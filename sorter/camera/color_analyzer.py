@@ -285,24 +285,24 @@ def calibrate_reference(variety: str, process: str,
         参考范围字典
     """
     # 收集所有合格样本的颜色统计
-   合格_L, 合格_a, 合格_b = [], [], []
+    qualified_L, qualified_a, qualified_b = [], [], []
 
     for img, label in zip(sample_images, manual_labels):
         analyzer = ColorAnalyzer(variety, process)
         result = analyzer.analyze(img)
 
         if label.get("qualified", False):
-            合格_L.append(result.avg_L)
-            合格_a.append(result.avg_a)
-            合格_b.append(result.avg_b)
+            qualified_L.append(result.avg_L)
+            qualified_a.append(result.avg_a)
+            qualified_b.append(result.avg_b)
 
-    if not 合格_L:
+    if not qualified_L:
         return {"L": (35, 50), "a": (-2, 6), "b": (12, 25)}
 
     return {
-        "L": (np.percentile(合格_L, 5), np.percentile(合格_L, 95)),
-        "a": (np.percentile(合格_a, 5), np.percentile(合格_a, 95)),
-        "b": (np.percentile(合格_b, 5), np.percentile(合格_b, 95)),
+        "L": (np.percentile(qualified_L, 5), np.percentile(qualified_L, 95)),
+        "a": (np.percentile(qualified_a, 5), np.percentile(qualified_a, 95)),
+        "b": (np.percentile(qualified_b, 5), np.percentile(qualified_b, 95)),
     }
 
 

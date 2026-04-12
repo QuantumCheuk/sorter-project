@@ -3,17 +3,51 @@
 
 ---
 
-## 项目状态：🟡 进行中（课题2进行中）
+## 项目状态：🟡 进行中（课题2 Day2/3）
 
 ---
 
 ## 当前版本
 - **SPEC.md: v0.2 (2026-04-10)**
-- **WORKLOG.md: v0.2.1 (2026-04-13)** — 课题2启动，颜色检测模块初版代码
+- **WORKLOG.md: v0.2.2 (2026-04-13)** — 课题2 Day2，标定工具+训练数据采集+测试框架
 
 ---
 
 ## 课题进度
+
+### 课题2：颜色检测系统 🟡 Day 2/3
+- 状态：🟡 进行中
+- **今日完成：**
+  - `sorter/camera/calibration.py` — ColorCalibrator 阈值标定工具：
+    - 多策略背景分离（Otsu/自适应/HSV/组合）
+    - 按品种+处理法分组统计 L*a*b* 分布
+    - 自动计算缺陷阈值建议 + 参考范围 (5th-95th percentile)
+    - 支持合成样本测试 + 真实文件夹批量导入
+    - YAML 标定结果导出
+  - `sorter/camera/dataset_collector.py` — DatasetCollector 训练数据采集工具：
+    - 摄像头实时预览 + 键盘标注（G/B/M/F/R/I）
+    - 结构化保存到 `output/{good,bleached,moldy,fermented,broken,insect}/`
+    - 自动生成 `labels.json` 标签记录
+    - metadata.json 元数据导出
+  - `sorter/camera/image_processor.py` — ImageProcessor 改进预处理器：
+    - 组合背景分离（HSV绿色范围 + LAB L通道 + 边缘检测）
+    - BeanRegion 数据类（轮廓/掩码/重心/面积/紧凑度/等效直径）
+    - `batch_statistics()` 批量统计分析
+    - `visualize()` 检测结果可视化
+  - `sorter/camera/test_color_analyzer.py` — 测试框架：
+    - 合成测试集生成（Heirloom水洗/Geisha日晒 + 4种缺陷类型）
+    - 基准测试 + 召回率统计 + 处理时间
+  - **合成测试结果：**
+    - 正常豆召回率：100% ✅
+    - 漂白豆召回率：100% ✅
+    - 发霉豆/发酵过度：待真实样本标定（合成数据特征不够典型）
+    - 平均处理时间：13.4ms/帧 ✅（目标<100ms）
+  - 修复 color_analyzer.py 缩进错误（Chinese variable mixing）
+- 待完成（Day 3）：
+  - [ ] 真实样本采集（目标：每个品种≥30张）
+  - [ ] 阈值实测校准
+  - [ ] LED光源均匀度测试验证
+  - [ ] 暗箱3D打印样品实测
 
 ### 课题1：尺寸分选机构 ✅ 已完成基础框架
 - 状态：🟡 进行中（3D模型待验证）
@@ -22,7 +56,7 @@
   - 步进电机驱动方案（28BYJ-48 + ULN2003）
 - 待验证：3D打印样品测试
 
-### 课题2：颜色检测系统 🔴 Day 1/3
+### 课题2：颜色检测系统 🟡 Day 1/3 ✅
 - 状态：🔴 进行中
 - **今日完成：**
   - `sorter/camera/__init__.py` — 模块初始化
@@ -96,7 +130,50 @@
 
 ---
 
-## 今日研究笔记（2026-04-13 课题2 Day1）
+## 今日研究笔记（2026-04-13 课题2 Day2）
+
+### 合成测试发现的问题
+
+**发霉豆召回率 0%（预期应该检出）**
+- 原因：合成 moldy 图像 L=35, a=-4, b=10，但阈值要求 a≤-5
+- a=-4 超出阈值 1 个单位 → 未触发
+- 真实发霉豆样本可能 a 更负（更绿），需要实测确认
+
+**发酵过度召回率 0%**
+- 原因：合成 fermented 图像 a=9, b=20，阈值 a≥8, b≥18 → 理论上应该触发
+- 但 L*a*b* 计算时背景干扰导致平均值偏移
+- 真实样本中发酵过度的红棕色特征应更明显
+
+**结论：** 合成数据有限，真实样本标定是下一步关键。
+
+### 标定工具使用流程（实测时）
+```
+1. 用 dataset_collector.py 采集样本：
+   python -m sorter.camera.dataset_collector -o dataset/heirloom_washed
+
+2. 采集完毕后运行标定：
+   python -m sorter.camera.calibration -i dataset/heirloom_washed \
+       --variety Heirloom --process 水洗 --output cal_heirloom.yaml
+
+3. 更新 config.py 中的 VARIETY_REFERENCES 和 DEFECT_THRESHOLDS
+```
+
+### image_processor.py 组合策略详解
+```
+融合4种信号：
+1. HSV绿色范围 → 豆子主体
+2. LAB L通道中间调 → 去除极亮/极暗背景
+3. 自适应阈值 → 光照不均补偿
+4. Canny边缘 dilated → 精确边界
+
+最终：HSV OR (边缘 AND L中间调) OR 自适应
+```
+
+### Day 3 计划
+- 重点：真实样本采集 + 阈值实测校准
+- 工具：dataset_collector.py（标注界面）+ calibration.py（标定）
+- 采集目标：每个品种≥20张（good），每种缺陷≥10张
+
 
 ### 颜色检测关键技术点
 
@@ -131,3 +208,4 @@
 | 2026-04-10 | 项目初始化，SPEC v0.1 完成 | Husky |
 | 2026-04-12 | SPEC v0.2 完成，澄清批次模式等设计约束 | Husky |
 | **2026-04-13** | **WORKLOG v0.2.1，课题2 Day1 完成** | **Husky** |
+| **2026-04-13** | **WORKLOG v0.2.2，课题2 Day2 完成：标定工具+数据集采集+测试框架** | **Husky** |
