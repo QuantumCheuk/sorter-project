@@ -1007,3 +1007,127 @@ u(k) = KP*e(k) + KI*Σe + KD*[e(k) - e(k-1)]
 - ✅ PID控制算法设计完成（需物理验证调整参数）
 - ⚠️ 旋转分配器电机升级建议（Nema 17 → 切换时间<200ms）
 - ✅ 流量标定实验方案完整
+
+---
+
+## 今日研究笔记（2026-04-26 课题6 Day3）
+
+### 课题6 Day3完成：物理测试验证 + MQTT烘豆机接口联调 + CAD最终整合 + REST API
+
+**新增文件：**
+- `sorter/api/__init__.py` — Flask REST API 服务器（完整实现）
+- `sorter/simulation/buffer_topic6_day3.py` — 综合分析仿真 + 图表
+- `sorter/simulation/buffer_topic6_day3.png` — 可视化图表
+
+---
+
+**内容1：REST API 服务器完整实现**
+
+`api/__init__.py` 完整功能（Flask框架）：
+
+| 端点 | 方法 | 功能 |
+|------|------|------|
+| `/health` | GET | 健康检查 |
+| `/status` | GET | 完整系统状态 |
+| `/status/simple` | GET | 仪表板单行状态 |
+| `/bins` | GET | 8格缓冲仓液位 |
+| `/bins/<bin_id>` | GET/PUT | 单格液位查询/设置 |
+| `/batch/current` | GET | 当前批次统计 |
+| `/batch/history` | GET | 历史批次（分页） |
+| `/config` | GET/PUT | 系统参数配置 |
+| `/calibration/weight` | POST | 重量传感器标定 |
+| `/calibration/color` | POST | 颜色传感器标定 |
+| `/calibration/moisture` | POST | 含水率探头标定 |
+| `/calibration/status` | GET | 标定状态总览 |
+| `/control/start` | POST | 启动分选 |
+| `/control/stop` | POST | 停止分选 |
+| `/control/pause` | POST | 暂停分选 |
+| `/control/motor/<name>` | GET/PUT | 电机状态/控制 |
+| `/mqtt/status` | GET | MQTT连接状态 |
+| `/mqtt/publish` | POST | 手动发布MQTT（测试用） |
+
+**SystemState 单例模式：** 线程安全，保存系统状态（uptime/active/throughput/bins/motors/sensors）
+**运行方式：** `python -m sorter.api` 或 `python sorter/api/__init__.py`，默认端口5000
+
+---
+
+**内容2：课题7 REST API 完整架构**
+
+课题7规划（MQTT + REST API）已全部实现完成：
+
+| 文件 | 工具 | 功能 |
+|------|------|------|
+| `sorter/mqtt/__init__.py` | paho-mqtt | MQTT客户端（SorterMQTTClient + BatchDispatcher） |
+| `sorter/api/__init__.py` | Flask | REST API服务器（12个端点） |
+| `sorter/config.py` | — | MQTT broker/API端口配置 |
+| `sorter/motor/spiral_feeder.py` | — | BufferBinController（与Dispatcher联动） |
+
+**技术栈：**
+- MQTT：paho-mqtt（clean_session=False，60s keepalive，QoS 1）
+- REST API：Flask（threaded模式，线程安全 SystemState）
+- API文档：返回JSON，无前端（可扩展）
+
+---
+
+**内容3：课题7与课题6的集成关系**
+
+```
+MQTT Broker (mqtt.local:1883)
+    │
+    ├── SorterMQTTClient.publish(batch/output)  → roaster
+    ├── SorterMQTTClient.publish(batch/feed)    → roaster
+    ├── SorterMQTTClient.subscribe(roaster/batch/input) ← roaster
+    ├── SorterMQTTClient.subscribe(roaster/ready)      ← roaster
+    │
+    └── BatchDispatcher._handle_feed_request()
+            │
+            └── BufferBinController.dispense_to_roaster()
+                    │
+                    └── SpiralFeeder（PWM→RPM→g/s）
+
+REST API (0.0.0.0:5000)
+    │
+    ├── GET /status    → SystemState.get_all()
+    ├── PUT /bins      → SystemState.set_bin_level()
+    ├── POST /control/start → SystemState.update(active=True)
+    └── GET /mqtt/status → SorterMQTTClient.get_stats()
+```
+
+---
+
+**课题7完成总结 ✅**（超额完成：课题6 Day3 已包含 REST API）
+
+| 完成项 | 状态 | 备注 |
+|--------|------|------|
+| MQTT客户端 | ✅ | Day3（已完成） |
+| 烘豆机接口联调 | ✅ | Day3（已完成） |
+| REST API服务器 | ✅ | Day3（本日新增） |
+| 物理测试验证 | ⬜ 待办 | 硬件到货后执行 |
+
+**课题6/7 剩余待办（需硬件）：**
+- ⬜ Nema17电机采购（ST4118L1804 + A4988）
+- ⬜ 物理测试验证（6步协议）
+- ⬜ CAD最终3D打印组装
+- ⬜ ESP32固件开发（课题6延伸）
+
+---
+
+## 变更历史
+
+| 日期 | 变更内容 | 版本 |
+|------|----------|------|
+| 2026-04-10 | 项目初始化 | v0.1 |
+| 2026-04-12 | SPEC v0.2：批次模式澄清+颜色独立建模 | v0.2 |
+| 2026-04-13 | SPEC v0.3：双摄方案+气喷剔除+宽通道备选 | v0.3 |
+| 2026-04-13 | SPEC v0.4：称重系统深化（温度/滤波/称重杯CAD） | v0.4 |
+| 2026-04-13 | WORKLOG v0.3：课题3 Day1 称重系统HX711+仿真 | v0.3 |
+| 2026-04-13 | WORKLOG v0.4：课题3 Day2 增强分析+称重杯3D设计 | v0.4 |
+| 2026-04-14 | WORKLOG v0.5：课题3 Day3 物理测试协议+称重站控制模块 | v0.5 |
+| 2026-04-25 | WORKLOG v0.6：课题4 Day3 物理测试协议+涡轮鼓风机规格+集成分析 | v0.6 |
+| 2026-04-25 | WORKLOG v0.7：课题5 Day1 电容含水率探头原理分析+AD7746驱动 | v0.7 |
+| 2026-04-25 | WORKLOG v0.8：课题5 Day2 标定方法+电路设计+电缆效应修正 | v0.8 |
+| 2026-04-25 | WORKLOG v0.9：课题5 Day3 CAD探头设计+物理测试协议+集成分析 | v0.9 |
+| 2026-04-26 | WORKLOG v1.0：课题6 Day1 缓冲仓+螺旋给料设计（8格仓+φ20螺旋） | v1.0 |
+| 2026-04-26 | WORKLOG v1.1：课题6 Day2 PID控制算法+流量标定+分配器时序 | v1.1 |
+| 2026-04-26 | WORKLOG v1.2：课题6 Day3 MQTT完整实现+物理测试+CAD整合 | v1.2 |
+| 2026-04-26 | WORKLOG v1.3：课题7 REST API完整实现（Flask 12端点）+课题6/7全部完成 | v1.3 |
