@@ -32,8 +32,8 @@ from dataclasses import dataclass
 @dataclass
 class HX711Config:
     """HX711 configuration parameters."""
-    data_pin: int = 5      # GPIO pin for DT (DATA)
-    clock_pin: int = 6    # GPIO pin for SCK (CLK)
+    data_pin: int = 5       # GPIO pin for DT (DATA)
+    clock_pin: int = 27     # GPIO pin for SCK (CLK) ← 从GPIO6迁移解决与DRV8833 DIR冲突
     channel: str = "A"    # "A" or "B" (Channel A has 128 gain, Channel B has 32)
     gain: int = 128        # Gain: 128 (Channel A), 64 (Channel A), or 32 (Channel B)
     reference_unit: float = 1.0  # Scale factor (to be calibrated)

@@ -16,7 +16,7 @@ Wiring:
   HX711 VCC     → 3.3V (or 5V if using level shifter)
   HX711 GND     → GND
   HX711 DT      → GPIO 5 (CONFIGURABLE)
-  HX711 SCK     → GPIO 6 (CONFIGURABLE)
+  HX711 SCK     → GPIO 27 (CONFIGURABLE, 从GPIO6迁移)
   HX711 E+      → Load Cell RED wire
   HX711 E-      → Load Cell BLACK wire
   HX711 A-      → Load Cell WHITE wire
@@ -41,7 +41,7 @@ from sorter.sensors.load_cell import LoadCell, HX711, HX711Config
 class HX711PhysicalTest:
     """Physical hardware test suite for HX711 + Load Cell system."""
     
-    def __init__(self, data_pin: int = 5, clock_pin: int = 6):
+    def __init__(self, data_pin: int = 5, clock_pin: int = 27):
         self.data_pin = data_pin
         self.clock_pin = clock_pin
         self.load_cell: Optional[LoadCell] = None
@@ -466,7 +466,7 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description="HX711 Physical Test Protocol")
     parser.add_argument('--data-pin', type=int, default=5, help='GPIO pin for DT (default: 5)')
-    parser.add_argument('--clock-pin', type=int, default=6, help='GPIO pin for SCK (default: 6)')
+    parser.add_argument('--clock-pin', type=int, default=27, help='GPIO pin for SCK (default: 27)')
     parser.add_argument('--test', type=str, choices=['all', '01', '02', '03', '04', '05', '06'],
                         default='all', help='Which test to run')
     args = parser.parse_args()

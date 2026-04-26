@@ -104,15 +104,14 @@ def detect_resource_conflicts():
         "GPIO4":  ["红外光电传感器T1 (输入)"],
         "GPIO17": ["红外光电传感器T2 (输入)"],
         "GPIO5":  ["HX711 DT (输出/输入)"],
-        "GPIO6":  ["HX711 SCK (输出)"],
-        "GPIO12": ["风扇PWM (输出)"],
+        "GPIO27": ["HX711 SCK (输出) ← 从GPIO6迁移解决冲突"],
         "GPIO16": ["电磁阀（气喷剔除）(输出)"],
         "GPIO20": ["电磁阀（称重杯释放）(输出)"],
         "GPIO21": ["电磁阀（Buffer出豆）(输出)"],
         "GPIO26": ["28BYJ-48 #1 PUL (振动给料)"],
         "GPIO19": ["28BYJ-48 #1 DIR"],
         "GPIO13": ["28BYJ-48 #2 PUL (旋转分配)"],
-        "GPIO6":  ["28BYJ-48 #2 DIR"],  # ⚠️ 冲突！GPIO6已被HX711 SCK占用
+        "GPIO12": ["28BYJ-48 #2 DIR (旋转分配)"],
         "GPIO18": ["28BYJ-48 #3 PUL (螺旋给料)"],
         "GPIO23": ["28BYJ-48 #3 DIR"],
         "GPIO24": ["液位传感器DATA (输入)"],
@@ -466,7 +465,7 @@ def generate_integration_charts():
         "传感器输入": ["GPIO4(T1)", "GPIO17(T2)", "GPIO5(DT)", "GPIO24(L液位)"],
         "执行器输出": ["GPIO16(气喷)", "GPIO20(称重阀)", "GPIO21(Buffer阀)"],
         "电机PWM": ["GPIO26(#1振)", "GPIO13(#2分)", "GPIO18(#3螺)"],
-        "其他": ["GPIO6(SCK)", "GPIO12(PWM风)", "GPIO25(L CLK)"]
+        "其他": ["GPIO27(SCK新)", "GPIO12(PWM风)", "GPIO25(L CLK)"]
     }
     
     y_pos = 0
@@ -550,7 +549,7 @@ if __name__ == "__main__":
 ✅ 全链路数据流完整（bean_id全程追踪）
 ✅ 时序裕量充足（气喷窗口15ms余量）
 ✅ MQTT keepalive解决方案（每10s publish）
-⚠️ GPIO6冲突：DRV8833 #2 DIR与HX711 SCK共用GPIO6 → 需重新分配
+✅ GPIO6冲突已修复：HX711 SCK迁移到GPIO27，DRV8833 #2 DIR保持在GPIO12
 ⚠️ 28BYJ-48切换540ms > 200ms目标 → 推荐Nema17升级
 ✅ BOM预算¥1065 < ¥1500目标
 ✅ 集成测试计划6步，总计420分钟
