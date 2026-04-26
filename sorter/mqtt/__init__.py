@@ -394,10 +394,9 @@ class BatchDispatcher:
               f"target={cmd.target_weight_g}g, grade={cmd.grade_preference}")
 
         start = time.time()
-        success = self.buffer.dispense_to_roaster(
-            bin_id=None,  # auto-select
-            batch_weight_g=cmd.target_weight_g,
-        )
+        # auto_dispatch auto-selects the first ready bin (FIFO) and dispenses
+        dispatched_bin_id = self.buffer.auto_dispatch(batch_weight_g=cmd.target_weight_g)
+        success = (dispatched_bin_id is not None)
         duration = time.time() - start
 
         if success:
@@ -405,7 +404,7 @@ class BatchDispatcher:
             report = BatchFeedComplete(
                 batch_id=cmd.batch_id,
                 actual_weight_g=cmd.target_weight_g,  # actual should come from buffer
-                dispensed_bins=[],  # TODO: fill from buffer
+                dispensed_bins=[dispatched_bin_id],
                 duration_s=round(duration, 2),
             )
             self.mqtt.publish_feed_complete(report)

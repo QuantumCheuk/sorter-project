@@ -86,3 +86,4 @@ dispensed_bins=list(bin_levels.keys()) if bin_levels else [],
 | 2026-04-26 | WORKLOG v1.5：课题8 Day2 GPIO重新分配（HX711→GPIO27）+ 采购清单整理（¥841） | v1.5 |
 | 2026-04-26 | WORKLOG v1.6：课题8 Day3 硬件组装3阶段计划+SPEC.md v0.6 GPIO表更新+最终检查清单+课题8全部完成 | v1.6 |
 | 2026-04-27 | WORKLOG v1.7：项目完整性检查 + TODO清理 + 下一步规划 | v1.7 |
+| 2026-04-27 | WORKLOG v1.8：修复 `mqtt/__init__.py` dispensed_bins TODO — 改用 auto_dispatch() 替代 dispense_to_roaster()，直接获取 dispatched_bin_id | v1.8 |
