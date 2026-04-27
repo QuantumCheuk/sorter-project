@@ -33,19 +33,10 @@
 
 | 文件 | TODO内容 | 评估 |
 |------|---------|------|
-| `camera/dark_box_test_protocol.py:417` | 实现加载逻辑 | 非阻塞：仅测试协议辅助功能 |
-| `camera/dark_box_test_protocol.py:515` | 真实样本测试逻辑 | 非阻塞：仅测试协议辅助功能 |
-| `mqtt/__init__.py:408` | `dispensed_bins` 未填充 | ⚠️ **需修复**：批次统计不完整 |
+| `sorter/camera/dark_box_test_protocol.py:417` | 实现加载逻辑 | 非阻塞：仅测试协议辅助功能 |
+| `sorter/camera/dark_box_test_protocol.py:515` | 真实样本测试逻辑 | 非阻塞：仅测试协议辅助功能 |
 
-**立即修复：`mqtt/__init__.py` dispensed_bins 字段**
-
-```python
-# 原始：
- dispensed_bins=[],  # TODO: fill from buffer
-
-# 修复：改为从 BufferBinController 读取实际出豆格
-dispensed_bins=list(bin_levels.keys()) if bin_levels else [],
-```
+> ✅ `dispensed_bins` 已在 v1.8 修复（commit 1d913ab）
 
 ---
 
