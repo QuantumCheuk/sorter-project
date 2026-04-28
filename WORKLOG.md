@@ -9,7 +9,7 @@
 
 ## 当前版本
 - **SPEC.md: v0.6 (2026-04-26)**
-- **WORKLOG.md: v1.10 (2026-04-27)** — 每日cron检查，Git已推送，项目完整清洁
+- **WORKLOG.md: v1.17 (2026-04-28)** — 每日研究任务，Git已推送，项目完整清洁
 
 ---
 
@@ -86,3 +86,4 @@
 | 2026-04-28 | WORKLOG v1.14：每日cron检查（00:07）— 项目待机状态，所有课题完成，Git已同步，无新增TODO或待处理事项 | v1.14 |
 | 2026-04-28 | WORKLOG v1.15：每日研究任务 — **吞吐量瓶颈深度分析**（sorter/simulation/throughput_bottleneck_analysis.py）。关键发现：单通道设计理论上限0.27kg/h（振动给料30bpm），距2kg/h目标差87%。3通道×50bpm=2.70kg/h可达成目标，需¥520升级费。生成3张分析图：throughput_stage_comparison.png / throughput_multichannel_scaling.png / throughput_upgrade_roadmap.png | v1.15 |
 | 2026-04-28 | WORKLOG v1.16：每日cron检查（12:07）— Git已同步（v1.15已推送f41cb12），SPEC.md v0.7已完成，项目待机状态，无新增TODO | v1.16 |
+| 2026-04-28 | WORKLOG v1.17：每日研究任务（18:07）— **多通道协调架构深度分析**（sorter/simulation/multi_channel_coordination.py）。在昨日吞吐量瓶颈分析基础上：①Nema17电机物理仿真验证50bpm可行性（相比28BYJ-48提速1.3×）；②2/3/4通道机械布局设计（共享下游设备）；③轮询调度算法仿真验证2.70kg/h达成；④ESP32多电机协调架构（LEDC硬件PWM+UART bean_id）；⑤MQTT多通道批次追踪设计。生成3张图：nema17_feeder_performance.png / multi_channel_layout.png / multi_channel_scheduling.png。升级成本估算¥347（原估算¥520含 contingency）。| v1.17 |
