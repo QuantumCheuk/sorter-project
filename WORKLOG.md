@@ -85,3 +85,4 @@
 | 2026-04-27 | WORKLOG v1.13：每日cron检查（21:06）— 项目待机状态，所有课题完成，Git已同步，无新增TODO | v1.13 |
 | 2026-04-28 | WORKLOG v1.14：每日cron检查（00:07）— 项目待机状态，所有课题完成，Git已同步，无新增TODO或待处理事项 | v1.14 |
 | 2026-04-28 | WORKLOG v1.15：每日研究任务 — **吞吐量瓶颈深度分析**（sorter/simulation/throughput_bottleneck_analysis.py）。关键发现：单通道设计理论上限0.27kg/h（振动给料30bpm），距2kg/h目标差87%。3通道×50bpm=2.70kg/h可达成目标，需¥520升级费。生成3张分析图：throughput_stage_comparison.png / throughput_multichannel_scaling.png / throughput_upgrade_roadmap.png | v1.15 |
+| 2026-04-28 | WORKLOG v1.16：每日cron检查（12:07）— Git已同步（v1.15已推送f41cb12），SPEC.md v0.7已完成，项目待机状态，无新增TODO | v1.16 |
