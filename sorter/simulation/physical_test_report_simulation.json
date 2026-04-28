@@ -1,0 +1,122 @@
+{
+  "report_id": "PHY-TEST-20260429-030915",
+  "start_time": "2026-04-29T03:09:15+08:00",
+  "end_time": "2026-04-29T03:09:15+08:00",
+  "summary": {
+    "report_id": "PHY-TEST-20260429-030915",
+    "total_tests": 18,
+    "passed": 14,
+    "failed": 4,
+    "pass_rate": "77.8%"
+  },
+  "records": [
+    {
+      "module": "color_camera",
+      "phase": "zero_calibration",
+      "result": "PASS",
+      "notes": "ΔL*=0.95 < 2.0 ✅"
+    },
+    {
+      "module": "load_cell",
+      "phase": "zero_calibration",
+      "result": "PASS",
+      "notes": "σ=2.1mg < 3mg ✅"
+    },
+    {
+      "module": "load_cell",
+      "phase": "span_calibration",
+      "result": "FAIL",
+      "notes": "误差=23.5mg (在10-50mg临界区，建议优化)"
+    },
+    {
+      "module": "load_cell",
+      "phase": "verification",
+      "result": "FAIL",
+      "notes": "线性误差=35.3mg (在20-100mg临界区)"
+    },
+    {
+      "module": "moisture_probe",
+      "phase": "live_test",
+      "result": "PASS",
+      "notes": "σ=0.41fF < 5fF ✅"
+    },
+    {
+      "module": "moisture_probe",
+      "phase": "span_calibration",
+      "result": "PASS",
+      "notes": "误差=0.37% < ±0.5% ✅"
+    },
+    {
+      "module": "density_separator",
+      "phase": "live_test",
+      "result": "PASS",
+      "notes": "σ=0.050m/s < 0.1m/s ✅"
+    },
+    {
+      "module": "density_separator",
+      "phase": "verification",
+      "result": "PASS",
+      "notes": "分离正确率=90% (轻:9/10, 重:9/10) ✅"
+    },
+    {
+      "module": "vibrating_feeder",
+      "phase": "live_test",
+      "result": "PASS",
+      "notes": "60秒297粒, σ=1.7bpm ✅"
+    },
+    {
+      "module": "vibrating_feeder",
+      "phase": "verification",
+      "result": "FAIL",
+      "notes": "平均49.6bpm ❌ < 50.0bpm目标 (差0.4bpm)"
+    },
+    {
+      "module": "system",
+      "phase": "gpio_check",
+      "result": "PASS",
+      "notes": "GPIO基础电平检查 PASS ✅"
+    },
+    {
+      "module": "system",
+      "phase": "i2c_discovery",
+      "result": "PASS",
+      "notes": "I2C设备: 0x48, 0x68 ✅"
+    },
+    {
+      "module": "camera",
+      "phase": "connectivity",
+      "result": "PASS",
+      "notes": "Top: ✅, Bottom: ✅"
+    },
+    {
+      "module": "mqtt",
+      "phase": "connectivity",
+      "result": "PASS",
+      "notes": "延迟=56.8ms < 100.0ms ✅"
+    },
+    {
+      "module": "rest_api",
+      "phase": "performance",
+      "result": "PASS",
+      "notes": "响应=44.5ms < 200.0ms ✅"
+    },
+    {
+      "module": "system",
+      "phase": "stress_test",
+      "result": "PASS",
+      "notes": "处理100粒, 崩溃0次 ✅"
+    },
+    {
+      "module": "defect_detector",
+      "phase": "accuracy",
+      "result": "PASS",
+      "notes": "检出17/20粒 (85%) ✅"
+    },
+    {
+      "module": "system",
+      "phase": "throughput_test",
+      "result": "FAIL",
+      "notes": "吞吐量=0.450kg/h ❌ < 0.9kg/h目标 (单通道瓶颈)"
+    }
+  ]
+}
