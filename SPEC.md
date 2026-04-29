@@ -1017,6 +1017,19 @@ python -m sorter.control.main --hardware   # 真实硬件模式
 
 **CLI 命令：** `start` / `stop` / `load` / `batch` / `status` / `beans` / `upstream` / `cal` / `estop` / `quit`
 
+**实时监控仪表盘（sorter/control/dashboard.py）：**
+- Tkinter GUI（1280×800，深色主题 `#0d1117`）
+- 9状态颜色编码大字显示 + 子状态文字
+- 实时传感器读数（重量/含水率/颜色分/尺寸/密度/缺陷）
+- 统计面板：已分选/已剔除/总重量/实时吞吐量(kg/h)/BPM/故障次数
+- 批次进度条（可配置目标kg）
+- matplotlib 吞吐量折线图（近2分钟，5fps，含2.0kg/h目标线）
+- 5类缺陷计数器（发霉/发酵/黑豆/碎豆/发育不全）
+- 控制按钮：Start / Pause / Stop / E-Stop / Reset
+- MQTT连接状态指示
+- 滚动事件日志（BeanSimulator 50bpm 模拟，无需硬件）
+- 运行：`python sorter/control/dashboard.py` 或 `python -m sorter.control.dashboard`
+
 ---
 
 ## 9. 课题规划
@@ -1042,3 +1055,4 @@ python -m sorter.control.main --hardware   # 真实硬件模式
 - v0.5 (2026-04-26): **缓冲仓+螺旋给料设计完成**：8格分级仓（680g容量）；螺旋给料器规格修正（φ20mm管+15mm螺距→250g批次需70s）；旋转分配器+状态机+MQTT烘豆机接口；**螺旋给料参数重大修正**（原φ12mm管给料速率不足）；**课题7 REST API完整实现（Flask 12端点）**：健康/状态/液位/批次/配置/标定/控制/MQTT全覆盖；Nema17电机升级评估（28BYJ-48切换540ms→Nema17可达~60ms）
 - v0.6 (2026-04-26): **GPIO冲突修复**：HX711 SCK从GPIO6迁移至GPIO27（解决与DRV8833 #2 DIR冲突）；更新GPIO映射表；**Nema17升级BOM**（ST4118L1804+A4988，¥39）；**硬件组装3阶段计划**（Day1-2核心传感/Day3-4分选机构/Day5-6通信联调）；**课题8全部完成**
 - v0.7 (2026-04-28): **吞吐量瓶颈深度分析**：`simulation/throughput_bottleneck_analysis.py`。关键发现：单通道设计仅0.27kg/h（振动给料30bpm），距2kg/h目标差87%。3通道×50bpm=2.70kg/h可达成目标，需¥520升级（3×Nema17+turbo blower）。更新设计目标章节（8.1节）。
+- v0.8 (2026-04-29): **实时监控仪表盘**（`sorter/control/dashboard.py`）：Tkinter GUI，9状态颜色编码显示，实时传感器读数，吞吐量折线图，批次进度条，缺陷计数器，控制按钮，MQTT状态，滚动日志。BeanSimulator 50bpm 无需硬件即可演示评估。更新第10节（软件架构）。

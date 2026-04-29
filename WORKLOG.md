@@ -9,7 +9,7 @@
 
 ## 当前版本
 - **SPEC.md: v0.8 (2026-04-29)**
-- **WORKLOG.md: v1.22 (2026-04-29)** — 每日研究任务，Git已推送
+- **WORKLOG.md: v1.23 (2026-04-29)** — 每日研究任务，Git已推送
 
 ---
 
@@ -27,7 +27,7 @@
 | MQTT客户端 `mqtt/` | 1 | ✅ |
 | REST API `api/` | 1 | ✅ |
 | CAD设计 `cad/` | 4 | ✅ |
-| 控制系统 `control/` | 2 | ✅ |
+| 控制系统 `control/` | 3 | ✅ |
 | 配置模块 `sorter/config.py` | 1 | ✅ |
 | 合计 | **~57文件** | ✅ |
 
@@ -96,4 +96,6 @@
 | 2026-04-29 | WORKLOG v1.21：每日研究任务（09:06）— **制造准备度评估**（sorter/simulation/manufacturing_readiness.py + .json）。目标：项目待机状态下，为硬件组装做最后准备。覆盖内容：①19种3D打印件工艺分析（PLA/PETG/层厚/填充/warping风险）；总打印33.5小时，PLA/PETG线材成本¥25；高风险件：缓冲仓212mm PETG（需RAFT+80°C热床）/ 称重杯壁薄2mm（0.1mm缝隙精度）。②激光切割建议：尺寸分选孔板×5级+气喷嘴φ2mm用PMMA替代3D打印（±0.1mm精度）。③25步装配顺序（依赖关系图），总工时13.2小时（约4工作日），10个HIGH风险关键检查点（相机标定/称重标定/AD7746<5cm引线/GPIO27接线）。④BOM采购成本：Phase1标准配置¥1927（21种），Phase2升级（Nema17×3+涡轮鼓风机）¥317，总计¥2244（超原始预算¥1500约50%，主因：HQ相机¥350+空压机¥200+AD7746¥60）。⑤8项关键风险（HQ相机货期/AD7746电缆效应/GPIO接线错误等）及缓解措施。⑥7天分阶段组装时间线（Day1-2框架到Day11+升级评估）。⑦6类最终检查清单（发运前必查）。Git已推送（2e50ae1）。|
 
 | 2026-04-29 | WORKLOG v1.22：每日研究任务（12:07）— **控制系统核心实现**（sorter/control/main.py + config.py）。目标：在课题全部完成后，为硬件组装准备完整的软件控制层。覆盖内容：①SorterController主控制类：9状态状态机（IDLE→INITIALIZING→CALIBRATING→READY→RUNNING→FEEDING→PAUSED→FAULT→ESTOP）+ 事件驱动架构；②传感器抽象层（T1Sensor/T2Sensor/HX711Sensor/MoistureSensor/ColorCamera）支持模拟+真实硬件模式；③执行器抽象层（AirJetValve/VibratingFeeder/WeighingCupRelease）；④BeanRecord+BatchRecord数据模型；⑤系统配置类SystemConfig（GPIO/Sensor/Motor/MQTT/API/Batch/Quality七个子配置，支持JSON加载/保存/环境变量覆盖）；⑥CLI交互界面（start/stop/load/batch/status/beans/estop命令）。SPEC.md更新至v0.8（新增第10节：软件架构更新+控制层说明）。Git已推送（f9616c6）。|
+
+| 2026-04-29 | WORKLOG v1.23：每日研究任务（15:11）— **实时监控仪表盘**（sorter/control/dashboard.py）。目标：在所有课题完成后，为硬件组装阶段准备完整的操作员界面，无需硬件即可演示评估。覆盖内容：①Tkinter全GUI实现（1280×800，深色主题）；②9状态机颜色编码大字状态显示（IDLE灰/INITIALIZING蓝/READY绿/RUNNING亮绿/PAUSED橙/FAULT红/ESTOP深红）；③实时传感器读数（重量/含水率/颜色分/尺寸/密度/最新缺陷类型）；④统计面板（已分选粒数/已剔除粒数/总重量/实时吞吐量/给料速度/故障次数）；⑤批次进度条（可配置目标kg）；⑥matplotlib吞吐量折线图（近2分钟，5fps更新，含2.0kg/h目标线）；⑦5类缺陷计数器（发霉豆/发酵豆/黑豆/碎豆/发育不全）；⑧控制按钮（Start/Pause/Stop/E-Stop/Reset）；⑨MQTT连接状态指示；⑩滚动事件日志。BeanSimulator以50bpm模拟豆子流（8%缺陷率）。Python语法检查通过。Git已推送。|
 | 2026-04-29 | WORKLOG v1.20：每日研究任务（03:06）— **物理测试协议与标定程序**（sorter/simulation/physical_test_protocol.py）。目标：硬件到位后，按本协议执行各模块标定与集成测试。覆盖内容：①18项性能基准PASS/FAIL阈值定义（颜色/称重/含水率/密度/给料/系统）；②模块标定流程（颜色预热+白板稳定性+双摄重现性 / 称重零点+量程+线性 / 含水率基线+样本验证 / 密度风速+分离正确率 / 振动给料稳定性+最大速率）；③8步集成测试序列（GPIO/I2C设备发现/相机连通性/MQTT延迟/API响应/持续运行/缺陷检出/吞吐量实测）；④CalibrationRecord+TestReport数据结构；⑤模拟运行结果：14/18通过（77.8%）。关键发现：称重系统100g误差23.5mg（临界区），线性误差35.3mg（临界区），给料49.6bpm差0.4bpm未达50bpm目标，吞吐量0.45kg/h（单通道瓶颈，预期结果，与v0.7结论一致）。通过率77.8%反映设计余量充足，真实硬件应有更大改善空间。Git已推送（104f1f4）。|
