@@ -1,0 +1,57 @@
+{
+  "analysis_date": "2026-04-30T03:14:42.081994",
+  "project": "HUSKY-SORTER-001",
+  "n_simulations": 10000,
+  "configurations": {
+    "1ch_30bpm": {
+      "throughput_kg_h": 0.27,
+      "hours_per_day": 10
+    },
+    "3ch_50bpm": {
+      "throughput_kg_h": 2.7,
+      "hours_per_day": 10
+    }
+  },
+  "key_findings": [
+    {
+      "defect_rate": 0.02,
+      "3ch_daily_qualified_kg_median": 24.987299999999998,
+      "1ch_daily_qualified_kg_median": 2.5029749999999997,
+      "3ch_defect_recall": 0.8790851814802744,
+      "3ch_precision": 0.26016786796509206,
+      "annual_qualified_3ch_300d": 7496.19,
+      "annual_qualified_1ch_300d": 750.8924999999999
+    },
+    {
+      "defect_rate": 0.05,
+      "3ch_daily_qualified_kg_median": 24.320325,
+      "1ch_daily_qualified_kg_median": 2.42535,
+      "3ch_defect_recall": 0.8789724461245587,
+      "3ch_precision": 0.46791034892286937,
+      "annual_qualified_3ch_300d": 7296.0975,
+      "annual_qualified_1ch_300d": 727.605
+    },
+    {
+      "defect_rate": 0.1,
+      "3ch_daily_qualified_kg_median": 22.949849999999998,
+      "1ch_daily_qualified_kg_median": 2.2956,
+      "3ch_defect_recall": 0.8789976720844279,
+      "3ch_precision": 0.6373791202731586,
+      "annual_qualified_3ch_300d": 6884.954999999999,
+      "annual_qualified_1ch_300d": 688.68
+    },
+    {
+      "note": "3-channel system achieves 2.70 kg/h, meeting 2 kg/h target with 35% margin",
+      "single_channel_gap": "Single channel only achieves 0.27 kg/h (87% below target)"
+    }
+  ],
+  "supply_chain_notes": [],
+  "recommendations": [
+    "Defect detection recall of 87.9% (Bayesian fusion) leaves room for improvement; targeting 95%+ would reduce false negatives significantly",
+    "False positive rate of 5% causes measurable revenue loss; calibration with known-good samples can reduce to ~2%",
+    "Supply chain: HQ Camera (14-day lead, \u00b17 uncertainty) is the longest-lead critical component; order immediately",
+    "Turbo blower (14-day lead, \u00b110 uncertainty) has highest delivery risk; consider domestic alternatives or parallel order",
+    "Annual revenue for premium beans (2% defect) at \u00a5120/kg: approximately \u00a525,000/year net (3ch, 10h/day, 300 days)",
+    "Single-channel configuration is not commercially viable (0.27 kg/h vs 2 kg/h target)"
+  ]
+}
