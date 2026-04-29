@@ -1,0 +1,133 @@
+{
+  "report_date": "2026-04-29",
+  "version": "v1.0",
+  "total_print_hours": 33.55,
+  "total_assembly_hours": 13.166666666666666,
+  "bom_phase1_cost": 1927.0,
+  "bom_phase2_cost": 317.0,
+  "bom_total_cost": 2244.0,
+  "high_risk_parts": [
+    {
+      "name": "入料斗 (Hopper)",
+      "risk": "MEDIUM",
+      "criticality": "HIGH"
+    },
+    {
+      "name": "振动给料器基座",
+      "risk": "LOW",
+      "criticality": "HIGH"
+    },
+    {
+      "name": "单文件通道管",
+      "risk": "LOW",
+      "criticality": "HIGH"
+    },
+    {
+      "name": "颜色检测暗箱",
+      "risk": "LOW",
+      "criticality": "HIGH"
+    },
+    {
+      "name": "称重杯",
+      "risk": "LOW",
+      "criticality": "HIGH"
+    },
+    {
+      "name": "称重杯托/Load Cell安装基座",
+      "risk": "LOW",
+      "criticality": "HIGH"
+    },
+    {
+      "name": "气流分选通道（密度区）",
+      "risk": "MEDIUM",
+      "criticality": "HIGH"
+    },
+    {
+      "name": "缓冲料仓（8格）",
+      "risk": "MEDIUM",
+      "criticality": "HIGH"
+    },
+    {
+      "name": "旋转分配器圆盘",
+      "risk": "MEDIUM",
+      "criticality": "HIGH"
+    },
+    {
+      "name": "螺旋给料器管",
+      "risk": "LOW",
+      "criticality": "HIGH"
+    },
+    {
+      "name": "框架立柱×4",
+      "risk": "LOW",
+      "criticality": "HIGH"
+    },
+    {
+      "name": "尺寸分选孔板（×5级）",
+      "risk": "MEDIUM",
+      "criticality": "HIGH"
+    }
+  ],
+  "critical_assembly_steps": [
+    {
+      "step": 5,
+      "name": "颜色检测暗箱安装",
+      "check": "暗箱不透光，接缝处密封棉；相机焦距6mm时工作距离约50mm"
+    },
+    {
+      "step": 6,
+      "name": "相机标定",
+      "check": "L*a*b*读数稳定性±1.0以内（连续10次）；top/bottom同一白板ΔE<2"
+    },
+    {
+      "step": 7,
+      "name": "Load Cell安装",
+      "check": "Load Cell水平安装（±0.5°），称重杯与通道出口对中<0.5mm"
+    },
+    {
+      "step": 8,
+      "name": "称重系统标定",
+      "check": "100g校准误差<50mg，连续10次读数标准差<10mg"
+    },
+    {
+      "step": 10,
+      "name": "含水率探头安装",
+      "check": "⚠️ AD7746必须<5cm引线连接探头（寄生电容问题，见SPEC.md 2.5.3）"
+    },
+    {
+      "step": 17,
+      "name": "Pi主控安装+接线",
+      "check": "⚠️ GPIO27=HX711 SCK（从GPIO6迁移）；每根GPIO线标签；HDMI线临时接显示器调试"
+    },
+    {
+      "step": 19,
+      "name": "系统接线+标签",
+      "check": "每条GPIO线与SPEC.md对照；电源正负极无误；I2C总线无短路"
+    },
+    {
+      "step": 21,
+      "name": "物理测试协议执行",
+      "check": "通过率目标≥85%（14/18已模拟通过，真实硬件应有更好表现）"
+    },
+    {
+      "step": 23,
+      "name": "带豆测试（单粒）",
+      "check": "T1→T2=90ms±10ms，颜色/称重/含水率数据完整，MQTT消息正确"
+    },
+    {
+      "step": 24,
+      "name": "连续给料测试",
+      "check": "实际吞吐量≥1.5kg/h（首阶段目标，3通道升级后≥2.0kg/h）"
+    }
+  ],
+  "total_assembly_days": 4,
+  "build_timeline": {
+    "Day 1": "框架+传感 (2.8h)",
+    "Day 2": "检测系统 (2.5h)",
+    "Day 3": "给料+缓冲 (2.0h)",
+    "Day 4": "电气+气动 (1.8h)",
+    "Day 5": "通信联调 (0.5h)",
+    "Day 6": "物理测试 (3.6h)",
+    "Day 7": "升级评估 (0.0h)"
+  }
+}
