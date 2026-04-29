@@ -1,6 +1,6 @@
 # 生豆分选机 / Green Coffee Bean Sorter
 > 项目代号：HUSKY-SORTER-001  
-> 版本：v0.7 | 2026-04-28
+> 版本：v0.8 | 2026-04-29
 > 目标：全指标分选（大小/颜色/重量/密度/含水率）+ 分类标签 + 数据输出 + 分批喂入烘豆机
 
 ---
@@ -937,6 +937,85 @@ feed_plan = [
 **替代方案（宽通道）：** 60mm宽通道 + 多目标追踪 ≈ 1.08 kg/h ❌（下游仍需升级，不推荐）
 
 **结论：** 推荐**3通道并行方案**（更低软件风险，组件成熟）。当前 v0.6 设计为单通道验证机，量产需升级。
+
+---
+
+## 10. 软件架构（v0.8 更新）
+
+### 10.1 系统分层
+
+```
+┌─────────────────────────────────────────────┐
+│  控制层 sorter/control/main.py              │  ← 主控制器（SorterController）
+│  - 状态机（9状态）                           │
+│  - 事件驱动调度                             │
+│  - BeanRecord / BatchRecord 数据模型        │
+└─────────────────────────────────────────────┘
+            │
+┌───────────┴───────────────────────────────────┐
+│  感知层 sorter/sensors/                      │  ← 传感器驱动
+│  sorter/motor/                              │  ← 执行器驱动
+│  sorter/camera/                             │  ← 视觉处理
+└─────────────────────────────────────────────┘
+            │
+┌───────────┴───────────────────────────────────┐
+│  通信层 sorter/mqtt/  sorter/api/            │  ← MQTT + REST API
+│  sorter/db/                                  │  ← 数据持久化
+└─────────────────────────────────────────────┘
+            │
+┌───────────┴───────────────────────────────────┐
+│  配置层 sorter/config.py                     │  ← SystemConfig（JSON加载/环境变量）
+└─────────────────────────────────────────────┘
+```
+
+### 10.2 SorterController
+
+**文件：** `sorter/control/main.py`
+
+| 属性/方法 | 说明 |
+|---------|------|
+| `MachineState` 枚举 | 9种主状态（IDLE/INITIALIZING/CALIBRATING/READY/RUNNING/FEEDING/PAUSED/FAULT/ESTOP） |
+| `SubState` 枚举 | 运行时刻子状态（RUN_FEEDING/RUN_SIZING/RUN_COLOR_DETECT等） |
+| `Event` 枚举 | 系统事件（START/STOP/PAUSE/RESUME/ESTOP/BATCH_START等） |
+| `BeanRecord` 数据类 | 单粒豆完整记录（size/weight/density/moisture/color/reject） |
+| `BatchRecord` 数据类 | 批次记录（metadata + beans列表 + feed_plan） |
+| `post_event()` | 事件入队（非阻塞） |
+| `process_events()` | 事件出队处理 |
+| `get_status()` | 返回状态快照（JSON） |
+| `get_recent_beans(n)` | 返回最近n粒豆数据 |
+
+**传感器抽象层：**
+
+| 类 | 说明 | 模式 |
+|----|------|------|
+| `T1Sensor` | 顶部光电传感器 | simulate / GPIO |
+| `T2Sensor` | 底部光电传感器 | simulate / GPIO |
+| `HX711Sensor` | 称重传感器（Load Cell） | simulate / real HX711 |
+| `MoistureSensor` | 含水率传感器（AD7746） | simulate / I2C |
+| `ColorCamera` | 双摄像头颜色检测 | simulate / real camera |
+
+**执行器抽象层：**
+
+| 类 | 说明 | 模式 |
+|----|------|------|
+| `AirJetValve` | 气喷电磁阀（缺陷豆剔除） | simulate / GPIO |
+| `VibratingFeeder` | 振动给料器 | simulate / GPIO+PWM |
+| `WeighingCupRelease` | 称重杯释放电磁阀 | simulate / GPIO |
+
+### 10.3 配置管理（sorter/config.py）
+
+**SystemConfig** 支持：
+- JSON 文件加载/保存（`/etc/sorter/config.json` 或 `SORTER_CONFIG` 环境变量）
+- 环境变量覆盖（`SORTER_SIMULATE` / `SORTER_MQTT_HOST` / `SORTER_LOG_LEVEL` 等）
+- 七个子配置类：`GPIOConfig` / `SensorConfig` / `MotorConfig` / `MQTTConfig` / `APIConfig` / `BatchConfig` / `QualityThresholds`
+
+**运行模式：**
+```bash
+python -m sorter.control.main --simulate   # 默认：模拟模式
+python -m sorter.control.main --hardware   # 真实硬件模式
+```
+
+**CLI 命令：** `start` / `stop` / `load` / `batch` / `status` / `beans` / `upstream` / `cal` / `estop` / `quit`
 
 ---
 
