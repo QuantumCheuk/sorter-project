@@ -1,87 +1,121 @@
-# 生豆分选机 / Green Coffee Bean Sorter
+# 生豆分選機 / Green Coffee Bean Sorter
 
-> 项目代号：HUSKY-SORTER-001  
-> 版本：v0.1 | 2026-04-10
+> 項目代號：HUSKY-SORTER-001  
+> 版本：v0.9 | 2026-04-30  
+> 目標：全指標分選（大小/顏色/重量/密度/含水率）+ 分批餵入烘豆機  
+> 狀態：**硬體採購階段**（預計 2026-07-13 到位）
 
 ---
 
-## 项目概述
+## 項目概述
 
-HUSKY-SORTER-001 是一款面向小型精品咖啡作坊的**全指标生豆分选机**，支持：
+HUSKY-SORTER-001 是一款面向小型精品咖啡作坊的**全指標生豆分選機**，支持：
 
-- ✅ **尺寸分选**：5级目数（16/15/14/13/12目）
-- ✅ **颜色检测**：Raspberry Pi HQ Camera + OpenCV + ML
-- ✅ **单粒称重**：200g Load Cell，精度 0.01g
-- ✅ **密度分级**：气流上扬法（轻/中/重 3级）
-- ✅ **含水率检测**：电容式探头
-- ✅ **分类标注**：产区/豆种/处理法/批次
-- ✅ **数据输出**：MQTT → HUSKY-ROASTER-001
-- ✅ **分批喂入**：按设定重量分段输出
+- ✅ **尺寸分選**：5級目數（16/15/14/13/12目）
+- ✅ **顏色檢測**：Raspberry Pi HQ Camera IMX477 + OpenCV + 雙攝像頭方案
+- ✅ **單粒稱重**：200g Load Cell，精度 ±0.01g（HX711 24bit ADC）
+- ✅ **密度分選**：氣流上揚法（輕/中/重 3級，渦輪鼓風機）
+- ✅ **含水率檢測**：電容式探頭（AD7746 VCN），精度 ±0.5%
+- ✅ **緩衝倉 + 螺旋給料**：8格旋轉料倉 + PID 控制
+- ✅ **MQTT 通信**：完整客戶端 + 狀態/批次數據上報
+- ✅ **REST API**：Flask 12端點，本地控制 + 遠程監控
+- ✅ **實時儀表盤**：Tkinter GUI，無硬體即可演示
+- ✅ **綜合仿真**：蒙特卡洛 / FMEA / 能量分析 / 供應鏈風險 / 時序分析
 
-## 📁 项目结构
+**對標產能：** ≥2.0 kg/h（3通道 × 50bpm）  
+**當前瓶頸：** 單通道 0.27kg/h（需升級至 3 通道 Nema17 配置）
+
+---
+
+## 📁 項目結構
 
 ```
 sorter-project/
-├── SPEC.md              # 设计规范
-├── WORKLOG.md           # 项目进度追踪
+├── SPEC.md              # 完整設計規範（v0.8）
+├── WORKLOG.md          # 項目進度追蹤（v1.27）
 ├── README.md            # 本文件
-├── sorter/              # 树莓派端主程序 (Python)
-│   ├── camera/          # 图像采集和分析
-│   ├── sensors/          # 传感器驱动
-│   ├── motor/           # 电机控制
-│   ├── mqtt/            # MQTT通信
-│   ├── api/             # REST API
-│   └── db/              # SQLite数据库
-├── firmware/            # ESP32固件
-├── docs/                # 技术分析文档
-├── components/          # 物料清单
-├── cad/                 # 3D模型/工程图
-├── memory/              # 每日记忆
-└── tasks/               # Cron任务脚本
+├── sorter/              # 樹莓派端主程序
+│   ├── camera/          # 圖像採集和分析（11文件）
+│   ├── sensors/         # 傳感器驅動（Load Cell / 含水率）
+│   ├── motor/           # 馬達控制（Nema17 + 28BYJ-48）
+│   ├── mqtt/            # MQTT 客戶端（狀態/批次）
+│   ├── api/             # REST API（Flask 12端點）
+│   ├── control/         # 控制模組（主控 + 儀表盤 + 配置）
+│   │   ├── main.py      # SorterController 狀態機
+│   │   ├── dashboard.py # Tkinter GUI 儀表盤
+│   │   ├── config.py    # SystemConfig 配置類
+│   │   ├── pi_setup.sh  # 一鍵 Pi 配置腳本
+│   │   ├── WIRING_GUIDE.md  # 接線指南
+│   │   └── DEBUGGING_GUIDE.md # 調試手冊
+│   ├── docs/            # 文檔
+│   │   └── OPERATOR_MANUAL.md # 操作員手冊（v1.0）✨
+│   ├── simulation/      # 仿真分析（32文件）
+│   ├── cad/             # 3D模型/工程圖（Fusion360）
+│   └── db/              # SQLite 數據庫
+└── firmware/            # ESP32 固件
 ```
 
-## 🎯 设计指标
+---
 
-| 指标 | 目标值 |
-|------|--------|
-| 处理量 | ≥ 2kg/h |
-| 尺寸分级 | 16/15/14/13/12目 |
-| 称重精度 | ±0.01g |
-| 含水率精度 | ±0.5% |
-| 缺陷检出率 | ≥ 95% |
-| 总成本 | < ¥1,500 |
+## 🎯 設計指標
 
-## 🔗 流水线集成
+| 指標 | 目標值 | 當前狀態 |
+|------|--------|---------|
+| 處理量 | ≥ 2kg/h | 🔵 0.27kg/h（單通道瓶頸）|
+| 尺寸分級 | 5級（16-12目）| ✅ 完成 |
+| 稱重精度 | ±0.01g | ✅ 完成 |
+| 含水率精度 | ±0.5% | ✅ 完成 |
+| 顏色檢出率 | ≥95%（融合召回87.9%）| ✅ 完成 |
+| 總成本 | < ¥1,500 | 🔵 ~¥2,244（含升級）|
+| 缺陷檢出率 | ≥95% | ✅ 融合算法達成 |
 
-```
-[HUSKY-SORTER-001]  ──MQTT──►  [HUSKY-ROASTER-001]
-  生豆分选机                          热风烘豆机
-  ├── 尺寸/颜色/重量/密度/含水率      ├── 接收批次参数
-  ├── 分类标注                         ├── 自动适配曲线
-  └── 分批输出（250g×N）             └── 冷却后出豆
-                                                  │
-                                                  ▼
-                                         [计量包装机]
-```
+---
 
 ## 📡 MQTT 消息流
 
-- `sorter/{id}/batch/output` → 向上游发送批次数据
-- `sorter/{id}/status` → 设备状态心跳
-- `roaster/{id}/batch/input` → 触发烘豆机进豆
+| Topic | 方向 | 內容 |
+|-------|------|------|
+| `sorter/{id}/batch/output` | → Roaster | 批次數據（重量/含水率/缺陷統計）|
+| `sorter/{id}/status` | → Monitor | 設備狀態心跳（5s間隔）|
+| `sorter/{id}/bean/{bean_id}` | → Monitor | 單豆檢測結果（實時）|
+| `roaster/{id}/batch/input` | ← Roaster | 觸發進豆指令 |
 
-## 🚀 运行要求
+---
+
+## 🚀 運行要求
 
 - Raspberry Pi 4B (2GB+)
 - Python 3.9+
 - Raspberry Pi OS (64-bit)
-- 3D打印机（打印面积 ≥ 220×220mm）
-
-## 📖 文档
-
-- [SPEC.md](./SPEC.md) — 完整设计规范
-- [WORKLOG.md](./WORKLOG.md) — 项目进度
+- 3D打印機（打印面積 ≥ 220×220mm）
+- 12V 3A 電源適配器（執行器）
+- 5V 3A USB-C（Pi 供電）
 
 ---
 
-*此项目与 [HUSKY-ROASTER-001](https://github.com/QuantumCheuk/roaster-project) 共同构成 DDC 数字化干燥链。*
+## 📖 文檔
+
+| 文檔 | 說明 |
+|------|------|
+| [SPEC.md](./SPEC.md) | 完整設計規範（v0.8）|
+| [WORKLOG.md](./WORKLOG.md) | 項目進度追蹤 |
+| [sorter/control/OPERATOR_MANUAL.md](./sorter/docs/OPERATOR_MANUAL.md) | **操作員手冊（v1.0）** |
+| [sorter/control/WIRING_GUIDE.md](./sorter/control/WIRING_GUIDE.md) | 接線指南 |
+| [sorter/control/DEBUGGING_GUIDE.md](./sorter/control/DEBUGGING_GUIDE.md) | 調試手冊 |
+
+---
+
+## 供應鏈狀態（2026-04-30 更新）
+
+| 關鍵組件 | 交付週期 | 預計到位 | 狀態 |
+|---------|---------|---------|------|
+| HQ Camera IMX477 | ~45天 | 2026-07-13 | 🔵 最高風險 |
+| 渦輪鼓風機 | ~45天 | 2026-07-13 | 🔵 最高風險 |
+| Nema17 馬達 ×3 | ~7天 | 2026-05-07 | ✅ 可提前備貨 |
+| HX711 Load Cell | ~7天 | 2026-05-07 | ✅ 國產備貨 |
+
+> ⚠️ 預計硬體到位：2026-07-13（60天風險窗口）
+
+---
+
+*此項目與 [HUSKY-ROASTER-001](https://github.com/QuantumCheuk/roaster-project) 共同構成 DDC 數字化乾燥鏈。*
