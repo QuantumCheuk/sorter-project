@@ -9,7 +9,7 @@
 
 ## 当前版本
 - **SPEC.md: v0.8 (2026-04-29)**
-- **WORKLOG.md: v1.31 (2026-04-30) (2026-05-01)** — Edge AI inference optimization，Git push成功（认证问题已解决）
+- **WORKLOG.md: v1.32 (2026-05-01)** — ML pipeline合成测试数据生成工具（synthetic_test_data_generator.py，14类COCO/YOLO标注，35.2 img/s），Git push成功
 
 ---
 
@@ -112,3 +112,5 @@
 | 2026-04-30 | WORKLOG v1.31：每日研究任务（00:07）— **Edge AI推理优化分析**（sorter/camera/edge_inference_analysis.py + edge_inference_report.json）。目标：在ML训练管道完成后，分析Pi 4边缘部署的推理性能约束。覆盖内容：①Pi 4硬件资源基线（1GB/2GB/4GB/4GB+EdgeTPU × FP32/INT8/EdgeTPU共9种组合）；②内存可行性：Pi 4 2GB + INT8剩余450MB（足够dashboard+MQTT共存）；③INT8 vs FP32：推理延迟70ms→28ms（2.5×加速），功耗节省8%（0.33W）；④多通道吞吐量验证：3通道×50bpm=2.70kg/h（满足2kg/h目标），50bpm间隔1200ms >> 轮询时间144ms，稳态无队列积压；⑤实时性保障5层机制：看门狗（5s超时重启）/推理超时（100ms）/降级策略（规则引擎）/背压检测（队列>5暂停给料）/多进程隔离；⑥升级路径：Phase 1 Pi 4 2GB ¥290（推荐）→ Phase 1b Pi 4 4GB ¥390 → Phase 2 EdgeTPU ¥850（仅在50bpm瓶颈确认后）；⑦关键结论：EdgeTPU升级¥560非必要（延迟余量充足，Pi 4 2GB INT8已满足所有推理需求）；⑧日能耗成本：¥0.022/天（@10h，¥0.6/kWh）。Git已推送（5fb3941）。|
 
 | 2026-04-30 | WORKLOG v1.30：每日研究任务（21:11）— **成本优化分析**（sorter/simulation/cost_optimization_analysis.py + cost_optimization_report.json + cost_optimization_analysis.png）。当前成本¥1864超预算24.3%，5种方案对比：方案A纯Phase1（¥1565但仅0.27kg/h❌）/ 方案D综合优化（¥1434达2.70kg/h✅）/ 方案E降级涡轮（¥1409但仅1.35kg/h⚠️）。方案D核心降本：HQ Camera→USB Camera（-¥270）+ AD7746→分立电路（-¥40）+ 涡轮鼓风机→优化版5015（-¥120）= 节省¥430，低于¥1500预算4.4%。替代品调研：Logitech C270×2/NE555分立电路/盘古风扇/Pi Zero 2W。Git已推送（5fb3941）。|
+
+| 2026-05-01 | WORKLOG v1.32：每日研究任务（03:03）— **ML pipeline合成测试数据生成工具**（sorter/camera/synthetic_test_data_generator.py，504行）。目标：补全ML训练管道的数据集生成与验证环节，无需真实硬件即可生成用于TFLite推理验证的合成测试集。覆盖内容：①14类咖啡豆合成图像（normal + 13种缺陷，含L*a*b*颜色模型精确建模）；②支持COCO + YOLO双格式标注输出（annotations.json + .txt）；③LED光斑/裂纹/贴片噪声物理模拟；④可配置缺陷率（默认8%）、图像分辨率（默认224×224）、随机种子；⑤30张生成测试：35.2 img/s，14类均衡分布，bbox/area正确。Git已推送（fc82f76）。|
