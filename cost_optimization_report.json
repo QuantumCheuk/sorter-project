@@ -1,0 +1,58 @@
+{
+  "project": "HUSKY-SORTER-001",
+  "analysis_date": "2026-04-30T21:11:08.403008",
+  "current_cost": {
+    "phase1": 1565,
+    "phase2": 299,
+    "total": 1864,
+    "budget_target": 1500,
+    "over_budget": 364,
+    "over_budget_pct": 24.3
+  },
+  "recommended_plan": {
+    "name": "方案D: 综合优化",
+    "description": "HQ→USB + AD→分立 + 砍涡轮鼓风机",
+    "estimated_cost": 1434,
+    "throughput_kg_h": 2.7,
+    "savings_vs_current": 430,
+    "actions": [
+      "立即采购USB摄像头×2（¥160）替代HQ Camera",
+      "启动AD7746分立电路设计（预算¥20）",
+      "Phase2采购Nema17电机（¥105）但暂缓涡轮鼓风机",
+      "优化5015风扇+PWM通道设计实现2-way密度分离"
+    ]
+  },
+  "cost_breakdown": {
+    "计算平台(Pi4+SD)": 485,
+    "视觉系统(HQ+C270)": 510,
+    "传感器(光电+LED)": 56,
+    "称重系统(LoadCell+HX711)": 35,
+    "执行器(电磁阀+风扇)": 60,
+    "AD7746含水率": 60,
+    "电机驱动(28BYJ+DRV)": 69,
+    "ESP32": 25,
+    "结构件(框架+紧固件)": 140,
+    "电源系统": 55,
+    "线材+工具": 50,
+    "亚克力等材料": 20
+  },
+  "alternatives": {
+    "HQ Camera IMX477 ¥350": {
+      "替代1": "Logitech C270 ×2 ¥160 — 分辨率降级但满足颜色检测",
+      "替代2": "Raspberry Pi Camera v2 ¥100 — 8MP但无自动对焦",
+      "替代3": "USB Camera ¥80×2 — 最便宜¥160双摄方案"
+    },
+    "AD7746 ¥60": {
+      "替代1": "NE555振荡器+GPIO计数 ¥5 — 精度±2%，勉强可用",
+      "替代2": "自制分立电路（运放+比较器）¥20 — 精度±0.5%，刚好达标"
+    },
+    "涡轮鼓风机 ¥120": {
+      "替代1": "5015风扇+PID通道优化 ¥25+工时 — 降级2-way分离",
+      "替代2": "盘古风扇 12V ¥60 — 中档方案，150L/min"
+    },
+    "Pi 4B 2GB ¥450": {
+      "替代1": "Pi Zero 2 W ¥180 — 降级但计算能力足够单通道",
+      "替代2": "OrangePi 3B ¥180 — 同价位更强CPU"
+    }
+  }
+}
