@@ -1,7 +1,7 @@
 # 生豆分選機 / Green Coffee Bean Sorter
 
 > 項目代號：HUSKY-SORTER-001  
-> 版本：v0.9 | 2026-04-30  
+> 版本：v1.0 | 2026-04-30  
 > 目標：全指標分選（大小/顏色/重量/密度/含水率）+ 分批餵入烘豆機  
 > 狀態：**硬體採購階段**（預計 2026-07-13 到位）
 
@@ -99,9 +99,67 @@ sorter-project/
 |------|------|
 | [SPEC.md](./SPEC.md) | 完整設計規範（v0.8）|
 | [WORKLOG.md](./WORKLOG.md) | 項目進度追蹤 |
-| [sorter/control/OPERATOR_MANUAL.md](./sorter/docs/OPERATOR_MANUAL.md) | **操作員手冊（v1.0）** |
+| [sorter/docs/OPERATOR_MANUAL.md](./sorter/docs/OPERATOR_MANUAL.md) | **操作員手冊（v1.0）** |
+| [sorter/docs/ANNOTATION_GUIDE.md](./sorter/docs/ANNOTATION_GUIDE.md) | **ML標注指南（v1.0）** |
 | [sorter/control/WIRING_GUIDE.md](./sorter/control/WIRING_GUIDE.md) | 接線指南 |
 | [sorter/control/DEBUGGING_GUIDE.md](./sorter/control/DEBUGGING_GUIDE.md) | 調試手冊 |
+
+---
+
+## 🤖 ML 訓練管道（預硬體開發）
+
+> ⚠️ 硬體尚未到位時的模型開發框架
+
+### 快速開始
+
+```bash
+# 1. 生成合成數據（預硬體開發用）
+python -m sorter.camera.ml_pipeline --mode synthetic --generate 5000
+
+# 2. 訓練模型
+python -m sorter.camera.ml_pipeline --mode train --epochs 50 --data ./data/beans
+
+# 3. 評估模型
+python -m sorter.camera.ml_pipeline --mode evaluate --model ./models/beans_best.h5
+
+# 4. 導出 TFLite（邊緣部署）
+python -m sorter.camera.ml_pipeline --mode export --model ./models/beans_v1.h5
+
+# 5. 推斷延遲基準測試
+python -m sorter.camera.ml_pipeline --mode benchmark --model ./models/beans_v1_int8.tflite
+```
+
+### 模型架構
+
+| 組件 | 規格 |
+|------|------|
+| Backbone | MobileNetV2（ImageNet 預訓練）|
+| 輸入尺寸 | 224×224×3 |
+| 輸出 | 14類（13缺陷 + 1正常）|
+| 訓練策略 | 遷移學習 + 微調最後30層 |
+| 標注工具 | LabelImg（本地）/ CVAT（團隊）|
+
+### 14個缺陷類別
+
+```
+正常通過：normal (class 0)
+——
+需剔除：mold / fermented / black / broken / foreign /
+        underweight / underdeveloped / dead / insect /
+        hollow / over_dry / over_wet / pre_mold (class 1-13)
+```
+
+### 實時分類器（TFLite）
+
+```python
+from sorter.camera.ml_pipeline import TFLiteDefectClassifier
+
+classifier = TFLiteDefectClassifier("./models/beans_v1_int8.tflite")
+class_id, class_name, confidence = classifier.classify(cv2_image)
+
+if class_id != 0:  # Any defect
+    trigger_air_jet_rejection(bean_id)
+```
 
 ---
 
