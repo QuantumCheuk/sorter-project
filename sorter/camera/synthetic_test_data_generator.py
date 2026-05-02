@@ -20,9 +20,10 @@ import json
 import math
 import os
 import random
+import struct
 import sys
 import time
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
@@ -81,37 +82,35 @@ BEAN_SIZE_RANGES = {
     "over_wet":       {"w": (42, 68), "h": (34, 58)},
 }
 
+# ─── L*a*b* → RGB 色彩转换 ─────────────────────────────────────────────────────
 
-# ─── 图像合成引擎 ─────────────────────────────────────────────────────────────
+
+def f_transfer(t: float) -> float:
+    """L*a*b* → XYZ 非线性转换（ICC标准）"""
+    return t ** 3 if t > 0.008856 else 0.128419 * (t - 0.137931)
+
 
 def lab_to_rgb(L: float, a: float, b: float) -> tuple:
-    """L*a*b* → RGB（整数 0-255）"""
-    # L*a*b* → XYZ
-    y = (L + 16) / 116
-    x = a / 500 + y
-    z = y - b / 200
+    """L*a*b* → RGB（整数 0-255，ICC标准 D65 白点）"""
+    # L*a*b* → XYZ（使用 D65 参考白点）
+    fy = (L + 16.0) / 116.0
+    fx = a / 500.0 + fy
+    fz = fy - b / 200.0
 
-    for ch, val in [(x, 3), (y, 3), (z, 3)]:
-        if val > 0.206897:
-            pass
-        else:
-            pass  # handled below
+    x = 0.95047 * f_transfer(fx)
+    y = 1.00000 * f_transfer(fy)
+    z = 1.08883 * f_transfer(fz)
 
-    x = 0.95047 * (x ** 3 if x > 0.206897 else 0.128419 * (x - 0.137931))
-    y = 1.00000 * (y ** 3 if y > 0.206897 else 0.128419 * (y - 0.137931))
-    z = 1.08883 * (z ** 3 if z > 0.206897 else 0.128419 * (z - 0.137931))
+    # XYZ → linear RGB（IEC 61966-2-1 D65）
+    r_lin =  3.2404542 * x - 1.5371385 * y - 0.4985314 * z
+    g_lin = -0.9692660 * x + 1.8760108 * y + 0.0415560 * z
+    b_lin =  0.0556434 * x - 0.2040259 * y + 1.0572252 * z
 
-    # XYZ → linear RGB
-    r =  3.2404542 * x - 1.5371385 * y - 0.4985314 * z
-    g = -0.9692660 * x + 1.8760108 * y + 0.0415560 * z
-    b_l = 0.0556434 * x - 0.2040259 * y + 1.0572252 * z
+    def gamma(c: float) -> int:
+        c = max(0.0, min(1.0, c))
+        return int(round((c ** (1.0 / 2.4) * 1.055 - 0.055) * 255.0))
 
-    def clamp(c):
-        c = max(0, min(1, c))
-        # gamma
-        return int(round((c ** (1/2.4) * 1.055 - 0.055) * 255))
-
-    return clamp(r), clamp(g), clamp(b_l)
+    return gamma(r_lin), gamma(g_lin), gamma(b_lin)
 
 
 def seeded_random(seed: int) -> random.Random:
@@ -120,90 +119,185 @@ def seeded_random(seed: int) -> random.Random:
     return r
 
 
+# ─── 2D 平滑噪声（用于咖啡豆表面纹理）────────────────────────────────────────
+
+
+def make_smooth_noise(rng: random.Random, w: int, h: int, strength: float = 12.0) -> list:
+    """
+    生成低分辨率 2D Gaussian 噪声并双线性插值到全分辨率。
+    比 per-pixel 独立噪声更平滑，模拟真实豆子表面纹理。
+    """
+    # 在 1/4 分辨率生成噪声点，减少计算量
+    gw = max(3, w // 4)
+    gh = max(3, h // 4)
+    grid = [[rng.gauss(0, strength) for _ in range(gw)] for _ in range(gh)]
+
+    result = []
+    for y in range(h):
+        row = []
+        for x in range(w):
+            # 双线性插值
+            gx = (x / w) * (gw - 1)
+            gy = (y / h) * (gh - 1)
+            ix, iy = int(gx), int(gy)
+            fx, fy = gx - ix, gy - iy
+            ix1 = min(ix + 1, gw - 1)
+            iy1 = min(iy + 1, gh - 1)
+            v00 = grid[iy][ix]
+            v10 = grid[iy][ix1]
+            v01 = grid[iy1][ix]
+            v11 = grid[iy1][ix1]
+            v = v00 * (1 - fx) * (1 - fy) + v10 * fx * (1 - fy) + v01 * (1 - fx) * fy + v11 * fx * fy
+            row.append(v)
+        result.append(row)
+    return result
+
+
+# ─── 图像合成引擎 ─────────────────────────────────────────────────────────────
+
+
 def generate_bean_pixels(
     rng: random.Random,
     label: str,
-    width: int,
-    height: int,
-    img_width: int = 224,
-    img_height: int = 224,
+    bw: int,
+    bh: int,
+    canvas_w: int,
+    canvas_h: int,
 ) -> list:
-    """生成单个咖啡豆的像素数据（椭圆形 + 贴片噪声）"""
-    cx = img_width // 2
-    cy = img_height // 2
-    w = width // 2
-    h = height // 2
+    """
+    生成单个咖啡豆的 RGBA 像素数据。
 
-    # RGBA 背景（黑色，alpha=0）
-    pixels = [[(0, 0, 0, 0) for _ in range(img_width)] for _ in range(img_height)]
+    改进 v2:
+    - 2D 平滑纹理噪声（替代 per-pixel gauss(0,8)）
+    - 3D 曲面 shading（边缘暗、中心亮，模拟真实豆子弧面）
+    - LED 光斑降低亮度峰值（避免 bean 区域像素超过 gray<110 检测阈值）
+    - 缺陷类特殊纹理（裂纹、虫洞等）
+    - 每粒豆子独立 RGB 基值（同一类别内也有变化）
+    """
+    cx = canvas_w // 2
+    cy = canvas_h // 2
+
+    # ── 基础 L*a*b* 颜色（带类内随机变化）────────────────────────
     color = LAB_COLOR_RANGES[label]
     L = rng.uniform(*color["L"])
     a = rng.uniform(*color["a"])
     b = rng.uniform(*color["b"])
     base_r, base_g, base_b = lab_to_rgb(L, a, b)
 
-    # 生成椭圆掩码
-    for y in range(img_height):
-        for x in range(img_width):
-            nx = (x - cx) / w if w > 0 else 0
-            ny = (y - cy) / h if h > 0 else 0
-            dist = nx * nx + ny * ny
-            if dist <= 1.0:
-                # 边缘羽化
-                alpha = max(0, 1.0 - dist ** 0.6) if dist > 0.8 else 1.0
-                # 添加贴片变化
-                patch = rng.gauss(0, 8)
-                # LED 光斑模拟
-                led_spot = max(0, 15 - math.hypot(x - cx, y - cy) * 0.4)
-                # 裂纹（针对 broken / insect_damaged）
-                crack = 0
-                if label in ("broken", "insect_damaged") and rng.random() < 0.4:
-                    angle = rng.uniform(0, math.pi)
-                    crack_dist = abs((x - cx) * math.cos(angle) + (y - cy) * math.sin(angle))
-                    if crack_dist < 3:
-                        crack = -40
-                r = max(0, min(255, base_r + patch + led_spot + crack))
-                g = max(0, min(255, base_g + patch + led_spot + crack))
-                b_val = max(0, min(255, base_b + patch + led_spot + crack))
-                pixels[y][x] = (r, g, b_val, int(255 * alpha))
+    # ── 椭圆掩码预计算 ───────────────────────────────────────────
+    w = bw // 2
+    h = bh // 2
+    max_r = max(w, h)
+    in_ellipse = [[False] * canvas_w for _ in range(canvas_h)]
+    dist_map = [[0.0] * canvas_w for _ in range(canvas_h)]
+    for y in range(canvas_h):
+        for x in range(canvas_w):
+            nx = (x - cx) / w if w > 0 else 0.0
+            ny = (y - cy) / h if h > 0 else 0.0
+            d2 = nx * nx + ny * ny
+            if d2 <= 1.0:
+                in_ellipse[y][x] = True
+                dist_map[y][x] = math.sqrt(d2)  # 0=center, 1=edge
+
+    # ── 表面纹理噪声（2D 平滑，强度取决于缺陷类型）───────────────
+    if label == "foreign":
+        # foreign 类：低纹理（异物表面较均匀）
+        texture_noise = make_smooth_noise(rng, canvas_w, canvas_h, strength=5.0)
+    elif label in ("moldy", "over_wet"):
+        # 潮湿/发霉：纹理更明显（表面不均匀）
+        texture_noise = make_smooth_noise(rng, canvas_w, canvas_h, strength=10.0)
+    else:
+        texture_noise = make_smooth_noise(rng, canvas_w, canvas_h, strength=7.0)
+
+    # ── 生成像素 ──────────────────────────────────────────────────
+    pixels = [[(0, 0, 0, 0) for _ in range(canvas_w)] for _ in range(canvas_h)]
+
+    for y in range(canvas_h):
+        for x in range(canvas_w):
+            if not in_ellipse[y][x]:
+                continue
+
+            dist = dist_map[y][x]  # 0=中心, 1=边缘
+
+            # ── 3D 曲面 shading ─────────────────────────────────
+            # 真实咖啡豆是弧形表面，中心较亮（高光），边缘渐暗
+            # 使用 cos 照明模型：边缘与视线夹角大，所以更暗
+            shading = 0.70 + 0.30 * math.cos(dist * math.pi * 0.8)
+
+            # ── 纹理噪声（平滑的 2D 噪声）────────────────────────
+            patch = texture_noise[y][x]
+
+            # ── LED 光斑（降低峰值从 15→8，避免中心过亮）────────
+            # 修复：原版 led_spot=15 导致部分 bean 中心像素 gray>110
+            # 使 gray<110 检测阈值失效；修正后峰值=8，falloff 更自然
+            led_spot = max(0, 8 - math.hypot(x - cx, y - cy) * 0.30)
+
+            # ── 缺陷特殊效果 ───────────────────────────────────
+            crack = 0
+            insect_hole = 0
+
+            if label in ("broken", "insect_damaged") and rng.random() < 0.45:
+                # 裂纹（方向随机，深色凹槽）
+                angle = rng.uniform(0, math.pi)
+                crack_x = (x - cx) * math.cos(angle) + (y - cy) * math.sin(angle)
+                crack_y = -(x - cx) * math.sin(angle) + (y - cy) * math.cos(angle)
+                if abs(crack_y) < 2.5 and -w * 0.8 < crack_x < w * 0.8:
+                    crack = rng.uniform(-35, -20)
+
+            if label == "insect_damaged" and rng.random() < 0.30:
+                # 虫洞（小圆形深色区域）
+                hx = cx + rng.uniform(-w * 0.5, w * 0.5)
+                hy = cy + rng.uniform(-h * 0.5, h * 0.5)
+                if math.hypot(x - hx, y - hy) < 4:
+                    insect_hole = rng.uniform(-50, -30)
+
+            if label == "moldy":
+                # 发霉：局部深色斑点（菌丝群）
+                mold_spot = max(0, 5 - math.hypot(x - cx, y - cy) * 0.35)
+                if rng.random() < 0.25:
+                    mold = -rng.uniform(10, 25)
+                else:
+                    mold = 0
+            else:
+                mold = 0
+
+            # ── 3D shading 影响（边缘变暗，但不改变色调）─────────
+            # RGB 分别处理，同时应用 shading
+            r = base_r * shading + patch + led_spot + crack + insect_hole + mold
+            g = base_g * shading + patch + led_spot + crack + insect_hole + mold
+            b_val = base_b * shading + patch + led_spot + crack + insect_hole + mold
+
+            # ── Alpha（椭圆边缘羽化）────────────────────────────
+            alpha = 1.0 if dist > 0.75 else min(1.0, 1.0 - (dist - 0.6) / 0.35)
+
+            r = int(max(0, min(255, r)))
+            g = int(max(0, min(255, g)))
+            b_val = int(max(0, min(255, b_val)))
+            pixels[y][x] = (r, g, b_val, int(255 * alpha))
 
     return pixels
-
-
-def composite_to_ppm(pixels: list, width: int, height: int) -> bytes:
-    """将像素数据写入 PPM（RGB）格式（无 Alpha，支持 PIL 免费读取）"""
-    lines = [f"P6\n{width} {height}\n255\n".encode()]
-    for row in pixels:
-        for r, g, b, _ in row:
-            lines.append(bytes([r, g, b]))
-    return b"".join(lines)
 
 
 def composite_to_png_rgba(pixels: list, width: int, height: int) -> bytes:
     """将 RGBA 像素数据写入 PNG"""
     import zlib
     sig = b"\x89PNG\r\n\x1a\n"
-    def chunk(ctype, data):
+
+    def chunk(ctype: bytes, data: bytes) -> bytes:
         c = ctype + data
         return struct.pack(">I", len(data)) + c + struct.pack(">I", zlib.crc32(c) & 0xffffffff)
 
-    # IHDR
+    # IHDR: 8-bit RGBA
     ihdr_data = struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0)
-    idat_data = b""
-    raw_rows = []
-    for row in pixels:
-        raw_rows.append(b"\x00" + b"".join(bytes([r, g, b, a]) for r, g, b, a in row))
+    raw_rows = [b"\x00" + b"".join(bytes([r, g, b, a]) for r, g, b, a in row) for row in pixels]
     idat_data = zlib.compress(b"".join(raw_rows), 6)
 
-    return (sig + chunk(b"IHDR", ihdr_data) + chunk(b"IDAT", idat_data) + chunk(b"IEND", b""))
+    return sig + chunk(b"IHDR", ihdr_data) + chunk(b"IDAT", idat_data) + chunk(b"IEND", b"")
 
-
-import struct
 
 # ─── COCO 格式标注 ─────────────────────────────────────────────────────────────
 
 def write_coco_annotation(ann_path: Path, annotations: list):
-    """写入 COCO JSON 标注文件"""
     coco = {
         "info": {"version": "1.0", "generated_by": "sorter-synthetic-gen"},
         "licenses": [],
@@ -234,7 +328,7 @@ def update_coco_annotations(coco: dict, ann_id: int, img_id: int, category_id: i
         "id": ann_id,
         "image_id": img_id,
         "category_id": category_id,
-        "bbox": bbox,       # [x, y, w, h]
+        "bbox": bbox,
         "area": area,
         "iscrowd": 0,
     })
@@ -243,8 +337,7 @@ def update_coco_annotations(coco: dict, ann_id: int, img_id: int, category_id: i
 # ─── YOLO 格式标注 ─────────────────────────────────────────────────────────────
 
 def write_yolo_annotation(yolo_path: Path, category_id: int,
-                            bbox: list, img_w: int, img_h: int):
-    """写入 YOLO .txt 标注文件（归一化中心点 + 宽高）"""
+                           bbox: list, img_w: int, img_h: int):
     x, y, w, h = bbox
     cx = (x + w / 2) / img_w
     cy = (y + h / 2) / img_h
@@ -312,15 +405,15 @@ def generate_synthetic_dataset(
         img_id_counter = 1
         ann_id_counter = 1
 
-    labels_pool = list(LABEL_MAP.keys())  # 0-13
+    label_names = list(LABEL_MAP.values())  # ["normal", "moldy", ...]
 
     for i in range(count):
-        label_id = rng.choices(
-            labels_pool,
-            weights=[distribution.get(l, 1.0) for l in labels_pool],
+        label_name = rng.choices(
+            label_names,
+            weights=[(distribution.get(n, 1.0) if distribution else 1.0) for n in label_names],
             k=1,
         )[0]
-        label_name = LABEL_MAP[label_id]
+        label_id = [k for k, v in LABEL_MAP.items() if v == label_name][0]
 
         t1 = time.time()
 
@@ -334,11 +427,10 @@ def generate_synthetic_dataset(
         bx = rng.randint(pad, img_size - bw - pad)
         by = rng.randint(pad, img_size - bh - pad)
 
-        # 生成图像（黑色背景 + 咖啡豆）
-        # 黑色背景
-        pixels = [[(12, 10, 8, 255) for _ in range(img_size)] for _ in range(img_size)]
+        # 中性灰背景（模拟相机暗箱实际背景，gray≈128）
+        pixels = [[(128, 128, 128, 255) for _ in range(img_size)] for _ in range(img_size)]
 
-        # 中心裁剪并合成
+        # 生成豆子并合成（canvas 稍大于 bean 以保留边缘羽化）
         bean_pixels = generate_bean_pixels(rng, label_name, bw, bh, bw + 20, bh + 20)
         boff_x = (bw + 20 - img_size) // 2
         boff_y = (bh + 20 - img_size) // 2
@@ -348,14 +440,14 @@ def generate_synthetic_dataset(
                 sx = x - bx + boff_x
                 sy = y - by + boff_y
                 if 0 <= sx < bw + 20 and 0 <= sy < bh + 20:
-                    r, g, b, a = bean_pixels[sy][sx]
+                    r, g, b_val, a = bean_pixels[sy][sx]
                     if a > 0:
                         alpha = a / 255.0
                         bg_r, bg_g, bg_b = pixels[y][x][:3]
                         pixels[y][x] = (
                             int(bg_r * (1 - alpha) + r * alpha),
                             int(bg_g * (1 - alpha) + g * alpha),
-                            int(bg_b * (1 - alpha) + b * alpha),
+                            int(bg_b * (1 - alpha) + b_val * alpha),
                             255,
                         )
 
@@ -401,77 +493,55 @@ def generate_synthetic_dataset(
     return stats
 
 
-def print_stats(stats: GenerationStats, output_dir: Path, total: int):
-    """打印数据集统计报告"""
-    elapsed = stats.durations_ms
-    print(f"\n{'='*60}")
-    print(f"  合成测试数据集生成完成")
-    print(f"{'='*60}")
-    print(f"  输出目录: {output_dir}")
-    print(f"  总图像数: {total}")
-    print(f"  总耗时:   {elapsed:.1f}ms ({total/elapsed*1000:.1f} img/s)")
-    print(f"\n  类别分布:")
-    for label_id in sorted(LABEL_MAP.keys()):
-        label = LABEL_MAP[label_id]
-        cnt = stats.per_label.get(label, 0)
-        pct = cnt / total * 100 if total > 0 else 0
-        bar = "█" * int(pct / 2)
-        print(f"    [{label_id:2d}] {label:<16} {cnt:4d} ({pct:5.1f}%) {bar}")
-
-    print(f"\n{'='*60}")
-
+# ─── 入口 ──────────────────────────────────────────────────────────────────────
 
 def main():
     parser = argparse.ArgumentParser(
-        description="生豆分选机 — 合成测试数据生成工具"
+        description="生豆分选机 ML 训练管道 — 合成测试数据生成工具"
     )
-    parser.add_argument(
-        "--count", "-n", type=int, default=100,
-        help="生成图像总数（默认 100）"
-    )
-    parser.add_argument(
-        "--output", "-o", type=Path,
-        default=Path("data/synthetic_test"),
-        help="输出目录路径"
-    )
-    parser.add_argument(
-        "--format", "-f", choices=["coco", "yolo", "both"],
-        default="coco",
-        help="标注格式: coco / yolo / both（默认 coco）"
-    )
-    parser.add_argument(
-        "--size", "-s", type=int, default=224,
-        help="图像分辨率（默认 224，与 MobileNetV2 输入相同）"
-    )
-    parser.add_argument(
-        "--seed", type=int, default=42,
-        help="随机种子（可复现，默认 42）"
-    )
-    parser.add_argument(
-        "--defect-ratio", type=float, default=0.08,
-        help="缺陷样本比例（默认 0.08，即 8%%）"
-    )
+    parser.add_argument("--count", "-n", type=int, default=100,
+                          help="生成图像数量（默认 100）")
+    parser.add_argument("--output", "-o", type=str, default="data/synthetic_test",
+                          help="输出目录")
+    parser.add_argument("--format", "-f", choices=["coco", "yolo", "both"],
+                          default="coco", help="标注格式（默认 coco）")
+    parser.add_argument("--size", "-s", type=int, default=224,
+                          help="图像分辨率（默认 224）")
+    parser.add_argument("--seed", type=int, default=42,
+                          help="随机种子（默认 42）")
+    parser.add_argument("--defect-rate", type=float, default=None,
+                          help="缺陷样本比例（默认 None=均匀分布）")
     args = parser.parse_args()
 
-    # 构建类别权重：normal 占比高，缺陷类共享剩余比例
-    defect_ratio = args.defect_ratio
-    normal_ratio = 1.0 - defect_ratio
-    distribution = {"normal": normal_ratio}
-    for lid, name in LABEL_MAP.items():
-        if name != "normal":
-            distribution[name] = defect_ratio / (len(LABEL_MAP) - 1)
+    output_dir = Path(args.output)
 
-    print(f"生豆分选机 — 合成测试数据生成工具")
+    print("=" * 60)
+    print("  生豆分选机 — 合成测试数据生成工具 v2")
+    print("=" * 60)
     print(f"  数量:    {args.count}")
-    print(f"  格式:    {args.format}")
+    print(f"  格式:    {args.format.upper()}")
     print(f"  分辨率:  {args.size}×{args.size}")
-    print(f"  缺陷率:  {defect_ratio*100:.1f}%")
     print(f"  随机种子:{args.seed}")
-    print(f"  输出:    {args.output}")
+    print(f"  输出:    {output_dir}")
+    if args.defect_rate is not None:
+        print(f"  缺陷率:  {args.defect_rate*100:.0f}%")
     print()
 
+    # 类别分布：支持 --defect-rate 独立控制缺陷率
+    distribution = None
+    if args.defect_rate is not None:
+        n_labels = len(LABEL_MAP)
+        n_normal = 1
+        n_defect = n_labels - n_normal
+        defect_rate = args.defect_rate
+        normal_rate = 1.0 - defect_rate
+        distribution = {
+            l: normal_rate / n_normal if l == "normal" else defect_rate / n_defect
+            for l in LABEL_MAP.values()
+        }
+
     stats = generate_synthetic_dataset(
-        output_dir=args.output,
+        output_dir=output_dir,
         count=args.count,
         img_size=args.size,
         format=args.format,
@@ -479,25 +549,38 @@ def main():
         seed=args.seed,
     )
 
-    print_stats(stats, args.output, args.count)
+    elapsed = time.time() - stats.start_time
 
-    # 写入元数据
-    meta = {
-        "version": "1.0",
-        "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "count": args.count,
-        "image_size": args.size,
+    print("\n" + "=" * 60)
+    print("  合成测试数据集生成完成")
+    print("=" * 60)
+    print(f"  输出目录: {output_dir}")
+    print(f"  总图像数: {stats.total}")
+    print(f"  总耗时:   {elapsed*1000:.1f}ms ({stats.total/elapsed:.1f} img/s)")
+    print()
+    print("  类别分布:")
+    for k, v in sorted(LABEL_MAP.items()):
+        count = stats.per_label.get(v, 0)
+        pct = count / max(1, stats.total) * 100
+        bar = "█" * int(pct / 5)
+        print(f"    [{k:2d}] {v:16s} {count:4d} ({pct:5.1f}%) {bar}")
+
+    metadata = {
+        "tool_version": "2.0",
+        "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "total_images": stats.total,
+        "elapsed_s": round(elapsed, 2),
+        "img_size": args.size,
         "format": args.format,
-        "defect_ratio": args.defect_ratio,
         "seed": args.seed,
-        "label_map": LABEL_MAP,
-        "total_duration_ms": stats.durations_ms,
-        "per_label_counts": stats.per_label,
+        "defect_rate": args.defect_rate,
+        "categories": LABEL_MAP,
+        "lab_color_ranges": LAB_COLOR_RANGES,
     }
-    meta_path = args.output / "metadata.json"
+    meta_path = output_dir / "metadata.json"
     with open(meta_path, "w") as f:
-        json.dump(meta, f, indent=2)
-    print(f"\n元数据已写入: {meta_path}")
+        json.dump(metadata, f, indent=2, ensure_ascii=False)
+    print(f"\n  元数据已写入: {meta_path}")
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 # 生豆分选机 / Green Coffee Bean Sorter
 > 项目代号：HUSKY-SORTER-001  
-> 版本：v0.8 | 2026-04-29
+> 版本：v0.9 | 2026-05-02
 > 目标：全指标分选（大小/颜色/重量/密度/含水率）+ 分类标签 + 数据输出 + 分批喂入烘豆机
 
 ---
@@ -1056,3 +1056,4 @@ python -m sorter.control.main --hardware   # 真实硬件模式
 - v0.6 (2026-04-26): **GPIO冲突修复**：HX711 SCK从GPIO6迁移至GPIO27（解决与DRV8833 #2 DIR冲突）；更新GPIO映射表；**Nema17升级BOM**（ST4118L1804+A4988，¥39）；**硬件组装3阶段计划**（Day1-2核心传感/Day3-4分选机构/Day5-6通信联调）；**课题8全部完成**
 - v0.7 (2026-04-28): **吞吐量瓶颈深度分析**：`simulation/throughput_bottleneck_analysis.py`。关键发现：单通道设计仅0.27kg/h（振动给料30bpm），距2kg/h目标差87%。3通道×50bpm=2.70kg/h可达成目标，需¥520升级（3×Nema17+turbo blower）。更新设计目标章节（8.1节）。
 - v0.8 (2026-04-29): **实时监控仪表盘**（`sorter/control/dashboard.py`）：Tkinter GUI，9状态颜色编码显示，实时传感器读数，吞吐量折线图，批次进度条，缺陷计数器，控制按钮，MQTT状态，滚动日志。BeanSimulator 50bpm 无需硬件即可演示评估。更新第10节（软件架构）。
+- v0.9 (2026-05-02): **批次数据持久化与报告生成系统**（`sorter/db/`）：SQLite数据库层（批次/豆粒/标定/事件4张表+WAL模式），完整数据模型（BeanRecord/BatchRecord/CalibrationRecord/SystemEvent），报告生成器（JSON/CSV/TEXT三格式），CLI工具（list/stats/report/export/events命令），蒙特卡洛模拟演示（3批次×3000豆验证）。
