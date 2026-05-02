@@ -9,7 +9,7 @@
 
 ## 当前版本
 - **SPEC.md: v0.8 (2026-04-29)**
-- **WORKLOG.md: v1.32 (2026-05-01)** — ML pipeline合成测试数据生成工具（synthetic_test_data_generator.py，14类COCO/YOLO标注，35.2 img/s），Git push成功
+- **WORKLOG.md: v1.34 (2026-05-02)** — 自诊断与健康监控系统（health_monitor.py，1144行，POST自检+HealthMonitor引擎+17传感器基线+多通道追踪+预测性维护）
 
 ---
 
@@ -27,7 +27,7 @@
 | MQTT客户端 `mqtt/` | 1 | ✅ |
 | REST API `api/` | 1 | ✅ |
 | CAD设计 `cad/` | 4 | ✅ |
-| 控制系统 `control/` | 6 | ✅ |
+| 控制系统 `control/` | 7 | ✅ |
 | 配置模块 `sorter/config.py` | 1 | ✅ |
 | 合计 | **~58文件** | ✅ |
 
@@ -113,4 +113,6 @@
 
 | 2026-04-30 | WORKLOG v1.30：每日研究任务（21:11）— **成本优化分析**（sorter/simulation/cost_optimization_analysis.py + cost_optimization_report.json + cost_optimization_analysis.png）。当前成本¥1864超预算24.3%，5种方案对比：方案A纯Phase1（¥1565但仅0.27kg/h❌）/ 方案D综合优化（¥1434达2.70kg/h✅）/ 方案E降级涡轮（¥1409但仅1.35kg/h⚠️）。方案D核心降本：HQ Camera→USB Camera（-¥270）+ AD7746→分立电路（-¥40）+ 涡轮鼓风机→优化版5015（-¥120）= 节省¥430，低于¥1500预算4.4%。替代品调研：Logitech C270×2/NE555分立电路/盘古风扇/Pi Zero 2W。Git已推送（5fb3941）。|
 
-| 2026-05-01 | WORKLOG v1.33：每日研究任务（18:07）— **ML Pipeline 验证工具运行**（sorter/camera/ml_pipeline_validator.py，8项测试）。验证结果：总分 93.8/100，6通过2警告0失败。✅ COCO格式正确（14类100条标注）/ 图像内容有效（100张224×224）/ 类别分布均衡（CV=0.242，不平衡比3.0:1）/ OpenCV 4.13.0+NumPy 2.4.2+PIL可用 / 标注-图像一致性通过 / Bbox面积分布合理 / 推理延迟满足实时约束（50bpm时延迟占比仅2.3%）。⚠️ YOLO格式未生成（需--format both参数）/ TensorFlow未安装（预期行为，硬件到位后安装）。同步验证：synthetic_test_data_generator.py生成50张COCO+YOLO双格式图像耗时1392.7ms（35.9 img/s）。Git push成功（ad8c35c）。|
+| 2026-05-01 | WORKLOG v1.33：每日研究任务（18:07）— **ML Pipeline 验证工具运行**（sorter/camera/ml_pipeline_validator.py，8项测试）。验证结果：总分 93.8/100，6通过2警告0失败。✅ COCO格式正确（14类100条标注）/ 图像内容有效（100张224×224）/ 类别分布均衡（CV=0.242，不平衡比3.0:1）/ OpenCV 4.13.0+NumPy 2.4.2+PIL可用 / 标注-图像一致性通过 / Bbox面积分布合理 / 推理延迟满足实时约束（50bpm时延迟占比仅2.3%）。⚠️ YOLO格式未生成（需--format both参数）/ TensorFlow未安装（预期行为，硬件到位后安装）。同步验证：synthetic_test_data_generator.py生成50张COCO+YOLO双格式图像耗时1392.7ms（35.9 img/s）。Git push成功（ad8c35c）。
+
+| 2026-05-02 | WORKLOG v1.34：每日研究任务（12:07）— **自诊断与健康监控系统**（sorter/control/health_monitor.py，1144行）。目标：硬件组装前建立完整的系统自诊断与传感器健康监控能力，为现场运维提供实时保障。覆盖内容：①POST上电自检程序（8项测试：系统基础/GPIO/I2C/传感器/执行器/通信/存储/安全回路，模拟模式无需硬件）；②HealthMonitor监控引擎（17种传感器基线定义，颜色/称重/含水率/光电/密度/液位/执行器全覆盖）；③多通道独立健康追踪（每通道独立评分，支持1-N通道扩展）；④实时分析：噪声异常/漂移检测/离线检测/错误率监控；⑤通道级综合健康评分(0-100) + 系统级评分；⑥AlertLevel 6级告警（OK/INFO/WARNING/DEGRADED/CRITICAL/OFFLINE）；⑦预测性维护告警（基于漂移速率趋势计算剩余标定周期）；⑧预测性故障分析（基于历史错误率预测传感器降级）；⑨传感器数据模拟器（用于无需硬件的监控逻辑验证）；⑩CLI支持（--test POST自检 / --monitor持续监控）。POST验证结果：8项测试85ms，6 PASS / 1 WARNING（传感器误差0.51）/ 1 SKIP（GPIO），综合PASS。Git push成功（4587f28）。
