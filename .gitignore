@@ -6,3 +6,8 @@ venv/
 *.db
 *.log
 .DS_Store
+
+# Generated data
+data/
+reports/
+sorter/**/__pycache__/

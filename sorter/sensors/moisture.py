@@ -212,7 +212,7 @@ class AD7746Driver:
 # ─────────────────────────────────────────────
 # 555振荡器 + GPIO测量方案（低成本备选）
 # ─────────────────────────────────────────────
-class555Oscillator:
+class Class555Oscillator:
     """
     555多谐振荡器 + GPIO脉冲计数测量方案
     
@@ -300,7 +300,7 @@ class MoistureSensor:
         if circuit == 'AD7746':
             self.driver = AD7746Driver(i2c_bus=i2c_bus)
         else:
-            self.driver = class555Oscillator()
+            self.driver = Class555Oscillator()
     
     def measure(self, samples: int = 5) -> Optional[float]:
         """
