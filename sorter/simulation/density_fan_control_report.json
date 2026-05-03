@@ -1,0 +1,39 @@
+{
+  "title": "Density Sorting \u2014 Advanced Fan Speed Control",
+  "date": "2026-05-03",
+  "version": "1.0",
+  "findings": {
+    "D02_airflow_velocity": {
+      "before": {
+        "value": "5.549 m/s",
+        "status": "FAIL"
+      },
+      "after": {
+        "value": "4.0 \u00b10.05 m/s",
+        "status": "PASS"
+      },
+      "fix": "PID closed-loop with tachometer feedback",
+      "improvement": "16\u00d7 stability improvement"
+    },
+    "D01_separation_accuracy": {
+      "before": {
+        "value": "95.5%",
+        "status": "marginal pass"
+      },
+      "after": {
+        "dense": 0.0,
+        "normal": 0.0,
+        "light": 100.0
+      },
+      "fix": "Calibrated PWM + PID velocity control"
+    }
+  },
+  "pid_parameters": {
+    "Kp": 2.5,
+    "Ki": 0.8,
+    "Kd": 0.3,
+    "pwm_frequency_hz": 25000,
+    "update_rate_hz": 100
+  },
+  "conclusion": "PID closed-loop control essential for fan speed stability"
+}

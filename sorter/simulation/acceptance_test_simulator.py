@@ -148,11 +148,20 @@ class AcceptanceTestSimulator:
         z = math.sqrt(-2 * math.log(u1 + 1e-10)) * math.cos(2 * math.pi * u2)
         return z * sigma
 
-    def _extra_bias(self, test_id: str) -> float:
+    def _extra_bias(self, test_id: str, noise_sigma: float) -> float:
+        """
+        Compute per-test extra bias from high-risk part mapping.
+        Scale sigma by noise level so high-precision tests (tiny noise_sigma)
+        aren't overwhelmed. We use noise_sigma as the unit scale, and apply
+        2.5 noise_sigma as the extra spread — same multiplier as before but
+        now proportional to each test's actual noise floor.
+        """
         bias = 0.0
         for _part, tests in RISK_TEST_MAP.items():
             if test_id in tests:
-                bias += self.rng.gauss(0, 2.5)
+                # Scale extra bias by the test's own noise_sigma
+                # (2.5× noise_sigma keeps proportional impact constant)
+                bias += self.rng.gauss(0, 2.5 * noise_sigma)
         return bias
 
     def _eval_single_test(self, test: Tuple) -> TestResult:
@@ -181,7 +190,7 @@ class AcceptanceTestSimulator:
         }
 
         base_val, noise_sigma = BASELINES.get(test_id, (50.0, 1.0))
-        measurement = base_val + self._gauss(noise_sigma) + bias + self._extra_bias(test_id)
+        measurement = base_val + self._gauss(noise_sigma) + bias + self._extra_bias(test_id, noise_sigma)
 
         # Special case: absolute value (non-negative quantities)
         if test_id in ("C-04", "C-06", "W-01"):

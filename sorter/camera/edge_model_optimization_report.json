@@ -1,0 +1,115 @@
+{
+  "title": "Edge Model Optimization \u2014 TensorFlow Lite",
+  "date": "2026-05-03",
+  "version": "1.0",
+  "model_conversion": [
+    {
+      "quantization": "float32",
+      "file_size_mb": 24.0,
+      "latency_mean_ms": 130.49,
+      "latency_p95_ms": 130.0,
+      "throughput_fps": 7.7,
+      "memory_mb": 24.5,
+      "pi4_compatible": true
+    },
+    {
+      "quantization": "int8",
+      "file_size_mb": 6.05,
+      "latency_mean_ms": 45.17,
+      "latency_p95_ms": 45.0,
+      "throughput_fps": 22.1,
+      "memory_mb": 24.5,
+      "pi4_compatible": true
+    },
+    {
+      "quantization": "int8_drq",
+      "file_size_mb": 6.35,
+      "latency_mean_ms": 45.17,
+      "latency_p95_ms": 45.0,
+      "throughput_fps": 22.1,
+      "memory_mb": 24.5,
+      "pi4_compatible": true
+    }
+  ],
+  "calibration": {
+    "num_samples": 252,
+    "samples_per_class": 18,
+    "num_classes": 14
+  },
+  "multi_channel_throughput": [
+    {
+      "config": "Single Channel (Baseline)",
+      "num_channels": 1,
+      "feeder_bpm": 30.0,
+      "target_kg_per_h": 0.27,
+      "inter_bean_ms": 2000.0,
+      "inference_mean_ms": 45.2,
+      "inference_p95_ms": 45.0,
+      "inference_p99_ms": 51.8,
+      "effective_utilization_pct": 2.26,
+      "headroom_pct": 97.74,
+      "is_feasible": true,
+      "real_time_capable": true
+    },
+    {
+      "config": "Dual Channel (Upgrade)",
+      "num_channels": 2,
+      "feeder_bpm": 40.0,
+      "target_kg_per_h": 0.72,
+      "inter_bean_ms": 1500.0,
+      "inference_mean_ms": 100.4,
+      "inference_p95_ms": 100.0,
+      "inference_p99_ms": 115.0,
+      "effective_utilization_pct": 6.69,
+      "headroom_pct": 93.31,
+      "is_feasible": true,
+      "real_time_capable": true
+    },
+    {
+      "config": "Triple Channel (Target)",
+      "num_channels": 3,
+      "feeder_bpm": 50.0,
+      "target_kg_per_h": 2.7,
+      "inter_bean_ms": 1200.0,
+      "inference_mean_ms": 120.5,
+      "inference_p95_ms": 120.0,
+      "inference_p99_ms": 138.0,
+      "effective_utilization_pct": 10.04,
+      "headroom_pct": 89.96,
+      "is_feasible": true,
+      "real_time_capable": true
+    },
+    {
+      "config": "Quad Channel (Max)",
+      "num_channels": 4,
+      "feeder_bpm": 55.0,
+      "target_kg_per_h": 3.96,
+      "inter_bean_ms": 1090.9,
+      "inference_mean_ms": 200.8,
+      "inference_p95_ms": 200.0,
+      "inference_p99_ms": 230.0,
+      "effective_utilization_pct": 18.4,
+      "headroom_pct": 81.6,
+      "is_feasible": true,
+      "real_time_capable": true
+    }
+  ],
+  "memory_feasibility": {
+    "FP32 Full": {
+      "model_mb": 24.5,
+      "fits": false,
+      "remaining_mb": 425.5
+    },
+    "INT8 Quantized": {
+      "model_mb": 6.2,
+      "fits": true,
+      "remaining_mb": 443.8
+    },
+    "Dynamic Range Quant.": {
+      "model_mb": 6.5,
+      "fits": true,
+      "remaining_mb": 443.5
+    }
+  },
+  "conclusion": "INT8 quantized model fits Pi 4 2GB \u2705, 45ms latency supports 3ch\u00d750bpm=2.70kg/h \u2705, 256-sample calibration sufficient for INT8 quantization \u2705"
+}

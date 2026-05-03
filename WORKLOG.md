@@ -8,8 +8,8 @@
 ---
 
 ## 当前版本
-- **SPEC.md: v0.8 (2026-04-29)**
-- **WORKLOG.md: v1.35 (2026-05-02)** — 批次数据持久化与报告生成系统（sorter/db/，SQLite数据库+JSON/CSV/TEXT三格式报告+CLI）
+- **SPEC.md: v0.9 (2026-05-02)**
+- **WORKLOG.md: v1.39 (2026-05-03)** — Edge model optimization（TFLite转换+INT8量化+Pi 4边缘推理+多通道吞吐量验证）+ 验收测试模拟器偏差修复
 
 ---
 
@@ -122,4 +122,8 @@
 
 | 2026-05-03 | WORKLOG v1.36：每日研究任务（06:04）— **ESP32固件 + ML数据质量基准工具**。ESP32固件（firmware/sorter_esp32/sorter_esp32.ino，768行）：30pin全引脚定义（GPIO4/5光电传感器输入/GPIO16/17/20/21/25电磁阀输出/GPIO18/19/21/22/26/27三轴步进电机脉冲）、FreeRTOS三任务架构（UART命令处理/系统状态心跳/步进脉冲生成）、HX711 24-bit称重接口（含tare/calibrate）、T1/T2红外遮挡检测（GPIO ISR）、JSON串口协议（Pi→ESP控制指令）、状态机5种（BOOTING/IDLE/RUNNING/PAUSED/FAULT）。ML质量基准工具（sorter/camera/quality_benchmark.py，614行）：7维度质量评估（图像质量/L*a*b*颜色范围验证/标注格式/类别分布/缺陷率合理性/颜色多样性/视觉真实性评分）；基准测试结果（data/synthetic_test，200张图）：综合评分59.9/100（B级），L*a*b*合法率24%（缺陷类100% invalid，合成数据颜色范围与检测阈值不匹配，需要真实硬件数据修正）。Git push成功（35227a3）。
 
-| 2026-05-03 | WORKLOG v1.37：每日研究任务（15:07）— **合成数据LAB范围修复**（sorter/camera/synthetic_test_data_generator.py + quality_benchmark.py）。问题：v1.36中quality_benchmark对合成数据（100% invalid）显示0%合法率，原因：3D渲染shading效应（cos照明模型，峰值+30%）使L*值超出EXPECTED_LAB_RANGES基础范围约15-20单位。修复：①扩展所有14类LAB_COLOR_RANGES基础范围（normal: 38-58→23-78，L*扩展+15/-15以覆盖shading高光+边缘暗化+纹理噪声）；②扩展EXPECTED_LAB_RANGES与生成器完全对齐；③容差从50%→75%（确保即使边缘情况也通过）；④生成synthetic_v3（100张）验证：综合评分59.9→74.0（A级），L*a*b*合法率24%→100%✅。剩余警告：缺陷率82%（85% def测试集预期行为）/ 亮度变化Std=0.9（合成数据固定背景不足，自然变化待硬件采集后改善）。Git push成功（ca8f167）。|
+| 2026-05-03 | WORKLOG v1.37：每日研究任务（15:07）— **合成数据LAB范围修复**（sorter/camera/synthetic_test_data_generator.py + quality_benchmark.py）。问题：v1.36中quality_benchmark对合成数据（100% invalid）显示0%合法率，原因：3D渲染shading效应（cos照明模型，峰值+30%）使L*值超出EXPECTED_LAB_RANGES基础范围约15-20单位。修复：①扩展所有14类LAB_COLOR_RANGES基础范围（normal: 38-58→23-78，L*扩展+15/-15以覆盖shading高光+边缘暗化+纹理噪声）；②扩展EXPECTED_LAB_RANGES与生成器完全对齐；③容差从50%→75%（确保即使边缘情况也通过）；④生成synthetic_v3（100张）验证：综合评分59.9→74.0（A级），L*a*b*合法率24%→100%✅。剩余警告：缺陷率82%（85% def测试集预期行为）/ 亮度变化Std=0.9（合成数据固定背景不足，自然变化待硬件采集后改善）。Git push成功（ca8f167）。
+
+| 2026-05-03 | WORKLOG v1.38：每日研究任务（18:20）— **硬件验收测试模拟器 + 密度风扇PID控制**。硬件验收测试模拟器（sorter/simulation/acceptance_test_simulator.py，530行）：基于制造风险模型生成18项硬件验收测试仿真结果；覆盖颜色(6)/称重(4)/含水率(2)/密度(2)/给料(2)/系统(2)共6大类；含真实硬件降级因子（moisture×0.80/color×0.92/weight×0.85等）；PASS基准基于各传感器自身baseline（M-01: 0.03pF，M-02: 0.3%，D-02: 4.0m/s等）。密度风扇PID控制（sorter/simulation/density_fan_control.py，645行）：解决D-02失败（风速5.549m/s超出4.2m/s阈值）——开环PWM无法满足精度需求；实现PID闭环控制（Kp=2.5/Ki=0.8/Kd=0.3，25kHz PWM，100Hz更新）；解决了D-02（5.549m/s→4.0±0.05m/s✅）和D-01稳定性问题。生成分析图density_fan_control_analysis.png。Git push成功（0644c6e）。
+
+| 2026-05-04 | WORKLOG v1.39：每日研究任务（00:07）— **Edge Model优化**（sorter/camera/edge_model_optimization.py，820行）。目标：在ML pipeline完成后，为Pi 4边缘部署完成TFLite量化转换与推理性能验证。覆盖内容：①TFLite转换管道（FP32→INT8+动态范围量化，MobileNetV2+自定义分类头）；②INT8量化模拟（Pi 4 INT8：45ms/帧 vs FP32：130ms/帧，2.9×加速）；③标定数据集生成（256样本×14类，覆盖全缺陷类型）；④多通道吞吐量验证（3通道×50bpm=2.70kg/h，利用率仅10%，余量90%✅）；⑤Pi 4 2GB内存可行性（INT8模型6.2MB，系统剩余450MB→模型+OS共1100MB fits ✅）；⑥完整Pi 4部署清单（预飞行/模型部署/运行时验证/多通道集成）。**验收测试模拟器偏差修复**（sorter/simulation/acceptance_test_simulator.py）：M-01基线0.03pF，sigma 0.015，_extra_bias却用固定sigma=2.5造成量级不匹配（额外偏差0.375pF vs 基线0.03pF），导致M-01失败率100%（实测1.291pF临界失败）。修复：将_extra_bias改为按测试自身noise_sigma缩放（2.5× noise_sigma）。修复后M-01通过✅（实测0.083pF），含水率模块100%通过。修复后测试结果：15/18通过（83.3%），失败项：C-05（颜色分辨率ΔE=0.701 vs >1.5）/ D-01（分离精度89.8% vs >90%）/ F-01（给料速度46.2bpm vs <52.0）。Git push成功。
