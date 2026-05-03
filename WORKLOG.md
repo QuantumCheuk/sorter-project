@@ -9,6 +9,7 @@
 
 ## 当前版本
 - **SPEC.md: v0.9 (2026-05-02)**
+- **WORKLOG.md: v1.40 (2026-05-04)** — 代码质量审查 + 语法修复 + .gitignore完善
 - **WORKLOG.md: v1.39 (2026-05-03)** — Edge model optimization（TFLite转换+INT8量化+Pi 4边缘推理+多通道吞吐量验证）+ 验收测试模拟器偏差修复
 
 ---
@@ -61,6 +62,7 @@
 ## 变更历史
 | 日期 | 变更内容 | 版本 |
 |------|----------|------|
+| 2026-05-04 | WORKLOG v1.40：每日cron检查（03:07）— **代码质量审查**。发现moisture.py语法错误：`class555Oscillator`（无效，数字开头）→ 修复为`Class555Oscillator`+调用处同步修复；.gitignore完善（新增data/、reports/、sorter/**/__pycache__/）；全系统集成烟雾测试通过（Database/BatchReportGenerator/Class555Oscillator/SorterController状态机✅）。所有74个Python文件语法检查OK✅。项目待机中，所有课题已完成，硬件采购阶段。Git push成功。 | v1.40 |
 | 2026-04-10 | 项目初始化 | v0.1 |
 | 2026-04-12 | SPEC v0.2：批次模式澄清+颜色独立建模 | v0.2 |
 | 2026-04-13 | SPEC v0.3：双摄方案+气喷剔除+宽通道备选 | v0.3 |
