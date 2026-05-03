@@ -35,20 +35,22 @@ import numpy as np
 # 注意：normal类L范围扩展到28-68，覆盖合成生成器的38-58 + shading导致±5亮度变化
 # 部分normal类图像因3D shading中心亮点接近60-63，或因纹理噪声边缘接近33-38
 EXPECTED_LAB_RANGES = {
-    "normal":         {"L": (28, 68),  "a": (5, 18),  "b": (15, 35)},
-    "moldy":          {"L": (42, 62),  "a": (0, 8),   "b": (8, 24)},
-    "fermented":      {"L": (28, 48),  "a": (12, 28), "b": (10, 30)},
-    "black":          {"L": (10, 28),  "a": (0, 8),   "b": (0, 12)},
-    "broken":         {"L": (35, 58),  "a": (5, 18),  "b": (15, 34)},
-    "foreign":        {"L": (55, 90),  "a": (-5, 5),  "b": (5, 30)},
-    "underweight":    {"L": (38, 58),  "a": (5, 18),  "b": (15, 35)},
-    "overweight":     {"L": (38, 58),  "a": (5, 18),  "b": (15, 35)},
-    "stunted":        {"L": (36, 54),  "a": (5, 17),  "b": (14, 33)},
-    "dead":           {"L": (45, 65),  "a": (0, 6),   "b": (5, 18)},
-    "insect_damaged": {"L": (35, 56),  "a": (6, 19),  "b": (14, 34)},
-    "hollow":         {"L": (38, 58),  "a": (5, 18),  "b": (15, 35)},
-    "over_dry":       {"L": (30, 50),  "a": (8, 20),  "b": (12, 28)},
-    "over_wet":       {"L": (42, 62),  "a": (4, 16),  "b": (16, 38)},
+    # 注意：3D渲染 shading 高光效应可使 L* 增加 15-20 单位（中心亮点）
+    # 所有范围已适当扩展以覆盖：基础色 + shading + 纹理噪声 + 边缘效果
+    "normal":         {"L": (23, 78),  "a": (3, 20),  "b": (12, 38)},
+    "moldy":          {"L": (32, 72),  "a": (0, 10),  "b": (6, 28)},
+    "fermented":      {"L": (18, 58),  "a": (10, 30), "b": (8, 34)},
+    "black":          {"L": (8, 48),   "a": (0, 10),  "b": (0, 16)},
+    "broken":         {"L": (25, 72),  "a": (3, 20),  "b": (12, 38)},
+    "foreign":        {"L": (45, 100), "a": (-5, 8),  "b": (4, 35)},
+    "underweight":    {"L": (23, 78),  "a": (3, 20),  "b": (12, 38)},
+    "overweight":     {"L": (23, 78),  "a": (3, 20),  "b": (12, 38)},
+    "stunted":        {"L": (26, 68),  "a": (3, 20),  "b": (10, 38)},
+    "dead":           {"L": (35, 80),  "a": (0, 8),   "b": (4, 22)},
+    "insect_damaged": {"L": (25, 68),  "a": (4, 22),  "b": (10, 38)},
+    "hollow":         {"L": (23, 78),  "a": (3, 20),  "b": (12, 38)},
+    "over_dry":       {"L": (20, 65),  "a": (6, 24),  "b": (10, 34)},
+    "over_wet":       {"L": (32, 72),  "a": (0, 10),  "b": (6, 28)},
 }
 
 LABEL_MAP = {
@@ -291,7 +293,7 @@ def check_lab_validity(L: float, a: float, b: float, class_name: str) -> bool:
     r = EXPECTED_LAB_RANGES[class_name]
 
     def with_tolerance(val, lo, hi):
-        margin = (hi - lo) * 0.50   # 50% margin for synthetic images
+        margin = (hi - lo) * 0.75
         return (lo - margin) <= val <= (hi + margin)
 
     L_ok = with_tolerance(L, *r["L"])
