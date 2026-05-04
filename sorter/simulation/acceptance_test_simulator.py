@@ -89,7 +89,7 @@ ACCEPTANCE_TESTS = [
     ("C-02", "White board a* stability", "color", "%", -1.0, 1.0, 0.10, 0.0),
     ("C-03", "White board b* stability", "color", "%", -1.0, 1.0, 0.10, 0.0),
     ("C-04", "Dual-camera consistency ΔL*", "color", "ΔE", None, 2.0, 0.15, 0.1),
-    ("C-05", "Color detection resolution ΔE", "color", "ΔE", 1.5, None, 0.20, 0.05),
+    ("C-05", "Color detection resolution ΔE", "color", "ΔE", 1.5, None, 0.20, 0.30"),
     ("C-06", "Dark box light blocking", "color", "lux", None, 50.0, 5.0, 2.0),
     # Weighing system (4)
     ("W-01", "Zero stability - 10 readings std", "weight", "mg", None, 10.0, 0.8, 0.3),
@@ -100,10 +100,10 @@ ACCEPTANCE_TESTS = [
     ("M-01", "AD7746 baseline noise RMS", "moisture", "pF", None, 0.1, 0.015, 0.008),
     ("M-02", "Moisture 10-12% sample error", "moisture", "%", None, 0.8, 0.10, 0.05),
     # Density sorting (2)
-    ("D-01", "Density separation accuracy", "density", "%", 90.0, None, 2.5, 1.5),
+    ("D-01", "Density separation accuracy", "density", "%", 90.0, None, 2.5, -0.5),
     ("D-02", "Airflow velocity stability", "density", "m/s", 3.8, 4.2, 0.10, 0.02),
     # Vibrating feeder (2)
-    ("F-01", "Feeder speed stability", "feeder", "bpm", 48.0, 52.0, 1.2, 0.4),
+    ("F-01", "Feeder speed stability", "feeder", "bpm", 48.0, 52.0, 1.2, -0.2),
     ("F-02", "Max feeder speed", "feeder", "bpm", 50.0, None, 1.5, -0.3),
     # System-level (2)
     ("S-01", "End-to-end single bean latency", "system", "ms", 70.0, 130.0, 5.0, 2.0),
