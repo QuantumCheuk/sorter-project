@@ -411,6 +411,24 @@ class WeighingCupRelease(ActuatorBase):
             pass
 
 
+class BufferSelectorValve(ActuatorBase):
+    """8格缓冲仓目标格选择电磁阀 (GPIO25 → ESP32 → 目标格充气切换)"""
+    def __init__(self, pin: int = 25, simulate: bool = True):
+        super().__init__("buffer_selector", simulate)
+        self.pin = pin
+
+    def activate(self, duration_ms: Optional[int] = None) -> None:
+        """选择当前目标格（保持通电直到切到下一格）"""
+        self._is_active = True
+        if not self.simulate:
+            pass  # ESP32 receives "buffer_selector" command via UART
+
+    def deactivate(self) -> None:
+        self._is_active = False
+        if not self.simulate:
+            pass
+
+
 # =============================================================================
 # 主控制器
 # =============================================================================
@@ -447,6 +465,7 @@ class SorterController:
         self.air_jet = AirJetValve(simulate=self.simulate)
         self.vibrating_feeder = VibratingFeeder(simulate=self.simulate)
         self.weighing_release = WeighingCupRelease(simulate=self.simulate)
+        self.buffer_selector = BufferSelectorValve(simulate=self.simulate)
 
         # 数据存储
         self._current_batch: Optional[BatchRecord] = None

@@ -1,0 +1,249 @@
+{
+  "timestamp": "2026-05-04T15:11:23.254108",
+  "total": 34,
+  "passed": 16,
+  "warned": 3,
+  "failed": 0,
+  "info": 15,
+  "overall": "WARN",
+  "results": [
+    {
+      "module_a": "ESP32 Firmware",
+      "module_b": "sorter.control.actuators",
+      "interface": "VALVE id namespace",
+      "severity": "✅",
+      "message": "VALVE ids consistent across ESP32 and control module"
+    },
+    {
+      "module_a": "ESP32 Firmware",
+      "module_b": "sorter.control.actuators",
+      "interface": "STEPPER id namespace",
+      "severity": "✅",
+      "message": "STEPPER ids consistent (feeder/distributor/spiral)"
+    },
+    {
+      "module_a": "ESP32 Firmware",
+      "module_b": "sorter.config",
+      "interface": "UART BAUD rate",
+      "severity": "ℹ️",
+      "message": "ESP32 UART configured at 115200 baud (115200 8N1)"
+    },
+    {
+      "module_a": "ESP32 Firmware",
+      "module_b": "Pi HX711 Wiring",
+      "interface": "HX711 GPIO routing",
+      "severity": "ℹ️",
+      "message": "ESP32 reads HX711 directly via GPIO35(DT)/GPIO32(SCK); Pi GPIO27(HX711_SCK) is separate circuit for Pi-side HX711 reading"
+    },
+    {
+      "module_a": "ESP32 Firmware",
+      "module_b": "sorter.control.sensors",
+      "interface": "T1/T2 bean detection sensors",
+      "severity": "ℹ️",
+      "message": "ESP32 GPIO4=T1, GPIO5=T2 for bean detection IR break-beam; Pi also reads T1/T2 for camera triggering via GPIO interrupts"
+    },
+    {
+      "module_a": "ESP32 Firmware",
+      "module_b": "JSON Parser",
+      "interface": "Command parsing method",
+      "severity": "⚠️",
+      "message": "ESP32 uses manual indexOf() string parsing instead of ArduinoJson library. Commands with complex args may misparse. Consider adding ArduinoJson library."
+    },
+    {
+      "module_a": "sorter.mqtt.SorterMQTTClient",
+      "module_b": "roaster",
+      "interface": "MQTT Topic Contract",
+      "severity": "✅",
+      "message": "MQTT topics follow consistent naming: sorter/{id}/action and roaster/{id}/action"
+    },
+    {
+      "module_a": "sorter.mqtt.BatchStats",
+      "module_b": "sorter.mqtt.FeedCommand",
+      "interface": "Grade field matching",
+      "severity": "✅",
+      "message": "BatchStats provides granular grade weights; FeedCommand grade_preference is a filter request (not a direct field mapping)"
+    },
+    {
+      "module_a": "sorter.mqtt.BatchFeedComplete",
+      "module_b": "sorter.db",
+      "interface": "dispensed_bins field",
+      "severity": "ℹ️",
+      "message": "BatchFeedComplete includes dispensed_bins list (fixed in v1.8)"
+    },
+    {
+      "module_a": "sorter.mqtt.SorterMQTTClient",
+      "module_b": "MQTT Broker",
+      "interface": "QoS Level Assignment",
+      "severity": "✅",
+      "message": "QoS levels appropriate: batch/feed=EXACTLY_ONCE (critical), batch/output=AT_LEAST_ONCE, status=AT_MOST_ONCE (frequent heartbeat)"
+    },
+    {
+      "module_a": "sorter.mqtt.SorterMQTTClient",
+      "module_b": "MQTT Broker",
+      "interface": "Retain flags",
+      "severity": "✅",
+      "message": "status and batch/output use retain=True (new subscribers get last state)"
+    },
+    {
+      "module_a": "sorter.camera.ml_pipeline",
+      "module_b": "sorter.db.models",
+      "interface": "Defect class name mapping",
+      "severity": "✅",
+      "message": "ML pipeline class names map cleanly to DB BeanDefect enum (via upper())"
+    },
+    {
+      "module_a": "sorter.camera.ml_pipeline",
+      "module_b": "sorter.control.sorter_controller",
+      "interface": "Inference latency budget",
+      "severity": "✅",
+      "message": "Pi 4 INT8 inference 45ms << color detection budget 125ms. ML inference is not the throughput bottleneck."
+    },
+    {
+      "module_a": "sorter.camera.dark_box",
+      "module_b": "sorter.camera.ml_pipeline",
+      "interface": "Top+Bottom dual capture",
+      "severity": "ℹ️",
+      "message": "Dual camera captures top+bottom image pair per bean. ML pipeline processes each image separately; fusion logic combines results (any defect → reject)"
+    },
+    {
+      "module_a": "sorter.camera.ml_pipeline",
+      "module_b": "ML Model File",
+      "interface": "TFLite model deployment",
+      "severity": "⚠️",
+      "message": "TFLite model file (sorter_001.tflite) must be generated from training pipeline and deployed to Pi before hardware testing. Currently only pipeline code exists; model must be trained on real hardware."
+    },
+    {
+      "module_a": "sorter.control.sorter_controller",
+      "module_b": "sorter.db.models",
+      "interface": "State machine separation",
+      "severity": "ℹ️",
+      "message": "Control state machine (9 states) is separate from batch state (5 states). No direct mapping required — control state governs system, batch state governs data lifecycle."
+    },
+    {
+      "module_a": "sorter.control.sorter_controller",
+      "module_b": "sorter.db.models",
+      "interface": "BeanRecord schema completeness",
+      "severity": "✅",
+      "message": "BeanRecord includes all required fields for traceability: weight, density, moisture, color, defect, grade, timestamp"
+    },
+    {
+      "module_a": "sorter.control.sorter_controller",
+      "module_b": "sorter.db",
+      "interface": "Calibration record completeness",
+      "severity": "ℹ️",
+      "message": "5 calibration types tracked: ['ad7746', 'color', 'density_fan', 'hx711', 'vibrating_feeder']. Each module should create CalibrationRecord on calibrate()."
+    },
+    {
+      "module_a": "sorter.control.health_monitor",
+      "module_b": "sorter.db",
+      "interface": "System event logging",
+      "severity": "✅",
+      "message": "HealthMonitor logs all state transitions, faults, and alerts to system_events table with severity + details_json"
+    },
+    {
+      "module_a": "sorter.api.app",
+      "module_b": "Flask Framework",
+      "interface": "REST API endpoint coverage",
+      "severity": "ℹ️",
+      "message": "12 REST API endpoints defined covering status, batch, calibration, health, beans, reports, and control commands"
+    },
+    {
+      "module_a": "sorter.api.app",
+      "module_b": "sorter.control.sorter_controller",
+      "interface": "API → Controller delegation",
+      "severity": "ℹ️",
+      "message": "API routes delegate to SorterController methods. Database queries go through Database class. No direct GPIO/I2C access in API layer."
+    },
+    {
+      "module_a": "sorter.api.app",
+      "module_b": "Security",
+      "interface": "API Authentication",
+      "severity": "⚠️",
+      "message": "No authentication on REST API (localhost-only by design on Pi). Production deployment should add token auth or restrict to VPN. Consider: @requires_auth decorator for external access."
+    },
+    {
+      "module_a": "sorter.api.app",
+      "module_b": "HTTP Protocol",
+      "interface": "HTTP status code coverage",
+      "severity": "ℹ️",
+      "message": "API should return 400 for bad requests, 404 for missing resources, 500 for internal errors, with JSON error body"
+    },
+    {
+      "module_a": "sorter.control.health_monitor",
+      "module_b": "sorter.sensors",
+      "interface": "Sensor baseline coverage",
+      "severity": "✅",
+      "message": "HealthMonitor tracks 17 sensor baselines with noise thresholds, drift limits, and offline detection"
+    },
+    {
+      "module_a": "sorter.control.health_monitor",
+      "module_b": "sorter.control.dashboard",
+      "interface": "6-level alert escalation",
+      "severity": "✅",
+      "message": "HealthMonitor publishes 6-level alerts; Dashboard visualizes with color coding (gray→blue→green→yellow→red→darkred)"
+    },
+    {
+      "module_a": "sorter.control.health_monitor",
+      "module_b": "Statistics",
+      "interface": "Predictive maintenance model",
+      "severity": "ℹ️",
+      "message": "Uses linear regression on recent samples to predict drift direction. Accuracy depends on sample count (≥10 for stable prediction). May need tuning with real hardware data."
+    },
+    {
+      "module_a": "sorter.control.dashboard",
+      "module_b": "sorter.control.sorter_controller",
+      "interface": "Dashboard update rate",
+      "severity": "✅",
+      "message": "Dashboard updates at 5fps (200ms) vs bean arrival 833ms. Display granularity is sufficient for real-time monitoring."
+    },
+    {
+      "module_a": "sorter.control.dashboard",
+      "module_b": "sorter.control.bean_simulator",
+      "interface": "BeanSimulator for demo mode",
+      "severity": "✅",
+      "message": "Dashboard includes BeanSimulator (50bpm, 8% defect rate) for demo without hardware. Demo mode verified working in v1.23."
+    },
+    {
+      "module_a": "sorter.control.dashboard",
+      "module_b": "matplotlib",
+      "interface": "Throughput chart buffer",
+      "severity": "ℹ️",
+      "message": "Throughput chart maintains 600-point rolling buffer (2min @ 5fps). Total memory: 600 × 2 floats ≈ 5KB — negligible."
+    },
+    {
+      "module_a": "sorter.db.database",
+      "module_b": "Thread Safety",
+      "interface": "SQLite WAL mode + connection-per-thread",
+      "severity": "✅",
+      "message": "Database uses SQLite WAL mode with thread-local connections (connection-per-thread pattern). Safe for multi-threaded dashboard + MQTT."
+    },
+    {
+      "module_a": "sorter.mqtt.client",
+      "module_b": "Network",
+      "interface": "Auto-reconnect on unexpected disconnect",
+      "severity": "✅",
+      "message": "paho-mqtt on_disconnect callback spawns reconnect thread (5s delay, daemon=True). Clean disconnects (rc=0) skip reconnect."
+    },
+    {
+      "module_a": "Hardware",
+      "module_b": "sorter.control.sorter_controller",
+      "interface": "E-Stop safety chain",
+      "severity": "ℹ️",
+      "message": "E-Stop is hardware-level interrupt (EXTI GPIO) + software state machine. ESTOP state halts all motors/solenoids immediately. Reset required before recovering. Not a soft fault — physical intervention needed."
+    },
+    {
+      "module_a": "All Modules",
+      "module_b": "Resource Management",
+      "interface": "MQTT client cleanup on shutdown",
+      "severity": "ℹ️",
+      "message": "SorterMQTTClient.disconnect() calls loop_stop() + disconnect(). Database connections close on app exit. ESP32 firmware has heap monitoring (g_status.heap_free_bytes). No explicit __del__ cleanup found — recommend explicit close() calls."
+    },
+    {
+      "module_a": "sorter.db",
+      "module_b": "DateTime",
+      "interface": "ISO 8601 timestamps with timezone",
+      "severity": "ℹ️",
+      "message": "Database and MQTT use datetime.now().isoformat() (local timezone). For cross-timezone operation (cloud sync), consider UTC + tzinfo. Currently consistent within Pi (local timezone)."
+    }
+  ]
+}
