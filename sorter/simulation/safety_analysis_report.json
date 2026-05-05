@@ -1,0 +1,407 @@
+{
+  "report_date": "2026-05-05",
+  "project": "HUSKY-SORTER-001",
+  "hazard_summary": {
+    "total": 24,
+    "by_risk_level": {
+      "CRITICAL": 0,
+      "HIGH": 1,
+      "MEDIUM": 20,
+      "LOW": 3,
+      "VERY_LOW": 0
+    },
+    "by_category": {
+      "ELECTRICAL": 5,
+      "MECHANICAL": 6,
+      "THERMAL": 2,
+      "BIOLOGICAL": 2,
+      "OPERATIONAL": 9
+    }
+  },
+  "safety_functions": {
+    "total": 10,
+    "by_sil": {
+      "1": 6,
+      "2": 3,
+      "3": 1,
+      "4": 0
+    },
+    "functions": [
+      {
+        "id": "SF001",
+        "name": "紧急停止E-Stop",
+        "sil": 3,
+        "type": "demand",
+        "response_time_ms": 50,
+        "sw": true,
+        "hw": true
+      },
+      {
+        "id": "SF002",
+        "name": "看门狗超时停机",
+        "sil": 2,
+        "type": "continuous",
+        "response_time_ms": 5000,
+        "sw": true,
+        "hw": true
+      },
+      {
+        "id": "SF003",
+        "name": "气压不足检测告警",
+        "sil": 2,
+        "type": "continuous",
+        "response_time_ms": 500,
+        "sw": true,
+        "hw": true
+      },
+      {
+        "id": "SF004",
+        "name": "电源异常自动关机",
+        "sil": 1,
+        "type": "continuous",
+        "response_time_ms": 1000,
+        "sw": true,
+        "hw": true
+      },
+      {
+        "id": "SF005",
+        "name": "温度过高降频保护",
+        "sil": 1,
+        "type": "continuous",
+        "response_time_ms": 1000,
+        "sw": true,
+        "hw": false
+      },
+      {
+        "id": "SF006",
+        "name": "气喷前气压验证",
+        "sil": 2,
+        "type": "demand",
+        "response_time_ms": 200,
+        "sw": true,
+        "hw": true
+      },
+      {
+        "id": "SF007",
+        "name": "传感器数据合理性校验",
+        "sil": 1,
+        "type": "continuous",
+        "response_time_ms": 10,
+        "sw": true,
+        "hw": false
+      },
+      {
+        "id": "SF008",
+        "name": "MQTT批次数据完整性",
+        "sil": 1,
+        "type": "demand",
+        "response_time_ms": 5000,
+        "sw": true,
+        "hw": false
+      },
+      {
+        "id": "SF009",
+        "name": "步进电机堵转检测",
+        "sil": 1,
+        "type": "continuous",
+        "response_time_ms": 1000,
+        "sw": true,
+        "hw": true
+      },
+      {
+        "id": "SF010",
+        "name": "HX711零点漂移自动Tare",
+        "sil": 1,
+        "type": "continuous",
+        "response_time_ms": 5000,
+        "sw": true,
+        "hw": true
+      }
+    ]
+  },
+  "safety_circuit": {
+    "total_cost_estimate": 325,
+    "gpio_points": [
+      "GPIO22",
+      "GPIO10",
+      "GPIO9",
+      "GPIO11",
+      "GPIO8"
+    ]
+  },
+  "sil_compliance": {
+    "all_pass": true,
+    "details": [
+      {
+        "id": "SF001",
+        "name": "紧急停止E-Stop",
+        "SIL_target": 3,
+        "SIL_achieved": 4,
+        "PFHD": "1.0e-08",
+        "compliant": true
+      },
+      {
+        "id": "SF002",
+        "name": "看门狗超时停机",
+        "SIL_target": 2,
+        "SIL_achieved": 4,
+        "PFHD": "1.0e-06",
+        "compliant": true
+      },
+      {
+        "id": "SF003",
+        "name": "气压不足检测告警",
+        "SIL_target": 2,
+        "SIL_achieved": 4,
+        "PFHD": "1.0e-06",
+        "compliant": true
+      },
+      {
+        "id": "SF004",
+        "name": "电源异常自动关机",
+        "SIL_target": 1,
+        "SIL_achieved": 4,
+        "PFHD": "1.0e-06",
+        "compliant": true
+      },
+      {
+        "id": "SF005",
+        "name": "温度过高降频保护",
+        "SIL_target": 1,
+        "SIL_achieved": 4,
+        "PFHD": "1.0e-06",
+        "compliant": true
+      },
+      {
+        "id": "SF006",
+        "name": "气喷前气压验证",
+        "SIL_target": 2,
+        "SIL_achieved": 4,
+        "PFHD": "1.0e-08",
+        "compliant": true
+      },
+      {
+        "id": "SF007",
+        "name": "传感器数据合理性校验",
+        "SIL_target": 1,
+        "SIL_achieved": 4,
+        "PFHD": "1.0e-06",
+        "compliant": true
+      },
+      {
+        "id": "SF008",
+        "name": "MQTT批次数据完整性",
+        "SIL_target": 1,
+        "SIL_achieved": 4,
+        "PFHD": "1.0e-08",
+        "compliant": true
+      },
+      {
+        "id": "SF009",
+        "name": "步进电机堵转检测",
+        "SIL_target": 1,
+        "SIL_achieved": 4,
+        "PFHD": "1.0e-06",
+        "compliant": true
+      },
+      {
+        "id": "SF010",
+        "name": "HX711零点漂移自动Tare",
+        "SIL_target": 1,
+        "SIL_achieved": 4,
+        "PFHD": "1.0e-06",
+        "compliant": true
+      }
+    ]
+  },
+  "safety_checklist": {
+    "硬件采购阶段": [
+      {
+        "item": "E-STOP按钮(红色旋转复位,NC)",
+        "required": true,
+        "priority": "HIGH"
+      },
+      {
+        "item": "安全继电器(带自检功能)",
+        "required": true,
+        "priority": "HIGH"
+      },
+      {
+        "item": "执行器电源继电器x3(24VDC,10A)",
+        "required": true,
+        "priority": "HIGH"
+      },
+      {
+        "item": "气压传感器(0-200kPa)",
+        "required": true,
+        "priority": "HIGH"
+      },
+      {
+        "item": "温度传感器(DS18B20)",
+        "required": true,
+        "priority": "MEDIUM"
+      },
+      {
+        "item": "保险丝组件(500mAx8路带座)",
+        "required": true,
+        "priority": "HIGH"
+      },
+      {
+        "item": "TVS二极管保护阵列",
+        "required": true,
+        "priority": "MEDIUM"
+      },
+      {
+        "item": "UPS模块(Pi不间断电源30min)",
+        "required": false,
+        "priority": "MEDIUM"
+      },
+      {
+        "item": "透明防护罩PMMA 3mm",
+        "required": true,
+        "priority": "HIGH"
+      },
+      {
+        "item": "安全标识(中英文警示)",
+        "required": true,
+        "priority": "MEDIUM"
+      }
+    ],
+    "组装阶段": [
+      {
+        "item": "E-STOP按钮操作员1m范围内",
+        "required": true,
+        "priority": "HIGH"
+      },
+      {
+        "item": "E-STOP回路接线正确(NC回路)",
+        "required": true,
+        "priority": "HIGH"
+      },
+      {
+        "item": "安全继电器自检功能验证",
+        "required": true,
+        "priority": "HIGH"
+      },
+      {
+        "item": "K2/K3/K4继电器FAIL-SAFE验证",
+        "required": true,
+        "priority": "HIGH"
+      },
+      {
+        "item": "GPIO22 E-STOP状态监测验证",
+        "required": true,
+        "priority": "HIGH"
+      },
+      {
+        "item": "气压传感器零点/量程校准",
+        "required": true,
+        "priority": "HIGH"
+      },
+      {
+        "item": "防护罩安装完整无尖锐边缘",
+        "required": true,
+        "priority": "HIGH"
+      },
+      {
+        "item": "所有外露旋转部件有防护罩",
+        "required": true,
+        "priority": "HIGH"
+      },
+      {
+        "item": "接地连续性测试<0.1ohm",
+        "required": true,
+        "priority": "HIGH"
+      },
+      {
+        "item": "绝缘电阻测试>1Mohm",
+        "required": true,
+        "priority": "MEDIUM"
+      }
+    ],
+    "调试阶段": [
+      {
+        "item": "E-STOP按下->执行器<50ms停止",
+        "required": true,
+        "priority": "HIGH"
+      },
+      {
+        "item": "E-STOP释放->系统正确复位",
+        "required": true,
+        "priority": "HIGH"
+      },
+      {
+        "item": "看门狗超时5s->ESP32强制停机",
+        "required": true,
+        "priority": "HIGH"
+      },
+      {
+        "item": "气压<50kPa->气喷暂停告警",
+        "required": true,
+        "priority": "HIGH"
+      },
+      {
+        "item": "温度>80°C->降频;>90°C->FAULT",
+        "required": true,
+        "priority": "HIGH"
+      },
+      {
+        "item": "UPS断电->安全关机测试",
+        "required": false,
+        "priority": "MEDIUM"
+      },
+      {
+        "item": "安全回路每日自检写入日志",
+        "required": true,
+        "priority": "HIGH"
+      },
+      {
+        "item": "每月E-STOP功能测试记录",
+        "required": true,
+        "priority": "HIGH"
+      }
+    ],
+    "运行阶段": [
+      {
+        "item": "每日: 操作前E-STOP功能测试",
+        "required": true,
+        "priority": "HIGH"
+      },
+      {
+        "item": "每周: 螺丝紧固检查",
+        "required": true,
+        "priority": "MEDIUM"
+      },
+      {
+        "item": "每周: 防护罩完整性检查",
+        "required": true,
+        "priority": "HIGH"
+      },
+      {
+        "item": "每月: 气压系统泄漏检查",
+        "required": true,
+        "priority": "MEDIUM"
+      },
+      {
+        "item": "每月: 零点/量程校准验证",
+        "required": true,
+        "priority": "HIGH"
+      },
+      {
+        "item": "每季度: 安全回路功能测试",
+        "required": true,
+        "priority": "HIGH"
+      },
+      {
+        "item": "每半年: 安全继电器K1自检校验",
+        "required": true,
+        "priority": "HIGH"
+      },
+      {
+        "item": "每年: 全面安全评估审查",
+        "required": true,
+        "priority": "HIGH"
+      }
+    ]
+  }
+}

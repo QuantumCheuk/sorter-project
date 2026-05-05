@@ -1,0 +1,206 @@
+{
+  "report_version": "1.0",
+  "generated_utc": "2026-05-05T04:10:26.689391+00:00",
+  "generated_hkt": "2026-05-05 12:10 UTC+08:00",
+  "project": "HUSKY-SORTER-001",
+  "overall_result": "CONDITIONAL_GO",
+  "go_criteria_met": 1,
+  "go_criteria_total": 10,
+  "scores": {
+    "inventory": {
+      "pass": 45,
+      "fail": 1,
+      "total": 46
+    },
+    "syntax": {
+      "pass": 50,
+      "fail": 2,
+      "total": 52
+    },
+    "interfaces": {
+      "pass": 20,
+      "total": 35
+    },
+    "safety": {
+      "pass": 11,
+      "total": 12
+    },
+    "digital_twin": {
+      "pass": 6,
+      "total": 11
+    },
+    "documentation": {
+      "pass": 2,
+      "total": 5
+    },
+    "ml_pipeline": {
+      "pass": 5,
+      "total": 10
+    },
+    "database": {
+      "pass": 9,
+      "total": 11
+    },
+    "comm_apis": {
+      "cmd_pass": 8,
+      "ep_pass": 4,
+      "mqtt_pass": 0
+    },
+    "procurement": {
+      "ready": 14,
+      "total": 18
+    }
+  },
+  "bom_items": [
+    {
+      "name": "Raspberry Pi 4 Model B 2GB",
+      "phase": "Phase 1",
+      "in_stock": true,
+      "est_cost": "¥290"
+    },
+    {
+      "name": "Pi Camera HQ (IMX477R)",
+      "phase": "Phase 1",
+      "in_stock": false,
+      "est_cost": "¥350"
+    },
+    {
+      "name": "Logitech C270 USB Camera (alt.)",
+      "phase": "Phase 1",
+      "in_stock": true,
+      "est_cost": "¥80"
+    },
+    {
+      "name": "3× Nema 17 Stepper 42×42×40mm",
+      "phase": "Phase 1",
+      "in_stock": true,
+      "est_cost": "¥90"
+    },
+    {
+      "name": "3× A4988 / DRV8825 Driver",
+      "phase": "Phase 1",
+      "in_stock": true,
+      "est_cost": "¥30"
+    },
+    {
+      "name": "HX711 24-bit Load Cell Amp",
+      "phase": "Phase 1",
+      "in_stock": true,
+      "est_cost": "¥20"
+    },
+    {
+      "name": "5kg Load Cell",
+      "phase": "Phase 1",
+      "in_stock": true,
+      "est_cost": "¥35"
+    },
+    {
+      "name": "AD7746 Capacitance-to-Digital",
+      "phase": "Phase 1",
+      "in_stock": false,
+      "est_cost": "¥60"
+    },
+    {
+      "name": "AD7746 breakout board",
+      "phase": "Phase 1",
+      "in_stock": false,
+      "est_cost": "¥30"
+    },
+    {
+      "name": "5015 Turbo Fan (24V)",
+      "phase": "Phase 1",
+      "in_stock": true,
+      "est_cost": "¥80"
+    },
+    {
+      "name": "ESP32 DevKit-C",
+      "phase": "Phase 1",
+      "in_stock": true,
+      "est_cost": "¥35"
+    },
+    {
+      "name": "12V 5A Power Supply",
+      "phase": "Phase 1",
+      "in_stock": true,
+      "est_cost": "¥50"
+    },
+    {
+      "name": "5V 3A USB-C Power Supply (Pi)",
+      "phase": "Phase 1",
+      "in_stock": true,
+      "est_cost": "¥40"
+    },
+    {
+      "name": "3× Air Jet Solenoid Valve 5V",
+      "phase": "Phase 1",
+      "in_stock": true,
+      "est_cost": "¥45"
+    },
+    {
+      "name": "Air Compressor 24L/min",
+      "phase": "Phase 1",
+      "in_stock": false,
+      "est_cost": "¥200"
+    },
+    {
+      "name": "3D Printed Parts (PLA/PETG)",
+      "phase": "Phase 1",
+      "in_stock": true,
+      "est_cost": "¥25"
+    },
+    {
+      "name": "Jumper wires + breadboard",
+      "phase": "Phase 1",
+      "in_stock": true,
+      "est_cost": "¥30"
+    },
+    {
+      "name": "OLED 0.96\" I2C Display",
+      "phase": "Optional",
+      "in_stock": true,
+      "est_cost": "¥20"
+    }
+  ],
+  "critical_thresholds": {
+    "Inventory Complete": {
+      "passed": false,
+      "note": "45 files"
+    },
+    "Python Syntax Valid": {
+      "passed": false,
+      "note": "50/52 files"
+    },
+    "Module Interfaces Valid": {
+      "passed": false,
+      "note": "20/35 interfaces"
+    },
+    "Safety Systems Complete": {
+      "passed": false,
+      "note": "11/12 checks"
+    },
+    "Digital Twin Aligned": {
+      "passed": false,
+      "note": "6/11 pairs"
+    },
+    "Documentation Complete": {
+      "passed": false,
+      "note": "2/5 docs"
+    },
+    "ML Pipeline Ready": {
+      "passed": false,
+      "note": "5/10 checks"
+    },
+    "Database & Reporting Ready": {
+      "passed": false,
+      "note": "9/11 checks"
+    },
+    "Comm APIs Contract Valid": {
+      "passed": false,
+      "note": "CLI(8)/REST(4)/MQTT(0)"
+    },
+    "Procurement ≥70%": {
+      "passed": true,
+      "note": "14/18 available"
+    }
+  }
+}
