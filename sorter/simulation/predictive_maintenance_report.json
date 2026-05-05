@@ -1,0 +1,1221 @@
+{
+  "report_id": "MAINT-20260506-001018",
+  "generated": "2026-05-06T00:10:18.233276",
+  "version": "v1.0",
+  "usage_profile": {
+    "channels": 3,
+    "beans_per_hour": 9000,
+    "beans_per_day": 90000,
+    "annual_output_kg": 4050.0
+  },
+  "component_wear_summary": [
+    {
+      "id": "air_compressor",
+      "component": "小型空压机 (气喷气源)",
+      "category": "mechanical",
+      "lifespan_months": 17.5,
+      "wear_mechanism": "活塞环磨损 + 阀片疲劳 + 储气罐腐蚀",
+      "failure_mode": "气压不足 / 噪音增大 / 过热保护",
+      "failure_severity": 4,
+      "criticality": "🔴",
+      "replacement_cost_rmb": 200,
+      "monthly_cost_rmb": 11.42,
+      "annual_cost_rmb": 136.99,
+      "downtime_minutes": 45,
+      "notes": "按需运行(非连续)可延长寿命3×；需每日排水"
+    },
+    {
+      "id": "turbine_blower",
+      "component": "涡轮鼓风机 (密度分选)",
+      "category": "mechanical",
+      "lifespan_months": 70.1,
+      "wear_mechanism": "轴承磨损 + 涡轮叶片积灰 + 密封圈老化",
+      "failure_mode": "风速下降 / 异响 / 振动增大",
+      "failure_severity": 4,
+      "criticality": "🔴",
+      "replacement_cost_rmb": 200,
+      "monthly_cost_rmb": 2.85,
+      "annual_cost_rmb": 34.25,
+      "downtime_minutes": 60,
+      "notes": "预计交付周期60天⚠️；需备1个；每月清洁进风口过滤棉"
+    },
+    {
+      "id": "pi4",
+      "component": "Raspberry Pi 4 Model B",
+      "category": "electrical",
+      "lifespan_months": 350.4,
+      "wear_mechanism": "电容老化 + SD卡磨损",
+      "failure_mode": "启动失败 / SD卡只读 / USB端口退化",
+      "failure_severity": 4,
+      "criticality": "🔴",
+      "replacement_cost_rmb": 290,
+      "monthly_cost_rmb": 0.83,
+      "annual_cost_rmb": 9.93,
+      "downtime_minutes": 30,
+      "notes": "SD卡为最薄弱环节；建议使用SSD或高耐久性SD卡"
+    },
+    {
+      "id": "sd_card",
+      "component": "SD卡 (系统存储)",
+      "category": "consumable",
+      "lifespan_months": 70.1,
+      "wear_mechanism": "NAND Flash写入磨损",
+      "failure_mode": "只读模式 / 启动失败 / 文件系统损坏",
+      "failure_severity": 4,
+      "criticality": "🔴",
+      "replacement_cost_rmb": 40,
+      "monthly_cost_rmb": 0.57,
+      "annual_cost_rmb": 6.85,
+      "downtime_minutes": 20,
+      "notes": "使用高耐久性SD卡(A1/A2等级)；启用只读文件系统降低磨损"
+    },
+    {
+      "id": "hq_camera",
+      "component": "Raspberry Pi HQ Camera IMX477",
+      "category": "sensor",
+      "lifespan_months": 105.1,
+      "wear_mechanism": "CMOS传感器老化 + 接口松动",
+      "failure_mode": "图像噪点增加 / 连接不稳定 / 色彩偏差",
+      "failure_severity": 3,
+      "criticality": "🟡",
+      "replacement_cost_rmb": 350,
+      "monthly_cost_rmb": 3.33,
+      "annual_cost_rmb": 39.95,
+      "downtime_minutes": 25,
+      "notes": "预计交付周期60天⚠️；需备1个"
+    },
+    {
+      "id": "nema17",
+      "component": "Nema 17 步进电机 (振动给料)",
+      "category": "mechanical",
+      "lifespan_months": 35.0,
+      "wear_mechanism": "轴承磨损 + 磁铁退磁 + 润滑脂干涸",
+      "failure_mode": "失步 / 发热过高 / 共振噪音",
+      "failure_severity": 3,
+      "criticality": "🟡",
+      "replacement_cost_rmb": 65,
+      "monthly_cost_rmb": 1.86,
+      "annual_cost_rmb": 22.26,
+      "downtime_minutes": 30,
+      "notes": "3通道×50bpm@10h/天≈547,500次/年，远低于额定寿命"
+    },
+    {
+      "id": "psu_12v",
+      "component": "12V DC 电源适配器 (执行器)",
+      "category": "electrical",
+      "lifespan_months": 105.1,
+      "wear_mechanism": "电解电容老化 + 热疲劳",
+      "failure_mode": "输出电压下降 / 输出波动 / 完全失效",
+      "failure_severity": 3,
+      "criticality": "🟡",
+      "replacement_cost_rmb": 80,
+      "monthly_cost_rmb": 0.76,
+      "annual_cost_rmb": 9.13,
+      "downtime_minutes": 15,
+      "notes": "12V 3A minimum；空压机峰值3A+，当前2A适配器不足⚠️"
+    },
+    {
+      "id": "load_cell",
+      "component": "称重传感器 Load Cell (零点漂移)",
+      "category": "sensor",
+      "lifespan_months": 70.1,
+      "wear_mechanism": "应变片蠕变 + 温度漂移累积",
+      "failure_mode": "零点漂移超出标定范围 / 重复性下降",
+      "failure_severity": 3,
+      "criticality": "🟡",
+      "replacement_cost_rmb": 50,
+      "monthly_cost_rmb": 0.71,
+      "annual_cost_rmb": 8.56,
+      "downtime_minutes": 40,
+      "notes": "每天自动归零可延缓；长期使用后建议更换"
+    },
+    {
+      "id": "psu_5v",
+      "component": "5V USB-C 电源适配器 (Pi)",
+      "category": "electrical",
+      "lifespan_months": 105.1,
+      "wear_mechanism": "USB-C接口磨损 + 电容老化",
+      "failure_mode": "间歇性重启 / USB-C接口松动",
+      "failure_severity": 3,
+      "criticality": "🟡",
+      "replacement_cost_rmb": 60,
+      "monthly_cost_rmb": 0.57,
+      "annual_cost_rmb": 6.85,
+      "downtime_minutes": 10,
+      "notes": "建议使用官方Pi电源适配器"
+    },
+    {
+      "id": "ad7746",
+      "component": "AD7746 I2C电容数字转换器",
+      "category": "electrical",
+      "lifespan_months": 175.2,
+      "wear_mechanism": "参考电容老化 + 基准电压漂移",
+      "failure_mode": "含水率读数系统性偏移 / I2C通信失败",
+      "failure_severity": 3,
+      "criticality": "🟡",
+      "replacement_cost_rmb": 60,
+      "monthly_cost_rmb": 0.34,
+      "annual_cost_rmb": 4.11,
+      "downtime_minutes": 25,
+      "notes": "采购交付周期约14天，需备1个"
+    },
+    {
+      "id": "sol_valve",
+      "component": "微型电磁阀 12V NC (气喷)",
+      "category": "mechanical",
+      "lifespan_months": 77.9,
+      "wear_mechanism": "线圈老化 + 密封磨损 + 弹簧疲劳",
+      "failure_mode": "响应变慢 / 泄漏 / 无法关闭",
+      "failure_severity": 3,
+      "criticality": "🟡",
+      "replacement_cost_rmb": 25,
+      "monthly_cost_rmb": 0.32,
+      "annual_cost_rmb": 3.85,
+      "downtime_minutes": 20,
+      "notes": "实际约18,000次/天×300天=5.4M次/年；远低于额定8.76M"
+    },
+    {
+      "id": "photocell_t1t2",
+      "component": "红外光电传感器 T1/T2",
+      "category": "sensor",
+      "lifespan_months": 70.1,
+      "wear_mechanism": "LED发光强度衰减 + 灰尘遮挡",
+      "failure_mode": "触发阈值漂移 / 误触发 / 无响应",
+      "failure_severity": 3,
+      "criticality": "🟡",
+      "replacement_cost_rmb": 8,
+      "monthly_cost_rmb": 0.11,
+      "annual_cost_rmb": 1.37,
+      "downtime_minutes": 15,
+      "notes": "红外LED衰减约1%/1000小时；需定期清洁镜片"
+    },
+    {
+      "id": "hx711",
+      "component": "HX711 24-bit ADC模块",
+      "category": "electrical",
+      "lifespan_months": 175.2,
+      "wear_mechanism": "焊点热疲劳 + 输入保护二极管老化",
+      "failure_mode": "读数漂移 / ADC饱和 / I2C通信失败",
+      "failure_severity": 3,
+      "criticality": "🟡",
+      "replacement_cost_rmb": 15,
+      "monthly_cost_rmb": 0.09,
+      "annual_cost_rmb": 1.03,
+      "downtime_minutes": 20,
+      "notes": "建议备2个；焊锡接头需定期检查"
+    },
+    {
+      "id": "solenoid_release",
+      "component": "电磁阀释放机构 (称重杯)",
+      "category": "mechanical",
+      "lifespan_months": 2.4,
+      "wear_mechanism": "弹簧疲劳 + 密封磨损",
+      "failure_mode": "释放不完全 / 卡滞",
+      "failure_severity": 2,
+      "criticality": "🟢",
+      "replacement_cost_rmb": 20,
+      "monthly_cost_rmb": 8.22,
+      "annual_cost_rmb": 98.63,
+      "downtime_minutes": 25,
+      "notes": "动作频率与气喷电磁阀相近"
+    },
+    {
+      "id": "air_filter_cotton",
+      "component": "空气过滤器棉 (空压机进气)",
+      "category": "consumable",
+      "lifespan_months": 2.9,
+      "wear_mechanism": "粉尘积聚堵塞",
+      "failure_mode": "气压下降 / 能耗增加",
+      "failure_severity": 2,
+      "criticality": "🟢",
+      "replacement_cost_rmb": 5,
+      "monthly_cost_rmb": 1.74,
+      "annual_cost_rmb": 20.83,
+      "downtime_minutes": 10,
+      "notes": "每2周清洁(可复用)或更换；密集使用需更频繁"
+    },
+    {
+      "id": "vibration_feeder_bowl",
+      "component": "振动给料 bowl (3D打印PETG)",
+      "category": "mechanical",
+      "lifespan_months": 12.0,
+      "wear_mechanism": "材料疲劳 + 螺纹连接松动",
+      "failure_mode": "裂纹扩展 / 共振频率漂移",
+      "failure_severity": 2,
+      "criticality": "🟢",
+      "replacement_cost_rmb": 15,
+      "monthly_cost_rmb": 1.25,
+      "annual_cost_rmb": 15.0,
+      "downtime_minutes": 90,
+      "notes": "PETG比PLA更适合高振动环境；定期检查紧固螺丝"
+    },
+    {
+      "id": "28byj48",
+      "component": "28BYJ-48 步进电机 (旋转分配器)",
+      "category": "mechanical",
+      "lifespan_months": 12.0,
+      "wear_mechanism": "塑料齿轮磨损 + 轴承老化",
+      "failure_mode": "丢步 / 异响 / 堵转",
+      "failure_severity": 2,
+      "criticality": "🟢",
+      "replacement_cost_rmb": 12,
+      "monthly_cost_rmb": 1.0,
+      "annual_cost_rmb": 12.0,
+      "downtime_minutes": 20,
+      "notes": "分配器转速低，磨损较轻"
+    },
+    {
+      "id": "sizing_plate",
+      "component": "尺寸分选孔板 (激光切割PMMA)",
+      "category": "structural",
+      "lifespan_months": 35.0,
+      "wear_mechanism": "孔口磨损扩张 + 应力裂纹",
+      "failure_mode": "尺寸分选精度下降",
+      "failure_severity": 2,
+      "criticality": "🟢",
+      "replacement_cost_rmb": 30,
+      "monthly_cost_rmb": 0.86,
+      "annual_cost_rmb": 10.27,
+      "downtime_minutes": 45,
+      "notes": "PMMA比PLA更耐磨；定期用酒精清洁孔内残留物"
+    },
+    {
+      "id": "camera_lens",
+      "component": "相机镜头 M12 6mm",
+      "category": "sensor",
+      "lifespan_months": 105.1,
+      "wear_mechanism": "光学镀膜老化 + 镜片位移",
+      "failure_mode": "对焦漂移 / 眩光增加 / 色彩还原偏差",
+      "failure_severity": 2,
+      "criticality": "🟢",
+      "replacement_cost_rmb": 80,
+      "monthly_cost_rmb": 0.76,
+      "annual_cost_rmb": 9.13,
+      "downtime_minutes": 20,
+      "notes": "IP65防护罩可延长寿命；暗箱内定期清洁镜头"
+    },
+    {
+      "id": "transparent_window",
+      "component": "底部透明磨砂窗口 (PMMA)",
+      "category": "structural",
+      "lifespan_months": 35.0,
+      "wear_mechanism": "表面划痕 + 光散射特性退化",
+      "failure_mode": "底部相机成像质量下降",
+      "failure_severity": 2,
+      "criticality": "🟢",
+      "replacement_cost_rmb": 15,
+      "monthly_cost_rmb": 0.43,
+      "annual_cost_rmb": 5.14,
+      "downtime_minutes": 30,
+      "notes": "磨砂面朝上安装；用软布清洁，避免研磨性材料"
+    },
+    {
+      "id": "o_ring_seal",
+      "component": "O型密封圈 (气路接口)",
+      "category": "consumable",
+      "lifespan_months": 8.6,
+      "wear_mechanism": "压缩永久变形 + 臭氧老化",
+      "failure_mode": "气路泄漏 / 气压不足",
+      "failure_severity": 2,
+      "criticality": "🟢",
+      "replacement_cost_rmb": 3,
+      "monthly_cost_rmb": 0.35,
+      "annual_cost_rmb": 4.17,
+      "downtime_minutes": 15,
+      "notes": "建议备10个；NBR材质适合一般矿物油基压缩空气"
+    },
+    {
+      "id": "cable_connector",
+      "component": "杜邦线/连接器 (GPIO/I2C)",
+      "category": "consumable",
+      "lifespan_months": 17.3,
+      "wear_mechanism": "插针氧化 + 机械磨损",
+      "failure_mode": "接触不良 / 间歇性通信错误",
+      "failure_severity": 2,
+      "criticality": "🟢",
+      "replacement_cost_rmb": 5,
+      "monthly_cost_rmb": 0.29,
+      "annual_cost_rmb": 3.47,
+      "downtime_minutes": 20,
+      "notes": "使用防潮箱存放备件；接线端子定期检查紧固"
+    },
+    {
+      "id": "buffer_bin_hinge",
+      "component": "缓冲仓转轴/铰链",
+      "category": "mechanical",
+      "lifespan_months": 35.0,
+      "wear_mechanism": "轴承磨损 + 润滑脂流失",
+      "failure_mode": "旋转不顺畅 / 异响",
+      "failure_severity": 2,
+      "criticality": "🟢",
+      "replacement_cost_rmb": 10,
+      "monthly_cost_rmb": 0.29,
+      "annual_cost_rmb": 3.42,
+      "downtime_minutes": 30,
+      "notes": "8格缓冲仓每天多次旋转；润滑脂需每6个月补充"
+    },
+    {
+      "id": "dark_box",
+      "component": "遮光暗箱 (3D打印)",
+      "category": "structural",
+      "lifespan_months": 105.1,
+      "wear_mechanism": "连接件松动 + 遮光材料老化",
+      "failure_mode": "漏光导致颜色检测误差",
+      "failure_severity": 2,
+      "criticality": "🟢",
+      "replacement_cost_rmb": 20,
+      "monthly_cost_rmb": 0.19,
+      "annual_cost_rmb": 2.28,
+      "downtime_minutes": 60,
+      "notes": "遮光棉边缘老化后需更换；接缝定期检查密封性"
+    },
+    {
+      "id": "esp32",
+      "component": "ESP32 DevKit MCU",
+      "category": "electrical",
+      "lifespan_months": 350.4,
+      "wear_mechanism": "Flash写入次数限制 + USB接口磨损",
+      "failure_mode": "固件上传失败 / UART通信异常",
+      "failure_severity": 2,
+      "criticality": "🟢",
+      "replacement_cost_rmb": 25,
+      "monthly_cost_rmb": 0.07,
+      "annual_cost_rmb": 0.86,
+      "downtime_minutes": 20,
+      "notes": "Flash寿命约100,000次擦写；每日重启1次可工作273年"
+    },
+    {
+      "id": "lubricating_grease",
+      "component": "润滑脂 (轴承/导轨)",
+      "category": "consumable",
+      "lifespan_months": 17.3,
+      "wear_mechanism": "润滑脂氧化/干涸",
+      "failure_mode": "噪音/磨损增加",
+      "failure_severity": 1,
+      "criticality": "🟢",
+      "replacement_cost_rmb": 10,
+      "monthly_cost_rmb": 0.58,
+      "annual_cost_rmb": 6.94,
+      "downtime_minutes": 30,
+      "notes": "食品级润滑脂用于接触食品的部件；每月检查"
+    }
+  ],
+  "annual_cost_breakdown": {
+    "total_annual_parts_cost_rmb": 477.27,
+    "estimated_downtime_hours_per_year": 2.6,
+    "downtime_cost_rmb_per_year": 394.93,
+    "total_annual_cost_rmb": 872.2,
+    "weighted_mtbf_months": 91.9,
+    "by_category": {
+      "mechanical": 326.4,
+      "sensor": 59.01,
+      "consumable": 42.26,
+      "electrical": 31.91,
+      "structural": 17.69
+    },
+    "usage_summary": {
+      "channels": 3,
+      "beans_per_hour": 9000,
+      "beans_per_day": 90000,
+      "annual_output_kg": 4050.0
+    }
+  },
+  "spare_parts_recommendation": [
+    {
+      "component": "Raspberry Pi 4 Model B",
+      "category": "electrical",
+      "stock_qty": 2,
+      "unit_cost_rmb": 290,
+      "total_value_rmb": 580,
+      "failure_severity": 4,
+      "lead_time_days": 14,
+      "priority": "HIGH"
+    },
+    {
+      "component": "涡轮鼓风机 (密度分选)",
+      "category": "mechanical",
+      "stock_qty": 2,
+      "unit_cost_rmb": 200,
+      "total_value_rmb": 400,
+      "failure_severity": 4,
+      "lead_time_days": 14,
+      "priority": "HIGH"
+    },
+    {
+      "component": "小型空压机 (气喷气源)",
+      "category": "mechanical",
+      "stock_qty": 2,
+      "unit_cost_rmb": 200,
+      "total_value_rmb": 400,
+      "failure_severity": 4,
+      "lead_time_days": 14,
+      "priority": "HIGH"
+    },
+    {
+      "component": "SD卡 (系统存储)",
+      "category": "consumable",
+      "stock_qty": 2,
+      "unit_cost_rmb": 40,
+      "total_value_rmb": 80,
+      "failure_severity": 4,
+      "lead_time_days": 14,
+      "priority": "HIGH"
+    },
+    {
+      "component": "Raspberry Pi HQ Camera IMX477",
+      "category": "sensor",
+      "stock_qty": 1,
+      "unit_cost_rmb": 350,
+      "total_value_rmb": 350,
+      "failure_severity": 3,
+      "lead_time_days": 14,
+      "priority": "MEDIUM"
+    },
+    {
+      "component": "12V DC 电源适配器 (执行器)",
+      "category": "electrical",
+      "stock_qty": 1,
+      "unit_cost_rmb": 80,
+      "total_value_rmb": 80,
+      "failure_severity": 3,
+      "lead_time_days": 14,
+      "priority": "MEDIUM"
+    },
+    {
+      "component": "Nema 17 步进电机 (振动给料)",
+      "category": "mechanical",
+      "stock_qty": 1,
+      "unit_cost_rmb": 65,
+      "total_value_rmb": 65,
+      "failure_severity": 3,
+      "lead_time_days": 14,
+      "priority": "MEDIUM"
+    },
+    {
+      "component": "5V USB-C 电源适配器 (Pi)",
+      "category": "electrical",
+      "stock_qty": 1,
+      "unit_cost_rmb": 60,
+      "total_value_rmb": 60,
+      "failure_severity": 3,
+      "lead_time_days": 14,
+      "priority": "MEDIUM"
+    },
+    {
+      "component": "AD7746 I2C电容数字转换器",
+      "category": "electrical",
+      "stock_qty": 1,
+      "unit_cost_rmb": 60,
+      "total_value_rmb": 60,
+      "failure_severity": 3,
+      "lead_time_days": 14,
+      "priority": "MEDIUM"
+    },
+    {
+      "component": "称重传感器 Load Cell (零点漂移)",
+      "category": "sensor",
+      "stock_qty": 1,
+      "unit_cost_rmb": 50,
+      "total_value_rmb": 50,
+      "failure_severity": 3,
+      "lead_time_days": 14,
+      "priority": "MEDIUM"
+    },
+    {
+      "component": "微型电磁阀 12V NC (气喷)",
+      "category": "mechanical",
+      "stock_qty": 1,
+      "unit_cost_rmb": 25,
+      "total_value_rmb": 25,
+      "failure_severity": 3,
+      "lead_time_days": 14,
+      "priority": "MEDIUM"
+    },
+    {
+      "component": "HX711 24-bit ADC模块",
+      "category": "electrical",
+      "stock_qty": 1,
+      "unit_cost_rmb": 15,
+      "total_value_rmb": 15,
+      "failure_severity": 3,
+      "lead_time_days": 14,
+      "priority": "MEDIUM"
+    },
+    {
+      "component": "红外光电传感器 T1/T2",
+      "category": "sensor",
+      "stock_qty": 1,
+      "unit_cost_rmb": 8,
+      "total_value_rmb": 8,
+      "failure_severity": 3,
+      "lead_time_days": 14,
+      "priority": "MEDIUM"
+    },
+    {
+      "component": "空气过滤器棉 (空压机进气)",
+      "category": "consumable",
+      "stock_qty": 5,
+      "unit_cost_rmb": 5,
+      "total_value_rmb": 25,
+      "failure_severity": 2,
+      "lead_time_days": 14,
+      "priority": "LOW"
+    },
+    {
+      "component": "杜邦线/连接器 (GPIO/I2C)",
+      "category": "consumable",
+      "stock_qty": 5,
+      "unit_cost_rmb": 5,
+      "total_value_rmb": 25,
+      "failure_severity": 2,
+      "lead_time_days": 14,
+      "priority": "LOW"
+    },
+    {
+      "component": "O型密封圈 (气路接口)",
+      "category": "consumable",
+      "stock_qty": 5,
+      "unit_cost_rmb": 3,
+      "total_value_rmb": 15,
+      "failure_severity": 2,
+      "lead_time_days": 14,
+      "priority": "LOW"
+    },
+    {
+      "component": "润滑脂 (轴承/导轨)",
+      "category": "consumable",
+      "stock_qty": 5,
+      "unit_cost_rmb": 10,
+      "total_value_rmb": 50,
+      "failure_severity": 1,
+      "lead_time_days": 14,
+      "priority": "LOW"
+    }
+  ],
+  "total_spare_inventory_value_rmb": 2288,
+  "maintenance_schedule": [
+    {
+      "task": "空压机每日排水",
+      "frequency": "daily",
+      "components": [
+        "air_compressor"
+      ],
+      "estimated_minutes": 5,
+      "skill": "basic",
+      "pass_criteria": "排水口无积水；气压600-800kPa"
+    },
+    {
+      "task": "外观与声音检查",
+      "frequency": "daily",
+      "components": [
+        "nema17",
+        "turbine_blower",
+        "air_compressor",
+        "sol_valve"
+      ],
+      "estimated_minutes": 5,
+      "skill": "basic",
+      "pass_criteria": "无异常；运行电流正常"
+    },
+    {
+      "task": "气路泄漏检查",
+      "frequency": "daily",
+      "components": [
+        "sol_valve",
+        "o_ring_seal"
+      ],
+      "estimated_minutes": 5,
+      "skill": "basic",
+      "pass_criteria": "无气泡；无明显泄漏"
+    },
+    {
+      "task": "给料系统清洁",
+      "frequency": "daily",
+      "components": [
+        "vibration_feeder_bowl"
+      ],
+      "estimated_minutes": 10,
+      "skill": "basic",
+      "pass_criteria": "出料速度正常；无堵塞"
+    },
+    {
+      "task": "光电传感器镜片清洁",
+      "frequency": "weekly",
+      "components": [
+        "photocell_t1t2"
+      ],
+      "estimated_minutes": 10,
+      "skill": "basic",
+      "pass_criteria": "触发响应正常；阈值在标定范围内"
+    },
+    {
+      "task": "MQTT Broker健康检查",
+      "frequency": "weekly",
+      "components": [
+        "esp32"
+      ],
+      "estimated_minutes": 5,
+      "skill": "intermediate",
+      "pass_criteria": "服务正常；消息延迟<100ms；内存<200MB"
+    },
+    {
+      "task": "零点标定验证（称重系统）",
+      "frequency": "weekly",
+      "components": [
+        "hx711",
+        "load_cell"
+      ],
+      "estimated_minutes": 10,
+      "skill": "intermediate",
+      "pass_criteria": "零点漂移<50mg；标定记录已更新"
+    },
+    {
+      "task": "步进电机温度检查",
+      "frequency": "weekly",
+      "components": [
+        "nema17"
+      ],
+      "estimated_minutes": 5,
+      "skill": "basic",
+      "pass_criteria": "外壳温度<60°C；无异常振动"
+    },
+    {
+      "task": "空压机进气过滤器清洁/更换",
+      "frequency": "monthly",
+      "components": [
+        "air_filter_cotton"
+      ],
+      "estimated_minutes": 15,
+      "skill": "basic",
+      "pass_criteria": "气压恢复正常；无明显下降"
+    },
+    {
+      "task": "轴承润滑脂补充",
+      "frequency": "monthly",
+      "components": [
+        "nema17_bearing",
+        "buffer_bin_hinge"
+      ],
+      "estimated_minutes": 30,
+      "skill": "intermediate",
+      "pass_criteria": "噪音降低或消失；旋转顺畅"
+    },
+    {
+      "task": "相机暗箱清洁",
+      "frequency": "monthly",
+      "components": [
+        "camera_lens",
+        "dark_box"
+      ],
+      "estimated_minutes": 20,
+      "skill": "basic",
+      "pass_criteria": "无灰尘；成像清晰；LED无闪烁"
+    },
+    {
+      "task": "电气连接紧固检查",
+      "frequency": "monthly",
+      "components": [
+        "cable_connector",
+        "psu_12v",
+        "psu_5v"
+      ],
+      "estimated_minutes": 20,
+      "skill": "intermediate",
+      "pass_criteria": "所有连接牢固；无氧化/腐蚀"
+    },
+    {
+      "task": "称重系统完整标定",
+      "frequency": "monthly",
+      "components": [
+        "hx711",
+        "load_cell"
+      ],
+      "estimated_minutes": 30,
+      "skill": "advanced",
+      "pass_criteria": "误差<0.1g；5次标准差<10mg；记录已保存"
+    },
+    {
+      "task": "O型密封圈全面检查与更换",
+      "frequency": "monthly",
+      "components": [
+        "o_ring_seal"
+      ],
+      "estimated_minutes": 20,
+      "skill": "basic",
+      "pass_criteria": "无硬化/裂纹/永久变形"
+    },
+    {
+      "task": "涡轮鼓风机清洁与检查",
+      "frequency": "quarterly",
+      "components": [
+        "turbine_blower"
+      ],
+      "estimated_minutes": 45,
+      "skill": "intermediate",
+      "pass_criteria": "风速恢复到标定值±10%；无异常噪音"
+    },
+    {
+      "task": "螺旋给料机构检查",
+      "frequency": "quarterly",
+      "components": [
+        "nema17"
+      ],
+      "estimated_minutes": 30,
+      "skill": "intermediate",
+      "pass_criteria": "旋转顺畅；给料速率在基准±5%内"
+    },
+    {
+      "task": "含水率传感器标定验证",
+      "frequency": "quarterly",
+      "components": [
+        "ad7746"
+      ],
+      "estimated_minutes": 40,
+      "skill": "advanced",
+      "pass_criteria": "误差<0.5%；标定曲线R²>0.99"
+    },
+    {
+      "task": "SD卡健康检查",
+      "frequency": "quarterly",
+      "components": [
+        "sd_card"
+      ],
+      "estimated_minutes": 10,
+      "skill": "intermediate",
+      "pass_criteria": "Wear_Leveling>80%剩余；读写>10MB/s；空间>20%"
+    },
+    {
+      "task": "空压机年度全面维护",
+      "frequency": "annually",
+      "components": [
+        "air_compressor"
+      ],
+      "estimated_minutes": 120,
+      "skill": "advanced",
+      "pass_criteria": "排气量恢复出厂规格；无过热；噪音正常"
+    },
+    {
+      "task": "步进电机轴承更换",
+      "frequency": "annually",
+      "components": [
+        "nema17"
+      ],
+      "estimated_minutes": 90,
+      "skill": "advanced",
+      "pass_criteria": "运行平稳；无异常噪音；电流正常"
+    },
+    {
+      "task": "气路系统全面检漏与压力测试",
+      "frequency": "annually",
+      "components": [
+        "o_ring_seal",
+        "sol_valve"
+      ],
+      "estimated_minutes": 60,
+      "skill": "intermediate",
+      "pass_criteria": "无可见气泡；压力保持稳定"
+    }
+  ],
+  "troubleshooting_tree": [
+    {
+      "node_id": "S1",
+      "symptom": "系统无法启动 (Pi不通电)",
+      "priority": 1,
+      "possible_causes": [
+        {
+          "cause": "电源适配器故障",
+          "probability": 0.3,
+          "severity": 3
+        },
+        {
+          "cause": "USB-C接口松动/损坏",
+          "probability": 0.25,
+          "severity": 3
+        },
+        {
+          "cause": "SD卡损坏",
+          "probability": 0.2,
+          "severity": 4
+        },
+        {
+          "cause": "GPIO引脚短路",
+          "probability": 0.1,
+          "severity": 4
+        },
+        {
+          "cause": "SD卡只读模式(磨损)",
+          "probability": 0.15,
+          "severity": 4
+        }
+      ],
+      "diagnostic_steps": [
+        "1. 检查电源指示灯(Pi绿灯)是否亮起",
+        "2. 用万用表测量USB-C接口输出电压(5.1V±0.2V)",
+        "3. 尝试另一个已知良好的电源适配器",
+        "4. 检查SD卡金属触点是否氧化；尝试读卡器读取",
+        "5. 用显示器+键盘直连Pi检查启动日志"
+      ],
+      "quick_fix": "更换电源适配器或SD卡",
+      "downtime_estimate_min": "10-30"
+    },
+    {
+      "node_id": "S2",
+      "symptom": "MQTT消息丢失/延迟>500ms",
+      "priority": 2,
+      "possible_causes": [
+        {
+          "cause": "Mosquitto服务崩溃",
+          "probability": 0.35,
+          "severity": 3
+        },
+        {
+          "cause": "SD卡写入阻塞(日志过多)",
+          "probability": 0.25,
+          "severity": 3
+        },
+        {
+          "cause": "WiFi信号弱",
+          "probability": 0.2,
+          "severity": 2
+        },
+        {
+          "cause": "消息频率超过Pi处理能力",
+          "probability": 0.1,
+          "severity": 2
+        },
+        {
+          "cause": "ESP32 UART通信阻塞",
+          "probability": 0.1,
+          "severity": 3
+        }
+      ],
+      "diagnostic_steps": [
+        "1. systemctl status mosquitto — 检查服务状态",
+        "2. journalctl -u mosquitto — 查看崩溃日志",
+        "3. free -h — 检查可用内存(应>300MB)",
+        "4. iwconfig wlan0 — 检查WiFi信号强度",
+        "5. mosquitto_sub测试本地pub/sub延迟"
+      ],
+      "quick_fix": "systemctl restart mosquitto",
+      "downtime_estimate_min": "2-5"
+    },
+    {
+      "node_id": "S3",
+      "symptom": "称重读数漂移 > 100mg",
+      "priority": 2,
+      "possible_causes": [
+        {
+          "cause": "温度漂移(热源附近安装)",
+          "probability": 0.35,
+          "severity": 3
+        },
+        {
+          "cause": "零点未归零(皮重累积)",
+          "probability": 0.3,
+          "severity": 2
+        },
+        {
+          "cause": "HX711 ADC故障/老化",
+          "probability": 0.15,
+          "severity": 3
+        },
+        {
+          "cause": "称重杯物理变形/污染",
+          "probability": 0.15,
+          "severity": 2
+        },
+        {
+          "cause": "Load Cell过载冲击损坏",
+          "probability": 0.05,
+          "severity": 4
+        }
+      ],
+      "diagnostic_steps": [
+        "1. 检查环境温度是否稳定(±2°C内)",
+        "2. 执行tare归零，等待60s稳定后重新测量",
+        "3. 用100g砝码验证读数误差是否<0.1g",
+        "4. 检查HX711模块焊点(放大镜目视)",
+        "5. 拆卸称重杯检查是否有残留物或变形"
+      ],
+      "quick_fix": "执行tare归零；移至远离热源位置",
+      "downtime_estimate_min": "10-40"
+    },
+    {
+      "node_id": "S4",
+      "symptom": "颜色检测误判率突然上升",
+      "priority": 2,
+      "possible_causes": [
+        {
+          "cause": "LED光源衰减(>1000小时)",
+          "probability": 0.3,
+          "severity": 3
+        },
+        {
+          "cause": "镜头脏污/起雾",
+          "probability": 0.25,
+          "severity": 2
+        },
+        {
+          "cause": "暗箱漏光(密封老化)",
+          "probability": 0.2,
+          "severity": 2
+        },
+        {
+          "cause": "相机对焦漂移",
+          "probability": 0.15,
+          "severity": 2
+        },
+        {
+          "cause": "ML模型文件损坏",
+          "probability": 0.1,
+          "severity": 3
+        }
+      ],
+      "diagnostic_steps": [
+        "1. 目视检查暗箱所有接缝是否漏光",
+        "2. 用镜头纸清洁top和bottom相机镜头",
+        "3. 运行dashboard观察实时图像是否清晰",
+        "4. 用白色参考卡验证相机曝光/L*a*b*读数是否正常",
+        "5. 检查ML模型文件大小和哈希值"
+      ],
+      "quick_fix": "清洁镜头+白板标定+重新加载ML模型",
+      "downtime_estimate_min": "20-30"
+    },
+    {
+      "node_id": "S5",
+      "symptom": "气喷电磁阀响应延迟/无力",
+      "priority": 2,
+      "possible_causes": [
+        {
+          "cause": "气压不足(<500kPa)",
+          "probability": 0.3,
+          "severity": 3
+        },
+        {
+          "cause": "O型圈老化导致泄漏",
+          "probability": 0.3,
+          "severity": 2
+        },
+        {
+          "cause": "电磁阀线圈老化(内阻↑)",
+          "probability": 0.2,
+          "severity": 3
+        },
+        {
+          "cause": "电源适配器供电不足",
+          "probability": 0.15,
+          "severity": 3
+        },
+        {
+          "cause": "ESP32 GPIO输出故障",
+          "probability": 0.05,
+          "severity": 3
+        }
+      ],
+      "diagnostic_steps": [
+        "1. 检查空压机气压表(应600-800kPa)",
+        "2. 手动测试电磁阀: 直接供12V听是否有嗒嗒声",
+        "3. 用万用表测量电磁阀线圈电阻(正常约30-60Ω)",
+        "4. 检查12V电源适配器输出电流规格",
+        "5. 用示波器测量GPIO输出波形(应有12V驱动)"
+      ],
+      "quick_fix": "更换电磁阀O型圈；提升气压到600kPa以上",
+      "downtime_estimate_min": "15-25"
+    },
+    {
+      "node_id": "S6",
+      "symptom": "步进电机失步/丢步",
+      "priority": 1,
+      "possible_causes": [
+        {
+          "cause": "电机轴承磨损/损坏",
+          "probability": 0.3,
+          "severity": 3
+        },
+        {
+          "cause": "皮带/联轴器松动",
+          "probability": 0.2,
+          "severity": 2
+        },
+        {
+          "cause": "驱动器电流不足",
+          "probability": 0.2,
+          "severity": 3
+        },
+        {
+          "cause": "机械卡阻(异物/润滑不足)",
+          "probability": 0.2,
+          "severity": 2
+        },
+        {
+          "cause": "供电电压波动",
+          "probability": 0.1,
+          "severity": 3
+        }
+      ],
+      "diagnostic_steps": [
+        "1. 手动旋转轴确认无机械卡阻",
+        "2. 检查皮带张紧度(适中，无明显松弛)",
+        "3. 测量供电电压是否稳定(万用表监测)",
+        "4. 听电机运行声音是否有异常噪音",
+        "5. 降低转速测试是否改善(排除共振问题)"
+      ],
+      "quick_fix": "清理异物+补充润滑脂；紧固皮带；降低转速",
+      "downtime_estimate_min": "20-45"
+    },
+    {
+      "node_id": "S7",
+      "symptom": "含水率读数异常高/低 (>±2%)",
+      "priority": 2,
+      "possible_causes": [
+        {
+          "cause": "AD7746探头电缆过长(>5cm)",
+          "probability": 0.3,
+          "severity": 4
+        },
+        {
+          "cause": "探头极板污染/氧化",
+          "probability": 0.25,
+          "severity": 3
+        },
+        {
+          "cause": "AD7746基准电容漂移",
+          "probability": 0.2,
+          "severity": 3
+        },
+        {
+          "cause": "标定曲线错误(豆种不匹配)",
+          "probability": 0.15,
+          "severity": 3
+        },
+        {
+          "cause": "温度影响(非补偿温度范围)",
+          "probability": 0.1,
+          "severity": 2
+        }
+      ],
+      "diagnostic_steps": [
+        "1. 检查AD7746模块与探头距离(<5cm)",
+        "2. 用无水酒精清洁探头极板",
+        "3. 用标准电容验证AD7746读数准确性",
+        "4. 重新执行两点标定(5%和12%样本)",
+        "5. 检查环境温度是否在10-40°C范围内"
+      ],
+      "quick_fix": "清洁探头+重新标定；缩短电缆至<5cm",
+      "downtime_estimate_min": "30-50"
+    },
+    {
+      "node_id": "S8",
+      "symptom": "密度分选风速下降",
+      "priority": 2,
+      "possible_causes": [
+        {
+          "cause": "涡轮鼓风机叶轮积灰",
+          "probability": 0.4,
+          "severity": 3
+        },
+        {
+          "cause": "进气过滤器堵塞",
+          "probability": 0.3,
+          "severity": 2
+        },
+        {
+          "cause": "PWM控制信号异常",
+          "probability": 0.15,
+          "severity": 3
+        },
+        {
+          "cause": "鼓风机轴承磨损",
+          "probability": 0.15,
+          "severity": 3
+        }
+      ],
+      "diagnostic_steps": [
+        "1. 检查并清洁进气过滤器",
+        "2. 用风速计测量实际风速与基准对比",
+        "3. 拆卸进风口目视检查叶轮积灰程度",
+        "4. 测量鼓风机供电电压和电流",
+        "5. 检查ESP32 PWM输出信号(Duty Cycle)"
+      ],
+      "quick_fix": "清洁进气过滤器+叶轮；检查PWM信号",
+      "downtime_estimate_min": "30-60"
+    },
+    {
+      "node_id": "S9",
+      "symptom": "I2C设备无法发现/通信失败",
+      "priority": 1,
+      "possible_causes": [
+        {
+          "cause": "I2C地址冲突(多个设备同地址)",
+          "probability": 0.25,
+          "severity": 3
+        },
+        {
+          "cause": "上拉电阻缺失/损坏",
+          "probability": 0.2,
+          "severity": 2
+        },
+        {
+          "cause": "杜邦线接触不良",
+          "probability": 0.25,
+          "severity": 2
+        },
+        {
+          "cause": "设备I2C引脚损坏(ESD/过压)",
+          "probability": 0.15,
+          "severity": 4
+        },
+        {
+          "cause": "I2C总线被GPIO占用",
+          "probability": 0.15,
+          "severity": 3
+        }
+      ],
+      "diagnostic_steps": [
+        "1. i2cdetect -y 1 — 扫描I2C总线设备",
+        "2. 逐一拔插设备定位冲突源",
+        "3. 测量SDA/SCL上拉电阻(正常4.7kΩ±10%)",
+        "4. 重新插拔杜邦线接头",
+        "5. 检查GPIO复用配置(conflict with PWM?)"
+      ],
+      "quick_fix": "重新插拔杜邦线；修复上拉电阻",
+      "downtime_estimate_min": "10-25"
+    },
+    {
+      "node_id": "S10",
+      "symptom": "E-STOP无法复位",
+      "priority": 1,
+      "possible_causes": [
+        {
+          "cause": "FAIL-SAFE继电器卡滞",
+          "probability": 0.35,
+          "severity": 5
+        },
+        {
+          "cause": "E-STOP按钮机械损坏",
+          "probability": 0.2,
+          "severity": 4
+        },
+        {
+          "cause": "安全回路接线断开",
+          "probability": 0.25,
+          "severity": 5
+        },
+        {
+          "cause": "软件状态机卡在FAULT",
+          "probability": 0.2,
+          "severity": 3
+        }
+      ],
+      "diagnostic_steps": [
+        "1. 检查E-STOP按钮是否已旋钮释放",
+        "2. 测量安全回路各节点连续性(应导通)",
+        "3. 检查K1/K2/K3/K4继电器状态LED",
+        "4. 重启Pi并观察启动日志",
+        "5. 短接安全回路测试(仅在排查时)"
+      ],
+      "quick_fix": "旋转E-STOP释放+重启Pi",
+      "downtime_estimate_min": "5-20"
+    }
+  ]
+}
