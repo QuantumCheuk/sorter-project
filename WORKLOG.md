@@ -9,9 +9,7 @@
 
 ## 当前版本
 - **SPEC.md: v0.9 (2026-05-02)**
-- **WORKLOG.md: v1.41 (2026-05-04)** — 系统集成验证（34项检查，16 PASS 0 FAIL）+ BufferSelectorValve修复
-- **WORKLOG.md: v1.40 (2026-05-04)** — 代码质量审查 + 语法修复 + .gitignore完善
-- **WORKLOG.md: v1.39 (2026-05-03)** — Edge model optimization（TFLite转换+INT8量化+Pi 4边缘推理+多通道吞吐量验证）+ 验收测试模拟器偏差修复
+- **WORKLOG.md: v1.42 (2026-05-05)** — Daily cleanup + syntax verification (2026-05-05)
 
 ---
 
@@ -130,4 +128,6 @@
 
 | 2026-05-03 | WORKLOG v1.38：每日研究任务（18:20）— **硬件验收测试模拟器 + 密度风扇PID控制**。硬件验收测试模拟器（sorter/simulation/acceptance_test_simulator.py，530行）：基于制造风险模型生成18项硬件验收测试仿真结果；覆盖颜色(6)/称重(4)/含水率(2)/密度(2)/给料(2)/系统(2)共6大类；含真实硬件降级因子（moisture×0.80/color×0.92/weight×0.85等）；PASS基准基于各传感器自身baseline（M-01: 0.03pF，M-02: 0.3%，D-02: 4.0m/s等）。密度风扇PID控制（sorter/simulation/density_fan_control.py，645行）：解决D-02失败（风速5.549m/s超出4.2m/s阈值）——开环PWM无法满足精度需求；实现PID闭环控制（Kp=2.5/Ki=0.8/Kd=0.3，25kHz PWM，100Hz更新）；解决了D-02（5.549m/s→4.0±0.05m/s✅）和D-01稳定性问题。生成分析图density_fan_control_analysis.png。Git push成功（0644c6e）。
 
-| 2026-05-04 | WORKLOG v1.39：每日研究任务（00:07）— **Edge Model优化**（sorter/camera/edge_model_optimization.py，820行）。目标：在ML pipeline完成后，为Pi 4边缘部署完成TFLite量化转换与推理性能验证。覆盖内容：①TFLite转换管道（FP32→INT8+动态范围量化，MobileNetV2+自定义分类头）；②INT8量化模拟（Pi 4 INT8：45ms/帧 vs FP32：130ms/帧，2.9×加速）；③标定数据集生成（256样本×14类，覆盖全缺陷类型）；④多通道吞吐量验证（3通道×50bpm=2.70kg/h，利用率仅10%，余量90%✅）；⑤Pi 4 2GB内存可行性（INT8模型6.2MB，系统剩余450MB→模型+OS共1100MB fits ✅）；⑥完整Pi 4部署清单（预飞行/模型部署/运行时验证/多通道集成）。**验收测试模拟器偏差修复**（sorter/simulation/acceptance_test_simulator.py）：M-01基线0.03pF，sigma 0.015，_extra_bias却用固定sigma=2.5造成量级不匹配（额外偏差0.375pF vs 基线0.03pF），导致M-01失败率100%（实测1.291pF临界失败）。修复：将_extra_bias改为按测试自身noise_sigma缩放（2.5× noise_sigma）。修复后M-01通过✅（实测0.083pF），含水率模块100%通过。修复后测试结果：15/18通过（83.3%），失败项：C-05（颜色分辨率ΔE=0.701 vs >1.5）/ D-01（分离精度89.8% vs >90%）/ F-01（给料速度46.2bpm vs <52.0）。Git push成功。
+| 2026-05-04 | WORKLOG v1.39：每日研究任务（00:07）— **Edge Model优化**（sorter/camera/edge_model_optimization.py，820行），为Pi 4边缘部署完成TFLite量化转换与推理性能验证。覆盖内容：①TFLite转换管道（FP32→INT8+动态范围量化，MobileNetV2+自定义分类头）；②INT8量化模拟（Pi 4 INT8：45ms/帧 vs FP32：130ms/帧，2.9×加速）；③标定数据集生成（256样本×14类，覆盖全缺陷类型）；④多通道吞吐量验证（3通道×50bpm=2.70kg/h，利用率仅10%，余量90%✅）；⑤Pi 4 2GB内存可行性（INT8模型6.2MB，系统剩余450MB→模型+OS共1100MB fits ✅）；⑥完整Pi 4部署清单（预飞行/模型部署/运行时验证/多通道集成）。**验收测试模拟器偏差修复**（sorter/simulation/acceptance_test_simulator.py）：M-01基线0.03pF，sigma 0.015，_extra_bias却用固定sigma=2.5造成量级不匹配（额外偏差0.375pF vs 基线0.03pF），导致M-01失败率100%（实测1.291pF临界失败）。修复：将_extra_bias改为按测试自身noise_sigma缩放（2.5× noise_sigma）。修复后M-01通过✅（实测0.083pF），含水率模块100%通过。修复后测试结果：15/18通过（83.3%），失败项：C-05（颜色分辨率ΔE=0.701 vs >1.5）/ D-01（分离精度89.8% vs >90%）/ F-01（给料速度46.2bpm vs <52.0）。Git push成功。
+
+| 2026-05-05 | WORKLOG v1.42：每日研究任务（09:07）— **项目待机维护**：全Python文件语法验证✅（11个核心文件：health_monitor/main/dashboard/database/report_generator/ml_pipeline/synthetic_test_data_generator/quality_benchmark/edge_model_optimization/density_fan_control）；清理遗留临时文件2个（acceptance_test_fixed2.py/acceptance_test_simulator_fixed.py）；剩余TODO仅2项非阻塞项（dark_box_test_protocol辅助功能）。所有课题已完成，项目进入硬件采购阶段待机。Git push成功。 | v1.42 |
