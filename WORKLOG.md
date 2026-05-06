@@ -3,7 +3,7 @@
 
 ---
 
-| 2026-05-06 | WORKLOG v1.45：每日研究任务（00:10）— **预测性维护与磨损分析**（sorter/simulation/predictive_maintenance_analysis.py，~850行，v1.0）。目标：在硬件到位前的最后准备阶段，建立完整的预测性维护体系，作为来料检验协议的配套文档。覆盖内容：①23个组件的磨损数据库（5大类：电气6/机械8/传感器4/耗材5/结构3），含磨损机理/失效模式/严重性/更换成本/停机时间；②寿命计算模型（基于usage profile：3通道×50bpm×10h/天×300天/年），气喷电磁阀实际寿命：5.4M次/年 vs 额定8.76M次/年✅；③年度维护成本模型：配件成本¥477/年 + 停机损失¥395/年 = 年度总成本¥872/年；按类别：机械¥326/电气¥32/传感器¥59/耗材¥42/结构¥18；④备件库存推荐：总价值¥2288（一次投入），Pi4×2/HQ相机×1/涡轮鼓风机×2/空压机×2/SD卡×2等17项，HIGH优先级4项（Pi4/HQ相机/鼓风机/空压机均为进口件⚠️）；⑤多层级维护计划（21项任务，5个频率层级）：日/周/月/季度/年度，日均25分钟/周均30分钟/月均135分钟；⑥10节点故障诊断决策树（S1-S10），覆盖系统启动/MQTT/称重漂移/颜色误判/气喷无力/步进失步/含水率异常/风速下降/I2C故障/E-STOP无法复位，含最可能原因概率+快速修复+预计停机时间；⑦关键发现：空压机年度配件成本¥137最高，HQ相机和涡轮鼓风机交付周期60天⚠️需立即采购；SD卡启用只读文件系统可延长寿命3×。JSON报告已保存（predictive_maintenance_report.json）。Git push成功。 | v1.45 |
+| 2026-05-06 | WORKLOG v1.46：每日研究任务（12:07）— **端到端集成测试套件**（sorter/simulation/end_to_end_integration_test.py，1148行，v1.0）。目标：建立完整的无需硬件的端到端软件栈验证能力，在硬件到位前确保所有软件模块可协同工作。10个测试套件：①数据模型完整性（BeanRecord/BatchRecord/SystemEvent/CalibrationRecord + 3个枚举，修复字段不匹配问题）✅ ②数据库层（SQLite WAL，500豆批量插入，WAL模式验证）✅ ③ML Pipeline（合成数据生成器 + TFLite推理器，30张图生成）⚠️（TFLite需pip install tensorflow，预期） ④MQTT客户端（模块结构验证）⚠️（需broker） ⑤REST API（Flask未安装）⚠️（预期） ⑥健康监控（POST自检，HealthStatus枚举，3通道健康评分）✅ ⑦控制状态机（9状态机全部转换验证）✅ ⑧报告生成（JSON 1846B + CSV 201行 + TEXT 2975字符，三格式全部通过）✅ ⑨端到端模拟（3批次×1000豆=3000豆，DB+报告+SorterController全程验证）✅ ⑩配置加载（SystemConfig save/load/JSON往返）✅。修复3个BUG：CalibrationRecord字段名错误（cal_id←calibration_id等5个错误字段）/ generate_synthetic_dataset返回GenerationStats非list / 图片输出在images/子目录非根目录。最终结果：10/13 PASS ✅，3 WARN（MQTT/Flask/TFLite均预期），总耗时1.5秒。Git push成功（f983475）。 | v1.46 |
 
 | 2026-05-05 | WORKLOG v1.44：每日研究任务（18:08）— **来料检验协议**（sorter/simulation/incoming_inspection_protocol.py，~700行，v1.0）。目标：在硬件采购完成前的最后准备阶段，建立完整的来料检验与集成测试体系。覆盖内容：①54项检验项目，覆盖5大类别（电气10/机械10/传感器13/执行器9/集成12）；②电气安全测试（电源规格/GPIO隔离/I2C上拉/FAIL-SAFE继电器/E-STOP安全回路/接地连续性）；③机械结构测试（3D打印件/孔板精度/缓冲仓密封/螺旋给料同轴度/暗箱遮光/LED光源均匀性）；④传感器模块测试（HX711零点+线性/AD7746基线+分辨率/T1/T2光电响应/Top+Bottom Camera分辨率+色彩/同步触发/I2C设备发现）；⑤执行器测试（电磁阀响应+保压/步进电机单步/振动给料频率/FAIL-SAFE安全/E-STOP急停）；⑥集成测试（POST自检/MQTT连接/REST API/Dashboard启动/单粒完整流程/缺陷检出率/数据库写入/健康监控告警/报表生成/吞吐量实测/空压机噪声/1小时连续运行）；⑦检验报告生成（JSON格式，含分类汇总+失败项+警告项，报告ID: INSP-YYYYMMDD-HHMMSS）；⑧模拟运行结果：54项中46 PASS / 6 WARN / 2 FAIL（电磁阀保压+吞吐量需硬件到位），整体通过率85.2%。Git push成功（e60773f）。 | v1.44 |
 
@@ -13,7 +13,7 @@
 
 ## 当前版本
 - **SPEC.md: v0.9 (2026-05-02)**
-- **WORKLOG.md: v1.45 (2026-05-06)** — Predictive maintenance & wear analysis (2026-05-06)
+- **WORKLOG.md: v1.46 (2026-05-06)** — Predictive maintenance & wear analysis (2026-05-06)
 
 ---
 
