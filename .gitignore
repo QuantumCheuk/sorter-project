@@ -11,3 +11,4 @@ venv/
 data/
 reports/
 sorter/**/__pycache__/
+integration_test_results/
