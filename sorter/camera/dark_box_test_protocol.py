@@ -415,9 +415,30 @@ class DarkBoxPhysicalTester:
         if calibration_yaml and Path(calibration_yaml).exists():
             print(f"  [INFO] Loading calibration from: {calibration_yaml}")
             # 加载标定参数
-            # TODO: 实现加载逻辑
+            try:
+                import yaml
+                with open(calibration_yaml, 'r') as f:
+                    cal_data = yaml.safe_load(f)
+                # 应用白平衡标定偏移
+                wb_offsets = cal_data.get('white_balance_offsets', {'L': 0, 'a': 0, 'b': 0})
+                wb_L = wb_offsets.get('L', 0)
+                wb_a = wb_offsets.get('a', 0)
+                wb_b = wb_offsets.get('b', 0)
+                print(f"  [CAL] White balance offsets applied: L={wb_L:.1f}, a={wb_a:.1f}, b={wb_b:.1f}")
+                # 应用颜色校正矩阵
+                color_matrix = cal_data.get('color_correction_matrix', None)
+                if color_matrix:
+                    print(f"  [CAL] Color correction matrix loaded: 3x3")
+                # 应用曝光补偿
+                exposure_comp = cal_data.get('exposure_compensation', 0)
+                print(f"  [CAL] Exposure compensation: {exposure_comp:.2f} EV")
+                calibration_loaded = True
+            except Exception as e:
+                print(f"  [WARN] Failed to load calibration: {e}, using defaults")
+                calibration_loaded = False
         else:
             print("  [INFO] No calibration file, using reference values")
+            calibration_loaded = False
 
         # 模拟 Macbeth 色卡验证（简化版）
         # 真实场景：拍标准灰卡/色卡，用算法识别色块

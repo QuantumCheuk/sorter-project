@@ -1,0 +1,563 @@
+# Commissioning Sign-Off Checklist — Machine-Parseable
+# Green Coffee Bean Sorter Field Deployment
+# Ref: sorter/docs/COMMISSIONING_GUIDE.md
+
+meta:
+  document_id: COMCHECK-001
+  project: green_coffee_sorter
+  revision: v1.0
+  created_date: "2026-05-06"
+  status: TBD
+
+# ============================================================
+# SECTION 1: Pre-Commissioning Site Preparation
+# ============================================================
+site_prep:
+  environment:
+    temperature_range:
+      required: "15-35°C"
+      measured_min: null
+      measured_max: null
+      status: TBD
+      technician: null
+      timestamp: null
+    humidity_level:
+      required: "<80% RH"
+      measured: null
+      status: TBD
+      technician: null
+      timestamp: null
+    dust_level:
+      required: "Low (office/clean room)"
+      assessed: null
+      status: TBD
+      technician: null
+      timestamp: null
+    light_conditions:
+      required: "No direct sunlight on optical path"
+      assessed: null
+      status: TBD
+      technician: null
+      timestamp: null
+
+  power:
+    voltage_verified:
+      required: "230VAC 50Hz (or regional)"
+      measured: null
+      status: TBD
+      technician: null
+      timestamp: null
+    dedicated_circuit:
+      required: "16A dedicated"
+      verified: null
+      status: TBD
+      technician: null
+      timestamp: null
+    ups_installed:
+      required: "Yes (for Pi and control circuits)"
+      verified: null
+      status: TBD
+      technician: null
+      timestamp: null
+
+  network:
+    mqtt_broker_reachable:
+      required: "true"
+      host: null
+      port: 1883
+      verified: null
+      status: TBD
+      technician: null
+      timestamp: null
+    static_ip_configured:
+      required: "true"
+      ip_assigned: null
+      verified: null
+      status: TBD
+      technician: null
+      timestamp: null
+
+  compressed_air:
+    pressure_verified:
+      required: "4-6 bar (58-87 psi)"
+      measured: null
+      status: TBD
+      technician: null
+      timestamp: null
+    flow_rate_verified:
+      required: "≥50 L/min"
+      measured: null
+      status: TBD
+      technician: null
+      timestamp: null
+    air_purity_verified:
+      required: "ISO 8573-1:2010 Class 2.2.2 or better"
+      certified: null
+      status: TBD
+      technician: null
+      timestamp: null
+
+  workspace:
+    bench_space_verified:
+      required: "≥1200mm x 800mm x 600mm (W x D x H)"
+      measured: null
+      status: TBD
+      technician: null
+      timestamp: null
+    mounting_surface_level:
+      required: "<1mm/m deviation"
+      measured: null
+      status: TBD
+      technician: null
+      timestamp: null
+
+  tools_present:
+    calibrated_multimeter: null
+    calibrated_oscilloscope: null
+    torque_wrench: null
+    level_transit: null
+    anemometer: null
+    reference_weights_set: null
+    compressed_air_flow_meter: null
+    ip65_torpedo_level: null
+    all_status: TBD
+    technician: null
+    timestamp: null
+
+# ============================================================
+# SECTION 2: Unboxing and Mechanical Assembly
+# ============================================================
+unboxing:
+  packing_list_verified: null
+  damage_inspection_passed: null
+  all_status: TBD
+  technician: null
+  timestamp: null
+
+mechanical_assembly:
+  framework_pillars:
+    - pillar_1_torque: null
+      status: TBD
+    - pillar_2_torque: null
+      status: TBD
+    - pillar_3_torque: null
+      status: TBD
+    - pillar_4_torque: null
+      status: TBD
+
+  cross_beams_secured:
+    - beam_top_torque: null
+      status: TBD
+    - beam_bottom_torque: null
+      status: TBD
+
+  printed_parts_inspection:
+    hopper_mount_warping: null
+    chute_mount_warping: null
+    nozzle_holders_clarity: null
+    all_status: TBD
+    technician: null
+    timestamp: null
+
+  alignment_checks:
+    optical_axis_level: null
+      required: "<1mm/m"
+      measured: null
+      status: TBD
+    frame_deviation: null
+      required: "<1mm/m"
+      measured: null
+      status: TBD
+    conveyor_belt_alignment: null
+      status: TBD
+
+  dark_box_sealing:
+    light_leak_test_performed: null
+    light_leak_reading_lux: null
+    acceptable: null
+    status: TBD
+    technician: null
+    timestamp: null
+
+# ============================================================
+# SECTION 3: Electrical Commissioning
+# ============================================================
+electrical:
+  power_rails_no_pi:
+    rail_12v_measured: null
+      tolerance: "±5%"
+      status: TBD
+    rail_5v_measured: null
+      tolerance: "±5%"
+      status: TBD
+    rail_3v3_measured: null
+      tolerance: "±5%"
+      status: TBD
+    technician: null
+    timestamp: null
+
+  gpio_continuity:
+    all_gpio_verified: null
+    no_short_to_ground: null
+    no_cross_pin_short: null
+    all_status: TBD
+    technician: null
+    timestamp: null
+
+  i2c_discovery:
+    ad7746_detected:
+      expected_address: "0x48"
+      found: null
+      status: TBD
+    mpu6050_detected:
+      expected_address: "0x68"
+      found: null
+      status: TBD
+    hx711_detected:
+      expected_address: "0x5A or 0x5B"
+      found: null
+      status: TBD
+    technician: null
+    timestamp: null
+
+  relay_functional_test:
+    relay_1_click_audible: null
+      gpio: null
+      status: TBD
+    relay_2_click_audible: null
+      gpio: null
+      status: TBD
+    relay_3_click_audible: null
+      gpio: null
+      status: TBD
+    relay_4_click_audible: null
+      gpio: null
+      status: TBD
+    solenoid_1_test: null
+      gpio: null
+      status: TBD
+    solenoid_2_test: null
+      gpio: null
+      status: TBD
+    solenoid_3_test: null
+      gpio: null
+      status: TBD
+    solenoid_4_test: null
+      gpio: null
+      status: TBD
+
+  emergency_stop:
+    estop_cuts_power_to_actuators: null
+    estop_resets_on_twist: null
+    estop_logic_verified: null
+    all_status: TBD
+    technician: null
+    timestamp: null
+
+  ground_continuity:
+    resistance_measured_ohms: null
+      required: "<0.1Ω"
+      status: TBD
+    technician: null
+    timestamp: null
+
+# ============================================================
+# SECTION 4: Sensor Calibration
+# ============================================================
+sensor_calibration:
+  camera:
+    white_balance_calibrated: null
+    focus_verified: null
+    dark_current_measured: null
+      acceptable: "<5 DN at 100ms exposure"
+      status: TBD
+    all_status: TBD
+    technician: null
+    timestamp: null
+
+  load_cell_hx711:
+    zero_tare_performed: null
+    reference_100g_measured_g: null
+      tolerance: "±5mg"
+      status: TBD
+    reference_200g_measured_g: null
+      tolerance: "±5mg"
+      status: TBD
+    all_status: TBD
+    technician: null
+    timestamp: null
+
+  moisture_sensor_ad7746:
+    baseline_capacitance_measured_pF: null
+    calibration_5pct_reference_measured: null
+      tolerance: "±0.5% MC"
+      status: TBD
+    calibration_15pct_reference_measured: null
+      tolerance: "±0.5% MC"
+      status: TBD
+    all_status: TBD
+    technician: null
+    timestamp: null
+
+  photoelectric_sensors_t1_t2:
+    t1_led_current_measured_mA: null
+      acceptable: "10-20mA"
+      status: TBD
+    t2_led_current_measured_mA: null
+      acceptable: "10-20mA"
+      status: TBD
+    t1_bean_pass_trigger_verified: null
+    t2_bean_pass_trigger_verified: null
+    all_status: TBD
+    technician: null
+    timestamp: null
+
+  density_fan:
+    anemometer_calibration_performed: null
+    pid_kp: null
+      recommended: 2.5
+      status: TBD
+    pid_ki: null
+      recommended: 0.8
+      status: TBD
+    pid_kd: null
+      recommended: 0.3
+      status: TBD
+    fan_speed_stability: null
+      acceptable: "±2% over 5min"
+      status: TBD
+    technician: null
+    timestamp: null
+
+  calibration_report_json_created:
+    path: "sorter/config/calibration_report.json"
+    verified: null
+    status: TBD
+    technician: null
+    timestamp: null
+
+# ============================================================
+# SECTION 5: Software Commissioning
+# ============================================================
+software:
+  os_setup_complete: null
+    image_used: null
+    version: null
+    status: TBD
+    technician: null
+    timestamp: null
+
+  pi_setup_script_run:
+    script_path: "sorter/scripts/pi_setup.sh"
+    exit_code: null
+    errors: null
+    status: TBD
+    technician: null
+    timestamp: null
+
+  mqtt_broker:
+    mosquitto_config_valid: null
+    test_publish_success: null
+    test_subscribe_success: null
+    status: TBD
+    technician: null
+    timestamp: null
+
+  database:
+    sqlite_wal_mode_init: null
+    schema_migrations_run: null
+    status: TBD
+    technician: null
+    timestamp: null
+
+  configuration_loaded: null
+    config_source: null
+    validated: null
+    status: TBD
+    technician: null
+    timestamp: null
+
+  simulate_mode_test:
+    all_modules_initialize: null
+    no_crash_on_startup: null
+    status: TBD
+    technician: null
+    timestamp: null
+
+  hardware_mode_test:
+    sensor_readings_plausible: null
+    no_i2c_hang: null
+    no_gpio_conflict: null
+    status: TBD
+    technician: null
+    timestamp: null
+
+# ============================================================
+# SECTION 6: Integration Test Sequence
+# ============================================================
+integration_tests:
+  post_power_on_self_test:
+    command: "python -m sorter.control.main --test post"
+    exit_code: null
+    all_modules_pass: null
+    status: TBD
+    technician: null
+    timestamp: null
+
+  single_bean_pass:
+    bean_1_trigger_detected: null
+    image_captured: null
+    weight_measured_g: null
+    defect_decision_made: null
+    air_jet_or_pass_confirmed: null
+    status: TBD
+    technician: null
+    timestamp: null
+
+  reference_sample_100_beans:
+    known_defect_rate_percent: null
+    detection_rate_percent: null
+      target: "≥95%"
+      status: TBD
+    false_positive_rate_percent: null
+      target: "<5%"
+      status: TBD
+    technician: null
+    timestamp: null
+
+  continuous_30min_run:
+    no_crash: null
+    i2c_stable: null
+    gpio_states_normal: null
+    temperature_ok: null
+    max_temp_measured_c: null
+      acceptable: "<50°C"
+      status: TBD
+    status: TBD
+    technician: null
+    timestamp: null
+
+# ============================================================
+# SECTION 7: Performance Verification
+# ============================================================
+performance:
+  throughput:
+    measured_beans_per_minute: null
+    target_beans_per_minute: 50
+    per_channel: true
+    status: TBD
+    technician: null
+    timestamp: null
+
+  defect_detection_accuracy:
+    good_bean_test_count: 100
+    good_bean_correct_accept: null
+      target: "≥95%"
+      status: TBD
+    defective_bean_test_count: 100
+    defective_bean_correct_reject: null
+      target: "≥95%"
+      status: TBD
+    technician: null
+    timestamp: null
+
+  weight_measurement:
+    measured_vs_reference_mg: null
+      tolerance: "±5mg"
+      status: TBD
+    reference_scale_id: null
+    technician: null
+    timestamp: null
+
+  moisture_reading_accuracy:
+    measured_vs_drying_method_percent: null
+      tolerance: "±0.5%"
+      status: TBD
+    technician: null
+    timestamp: null
+
+  color_score_repeatability:
+    same_bean_5x_measured: null
+    coefficient_of_variation_percent: null
+      target: "<5%"
+      status: TBD
+    technician: null
+    timestamp: null
+
+  commissioning_report_json_created:
+    path: "sorter/config/commissioning_report.json"
+    verified: null
+    status: TBD
+
+# ============================================================
+# SECTION 8: Staff Training
+# ============================================================
+training:
+  operator_startup_trained: null
+    operator_name: null
+    trainer_name: null
+    timestamp: null
+  operator_shutdown_trained: null
+    operator_name: null
+    trainer_name: null
+    timestamp: null
+  fault_estop_response_trained: null
+    operator_name: null
+    trainer_name: null
+    timestamp: null
+  cleaning_maintenance_trained: null
+    operator_name: null
+    trainer_name: null
+    timestamp: null
+  batch_export_trained: null
+    operator_name: null
+    trainer_name: null
+    timestamp: null
+  mqtt_roaster_integration_trained: null
+    operator_name: null
+    trainer_name: null
+    timestamp: null
+
+# ============================================================
+# SECTION 9: Troubleshooting Reference
+# ============================================================
+troubleshooting:
+  debug_guide_verified: null
+    path: "sorter/docs/DEBUGGING_GUIDE.md"
+    status: TBD
+  wiring_guide_verified: null
+    path: "sorter/docs/WIRING_GUIDE.md"
+    status: TBD
+
+# ============================================================
+# FINAL SIGN-OFF
+# ============================================================
+sign_off:
+  overall_status:
+    # APPROVED / REJECTED / CONDITIONAL
+    value: null
+    conditional_notes: null
+
+  pre_commissioning_site_prep: TBD
+  mechanical_assembly: TBD
+  electrical_commissioning: TBD
+  sensor_calibration: TBD
+  software_commissioning: TBD
+  integration_tests: TBD
+  performance_verification: TBD
+  operator_training: TBD
+
+  field_engineer:
+    name: null
+    signature: null
+    date: null
+
+  site_supervisor:
+    name: null
+    signature: null
+    date: null
+
+  commissioning_manager:
+    name: null
+    signature: null
+    date: null
