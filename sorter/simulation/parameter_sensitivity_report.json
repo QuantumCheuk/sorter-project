@@ -1,0 +1,161 @@
+{
+  "base_params": {
+    "feed_rate_bpm": 50.0,
+    "num_channels": 3,
+    "bean_mass_g": 0.152,
+    "bean_mass_std_g": 0.028,
+    "t1_to_color_ms": 125.0,
+    "color_processing_ms": 25.0,
+    "weight_measurement_ms": 30.0,
+    "density_separation_ms": 80.0,
+    "moisture_measurement_ms": 20.0,
+    "air_jet_response_ms": 15.0,
+    "color_defect_threshold": 60.0,
+    "weight_defect_threshold_g": 0.08,
+    "density_defect_threshold_g_cm3": 0.02,
+    "defect_injection_rate": 0.08,
+    "simulation_duration_min": 30.0,
+    "pi_processing_overhead_ms": 5.0,
+    "polling_overhead_ms": 8.0
+  },
+  "ofat_sensitivity": {
+    "feed_rate_bpm": {
+      "base": 50.0,
+      "low": 40.0,
+      "high": 60.0,
+      "tp_low": 1.0944,
+      "tp_high": 1.6416,
+      "f1_low": 1.0,
+      "f1_high": 1.0,
+      "tp_sensitivity": 1.2499999999999996,
+      "f1_sensitivity": 0.0,
+      "tp_elasticity_pct": 49.999999999999986,
+      "f1_elasticity_pct": 0.0
+    },
+    "num_channels": {
+      "base": 3.0,
+      "low": 2.4000000000000004,
+      "high": 3.5999999999999996,
+      "tp_low": 1.0944000000000003,
+      "tp_high": 1.6415999999999997,
+      "f1_low": 1.0,
+      "f1_high": 1.0,
+      "tp_sensitivity": 1.2499999999999984,
+      "f1_sensitivity": 0.0,
+      "tp_elasticity_pct": 49.999999999999936,
+      "f1_elasticity_pct": 0.0
+    },
+    "color_processing_ms": {
+      "base": 25.0,
+      "low": 20.0,
+      "high": 30.0,
+      "tp_low": 1.368,
+      "tp_high": 1.368,
+      "f1_low": 1.0,
+      "f1_high": 1.0,
+      "tp_sensitivity": 0.0,
+      "f1_sensitivity": 0.0,
+      "tp_elasticity_pct": 0.0,
+      "f1_elasticity_pct": 0.0
+    },
+    "weight_measurement_ms": {
+      "base": 30.0,
+      "low": 24.0,
+      "high": 36.0,
+      "tp_low": 1.368,
+      "tp_high": 1.368,
+      "f1_low": 1.0,
+      "f1_high": 1.0,
+      "tp_sensitivity": 0.0,
+      "f1_sensitivity": 0.0,
+      "tp_elasticity_pct": 0.0,
+      "f1_elasticity_pct": 0.0
+    },
+    "density_separation_ms": {
+      "base": 80.0,
+      "low": 64.0,
+      "high": 96.0,
+      "tp_low": 1.368,
+      "tp_high": 1.368,
+      "f1_low": 1.0,
+      "f1_high": 1.0,
+      "tp_sensitivity": 0.0,
+      "f1_sensitivity": 0.0,
+      "tp_elasticity_pct": 0.0,
+      "f1_elasticity_pct": 0.0
+    },
+    "moisture_measurement_ms": {
+      "base": 20.0,
+      "low": 16.0,
+      "high": 24.0,
+      "tp_low": 1.368,
+      "tp_high": 1.368,
+      "f1_low": 1.0,
+      "f1_high": 1.0,
+      "tp_sensitivity": 0.0,
+      "f1_sensitivity": 0.0,
+      "tp_elasticity_pct": 0.0,
+      "f1_elasticity_pct": 0.0
+    },
+    "air_jet_response_ms": {
+      "base": 15.0,
+      "low": 12.0,
+      "high": 18.0,
+      "tp_low": 1.368,
+      "tp_high": 1.368,
+      "f1_low": 1.0,
+      "f1_high": 1.0,
+      "tp_sensitivity": 0.0,
+      "f1_sensitivity": 0.0,
+      "tp_elasticity_pct": 0.0,
+      "f1_elasticity_pct": 0.0
+    },
+    "polling_overhead_ms": {
+      "base": 8.0,
+      "low": 6.4,
+      "high": 9.6,
+      "tp_low": 1.368,
+      "tp_high": 1.368,
+      "f1_low": 1.0,
+      "f1_high": 1.0,
+      "tp_sensitivity": 0.0,
+      "f1_sensitivity": 0.0,
+      "tp_elasticity_pct": 0.0,
+      "f1_elasticity_pct": 0.0
+    }
+  },
+  "upgrade_paths": [
+    {
+      "name": "C: 4ch\u00d750",
+      "cost": 525.0,
+      "tp": 1.824,
+      "cpe": 1151.3157894736844
+    },
+    {
+      "name": "B: 3ch\u00d770 Nema17",
+      "cost": 740.0,
+      "tp": 1.9151999999999998,
+      "cpe": 1352.3391812865505
+    },
+    {
+      "name": "A: 3ch\u00d750 Nema17",
+      "cost": 740.0,
+      "tp": 1.368,
+      "cpe": Infinity
+    },
+    {
+      "name": "D: 3ch\u00d750+EdgeTPU",
+      "cost": 1300.0,
+      "tp": 1.368,
+      "cpe": Infinity
+    }
+  ],
+  "monte_carlo": {
+    "mean": 1.3275722240365975,
+    "std": 0.2238836475320785,
+    "p5": 1.032850745756307,
+    "p50": 1.3043418722174545,
+    "p95": 1.7620019735720818
+  },
+  "target_throughput_kg_h": 2.0
+}
