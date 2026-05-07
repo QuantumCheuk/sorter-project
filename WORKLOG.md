@@ -14,8 +14,8 @@
 ---
 
 ## 当前版本
-- **SPEC.md: v0.9 (2026-05-02)**
-- **WORKLOG.md: v1.46 (2026-05-06)** — Predictive maintenance & wear analysis (2026-05-06)
+- **SPEC.md: v0.10 (2026-05-05)**
+- **WORKLOG.md: v1.49 (2026-05-07)** — Vibrating feeder resonance tuning analysis (2026-05-07)
 
 ---
 
@@ -138,5 +138,7 @@
 | 2026-05-04 | WORKLOG v1.39：每日研究任务（00:07）— **Edge Model优化**（sorter/camera/edge_model_optimization.py，820行），为Pi 4边缘部署完成TFLite量化转换与推理性能验证。覆盖内容：①TFLite转换管道（FP32→INT8+动态范围量化，MobileNetV2+自定义分类头）；②INT8量化模拟（Pi 4 INT8：45ms/帧 vs FP32：130ms/帧，2.9×加速）；③标定数据集生成（256样本×14类，覆盖全缺陷类型）；④多通道吞吐量验证（3通道×50bpm=2.70kg/h，利用率仅10%，余量90%✅）；⑤Pi 4 2GB内存可行性（INT8模型6.2MB，系统剩余450MB→模型+OS共1100MB fits ✅）；⑥完整Pi 4部署清单（预飞行/模型部署/运行时验证/多通道集成）。**验收测试模拟器偏差修复**（sorter/simulation/acceptance_test_simulator.py）：M-01基线0.03pF，sigma 0.015，_extra_bias却用固定sigma=2.5造成量级不匹配（额外偏差0.375pF vs 基线0.03pF），导致M-01失败率100%（实测1.291pF临界失败）。修复：将_extra_bias改为按测试自身noise_sigma缩放（2.5× noise_sigma）。修复后M-01通过✅（实测0.083pF），含水率模块100%通过。修复后测试结果：15/18通过（83.3%），失败项：C-05（颜色分辨率ΔE=0.701 vs >1.5）/ D-01（分离精度89.8% vs >90%）/ F-01（给料速度46.2bpm vs <52.0）。Git push成功。
 
 | 2026-05-05 | WORKLOG v1.42：每日研究任务（09:07）— **项目待机维护**：全Python文件语法验证✅（11个核心文件：health_monitor/main/dashboard/database/report_generator/ml_pipeline/synthetic_test_data_generator/quality_benchmark/edge_model_optimization/density_fan_control）；清理遗留临时文件2个（acceptance_test_fixed2.py/acceptance_test_simulator_fixed.py）；剩余TODO仅2项非阻塞项（dark_box_test_protocol辅助功能）。所有课题已完成，项目进入硬件采购阶段待机。Git push成功。 | v1.42 |
+
+| 2026-05-07 | WORKLOG v1.49：每日研究任务（09:05）— **振动给料器共振调谐分析**（sorter/simulation/vibrating_feeder_resonance_analysis.py，~370行，v1.0）。目标：深入分析28BYJ-48电磁振动给料器的驱动机制，为Nema17升级提供理论依据。核心发现：①**驱动频率公式**：28BYJ-48电磁驱动f_drive = BPM/120 Hz（30bpm = 0.25Hz，50bpm = 0.42Hz）；②**静态偏置模式**：当前设计 f_drive/f_n 比值=0.05（<<1），系统运行于静态偏置模式而非真正共振驱动；③**弹簧系统自然频率**：k_eff=200N/m，m_eff=0.208kg，f_n=4.9Hz，Q=7.1，带宽0.7Hz；④**调谐策略**：通过调节弹簧刚度k（降低k→降低f_n→更接近驱动频率→振幅↑）或添加调谐质量块实现振幅优化；⑤**28BYJ-48极限**：PWM调制可实现更高频率，但真正共振驱动(>20Hz)需要Nema17升级；⑥**升级路径**：短期PWM调幅改善均匀性/中期Nema17真正共振50bpm/长期3通道Nema17=2.70kg/h。生成2张图：vibrating_feeder_resonance_analysis.png（振幅响应+给料速率+弹簧刚度灵敏度）/ vibrating_feeder_tuning_curves.png（调谐曲线+阻尼灵敏度+多通道升级路径+功率消耗）。Git push成功（929a8ba）。 | v1.49 |
 
 | 2026-05-07 | WORKLOG v1.48：每日cron检查（00:07）— **项目待机维护**：全部86个Python文件语法验证✅；Git已同步（v1.47 @ 793eab0）；项目状态：所有8个课题全部完成✅，SPEC.md v0.10，WORKLOG.md v1.47，所有TODO已清理（v1.47最后2项非阻塞TODO已解决）。硬件采购阶段待机，无新增TODO或待处理事项。 | v1.48 |
