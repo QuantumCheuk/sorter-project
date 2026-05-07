@@ -15,7 +15,7 @@
 
 ## 当前版本
 - **SPEC.md: v0.10 (2026-05-05)**
-- **WORKLOG.md: v1.49 (2026-05-07)** — Vibrating feeder resonance tuning analysis (2026-05-07)
+- **WORKLOG.md: v1.50 (2026-05-07)** — Digital Twin Simulation (2026-05-07)
 
 ---
 
@@ -138,6 +138,8 @@
 | 2026-05-04 | WORKLOG v1.39：每日研究任务（00:07）— **Edge Model优化**（sorter/camera/edge_model_optimization.py，820行），为Pi 4边缘部署完成TFLite量化转换与推理性能验证。覆盖内容：①TFLite转换管道（FP32→INT8+动态范围量化，MobileNetV2+自定义分类头）；②INT8量化模拟（Pi 4 INT8：45ms/帧 vs FP32：130ms/帧，2.9×加速）；③标定数据集生成（256样本×14类，覆盖全缺陷类型）；④多通道吞吐量验证（3通道×50bpm=2.70kg/h，利用率仅10%，余量90%✅）；⑤Pi 4 2GB内存可行性（INT8模型6.2MB，系统剩余450MB→模型+OS共1100MB fits ✅）；⑥完整Pi 4部署清单（预飞行/模型部署/运行时验证/多通道集成）。**验收测试模拟器偏差修复**（sorter/simulation/acceptance_test_simulator.py）：M-01基线0.03pF，sigma 0.015，_extra_bias却用固定sigma=2.5造成量级不匹配（额外偏差0.375pF vs 基线0.03pF），导致M-01失败率100%（实测1.291pF临界失败）。修复：将_extra_bias改为按测试自身noise_sigma缩放（2.5× noise_sigma）。修复后M-01通过✅（实测0.083pF），含水率模块100%通过。修复后测试结果：15/18通过（83.3%），失败项：C-05（颜色分辨率ΔE=0.701 vs >1.5）/ D-01（分离精度89.8% vs >90%）/ F-01（给料速度46.2bpm vs <52.0）。Git push成功。
 
 | 2026-05-05 | WORKLOG v1.42：每日研究任务（09:07）— **项目待机维护**：全Python文件语法验证✅（11个核心文件：health_monitor/main/dashboard/database/report_generator/ml_pipeline/synthetic_test_data_generator/quality_benchmark/edge_model_optimization/density_fan_control）；清理遗留临时文件2个（acceptance_test_fixed2.py/acceptance_test_simulator_fixed.py）；剩余TODO仅2项非阻塞项（dark_box_test_protocol辅助功能）。所有课题已完成，项目进入硬件采购阶段待机。Git push成功。 | v1.42 |
+
+| 2026-05-07 | WORKLOG v1.50：每日研究任务（13:05）— **实时数字孪生仿真**（sorter/simulation/digital_twin_simulation.py，~720行，v1.0）。目标：为硬件到位前的操作员培训、参数优化和预测性分析建立统一的实时仿真平台。核心模块：①BeanPhysics（物理学引擎）：终端速度v_t=10.08m/s，雷诺数Re=5460（完全湍流），自由落体+阻力耦合建模；②ColorSensor（IMX477 24-bit噪声模型）；③WeightSensor（HX711 24-bit，温度零点漂移40mg/°C）；④MoistureSensor（AD7746，1fF分辨率）；⑤DensitySensor（气流密度分离，PWM→风速映射）；⑥Bean类（14种缺陷注入，物理属性自动调制）；⑦BeanGenerator（蒙特卡洛，产地/品种/处理法/重量/密度/颜色）；⑧DigitalTwin核心（9状态机，完整分选流水线：入口→分级→颜色→称重→密度→水分→分级）；⑨ASCII实时可视化+Benchmark模式。Benchmark结果（1小时模拟，Bean=0.152g）：1ch×30bpm=0.27kg/h❌ / 1ch×50bpm=0.46kg/h❌ / 3ch×50bpm=1.37kg/h❌（均低于2kg/h目标）。关键发现：**在当前50bpm/channel喂料速率下，3通道实际产量1.37kg/h，低于2kg/h目标**。达到2kg/h所需：73bpm/channel（3ch）或 219bpm（单通道）。验证了v1.15吞吐量分析的结论——当前振动给料器喂料速率是核心瓶颈。Git push成功（0e9a663）。 | v1.50 |
 
 | 2026-05-07 | WORKLOG v1.49：每日研究任务（09:05）— **振动给料器共振调谐分析**（sorter/simulation/vibrating_feeder_resonance_analysis.py，~370行，v1.0）。目标：深入分析28BYJ-48电磁振动给料器的驱动机制，为Nema17升级提供理论依据。核心发现：①**驱动频率公式**：28BYJ-48电磁驱动f_drive = BPM/120 Hz（30bpm = 0.25Hz，50bpm = 0.42Hz）；②**静态偏置模式**：当前设计 f_drive/f_n 比值=0.05（<<1），系统运行于静态偏置模式而非真正共振驱动；③**弹簧系统自然频率**：k_eff=200N/m，m_eff=0.208kg，f_n=4.9Hz，Q=7.1，带宽0.7Hz；④**调谐策略**：通过调节弹簧刚度k（降低k→降低f_n→更接近驱动频率→振幅↑）或添加调谐质量块实现振幅优化；⑤**28BYJ-48极限**：PWM调制可实现更高频率，但真正共振驱动(>20Hz)需要Nema17升级；⑥**升级路径**：短期PWM调幅改善均匀性/中期Nema17真正共振50bpm/长期3通道Nema17=2.70kg/h。生成2张图：vibrating_feeder_resonance_analysis.png（振幅响应+给料速率+弹簧刚度灵敏度）/ vibrating_feeder_tuning_curves.png（调谐曲线+阻尼灵敏度+多通道升级路径+功率消耗）。Git push成功（929a8ba）。 | v1.49 |
 
