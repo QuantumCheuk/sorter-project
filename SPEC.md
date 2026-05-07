@@ -1,6 +1,6 @@
 # 生豆分选机 / Green Coffee Bean Sorter
 > 项目代号：HUSKY-SORTER-001  
-> 版本：v0.10 | 2026-05-05
+> 版本：v0.11 | 2026-05-08
 > 目标：全指标分选（大小/颜色/重量/密度/含水率）+ 分类标签 + 数据输出 + 分批喂入烘豆机
 
 ---
@@ -1173,3 +1173,4 @@ python -m sorter.control.main --hardware   # 真实硬件模式
 - v0.7 (2026-04-28): **吞吐量瓶颈深度分析**：`simulation/throughput_bottleneck_analysis.py`。关键发现：单通道设计仅0.27kg/h（振动给料30bpm），距2kg/h目标差87%。3通道×50bpm=2.70kg/h可达成目标，需¥520升级（3×Nema17+turbo blower）。更新设计目标章节（8.1节）。
 - v0.8 (2026-04-29): **实时监控仪表盘**（`sorter/control/dashboard.py`）：Tkinter GUI，9状态颜色编码显示，实时传感器读数，吞吐量折线图，批次进度条，缺陷计数器，控制按钮，MQTT状态，滚动日志。BeanSimulator 50bpm 无需硬件即可演示评估。更新第10节（软件架构）。
 - v0.10 (2026-05-05): **系统安全分析与安全功能设计**（`sorter/simulation/safety_analysis.py`）：HAZOP-style危险源识别（24项，覆盖电气/机械/热/生物/操作5大类）；IEC 61508 SIL等级确定（10个安全功能，SIL1×6/SIL2×3/SIL3×1，全部合规✅）；硬件安全回路设计（E-STOP安全链+K1/K2/K3/K4继电器组，FAIL-SAFE失电停止，GPIO22/10/9/11/8新增安全监控点）；硬件采购新增¥330（安全回路组件）；安全FMEA 8项关键改进建议；安全检查清单（4阶段×34项必检）。更新GPIO表（新增GPIO8/9/10/11/22安全回路脚位）。
+- v0.11 (2026-05-08): **多通道布局与吞吐量升级路径分析**（`sorter/simulation/upgrade_path_analysis.py`）。关键发现：3ch×50bpm=1.37kg/h（差46%，28BYJ-48已达上限）；达标路径：5ch×50bpm=2.05kg/h✅ 或 3ch×80bpm(Nema17)=2.08kg/h✅；推荐方案：3ch×73bpm Nema17升级¥740，2周，2.10kg/h（超出目标5%安全余量）；Pi CPU负荷仅7%（无需EdgeTPU，暂缓¥560）；共振调谐失败为最高风险（MEDIUM）。更新吞吐量目标章节+升级路径。
