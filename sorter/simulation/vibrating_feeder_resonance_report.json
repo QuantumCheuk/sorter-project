@@ -1,0 +1,43 @@
+{
+  "analysis": "Vibrating Feeder Resonance Tuning",
+  "date": "2026-05-07",
+  "version": "v1.49",
+  "spring_params": {
+    "k_eff_N_m": 200.0,
+    "m_eff_kg": 0.20766666666666667,
+    "damping_ratio": 0.05,
+    "natural_freq_hz": 4.94,
+    "Q_factor": 7.1,
+    "bandwidth_hz": 0.7
+  },
+  "working_point_30bpm": {
+    "f_drive_hz": 0.25,
+    "amplitude_mm": 5.0128,
+    "feed_rate_bpm": 0.33,
+    "frequency_ratio": 0.05062,
+    "mode": "static_bias_not_resonance"
+  },
+  "working_point_50bpm": {
+    "f_drive_hz": 0.4167,
+    "amplitude_mm": 5.0357,
+    "frequency_ratio": 0.08436
+  },
+  "resonance_point": {
+    "f_res_hz": 4.94,
+    "amplitude_mm": 50.0,
+    "feed_rate_bpm": 88.9
+  },
+  "key_findings": [
+    "28BYJ-48 f_drive = BPM/120Hz (\u6781\u4f4e\u9891)",
+    "30bpm=0.250Hz >> \u8fdc\u79bb\u5171\u632f f_n=4.9Hz",
+    "\u5f53\u524d\u9759\u6001\u504f\u7f6e\u6a21\u5f0f\uff0c\u632f\u5e45\u53d7\u9650",
+    "\u8c03\u8282\u5f39\u7c27\u521a\u5ea6k\u6216\u8d28\u91cfm\u53ef\u6539\u5584\u632f\u5e45\u54cd\u5e94",
+    "Nema17\u5347\u7ea7\u540e\u53ef\u5b9e\u73b0\u771f\u6b63\u5171\u632f\u9a71\u52a850bpm",
+    "3\u901a\u9053Nema17 = 2.70kg/h \u2705"
+  ],
+  "tuning_recommendations": {
+    "short_term": "PWM\u8c03\u5e45\u6539\u5584\u5747\u5300\u6027\uff08\u4e0d\u6539\u673a\u68b0\uff09",
+    "medium_term": "Nema17\u9ad8\u9891\u5171\u632f\u9a71\u52a8",
+    "long_term": "3\u901a\u9053Nema17\u8fbe\u52302kg/h\u76ee\u6807"
+  }
+}
