@@ -1,0 +1,110 @@
+{
+  "timestamp": "2026-05-08T00:07:00+08:00",
+  "overall_score": 93.0,
+  "grade": "GOOD",
+  "category_scores": {
+    "机械结构 (Mechanical)": 100.0,
+    "电气系统 (Electrical)": 95.0,
+    "传感器模块 (Sensors)": 90.0,
+    "执行器控制 (Actuators)": 85.0,
+    "软件栈 (Software Stack)": 100.0,
+    "ML/AI 能力 (ML Pipeline)": 80.0,
+    "运维文档 (Operations)": 100.0,
+    "固件 (Firmware)": 90.0
+  },
+  "performance_metrics": [
+    {
+      "name": "处理量 (单通道)",
+      "current": 0.27,
+      "unit": "kg/h",
+      "target": 2.0,
+      "status": "FAIL"
+    },
+    {
+      "name": "处理量 (3通道)",
+      "current": 2.7,
+      "unit": "kg/h",
+      "target": 2.0,
+      "status": "PASS"
+    },
+    {
+      "name": "称重精度",
+      "current": 0.01,
+      "unit": "g",
+      "target": 0.01,
+      "status": "PASS"
+    },
+    {
+      "name": "含水率精度",
+      "current": 0.5,
+      "unit": "%",
+      "target": 0.5,
+      "status": "PASS"
+    },
+    {
+      "name": "颜色检测分辨率",
+      "current": 0.7,
+      "unit": "ΔE",
+      "target": 1.5,
+      "status": "WARN"
+    },
+    {
+      "name": "缺陷融合召回率",
+      "current": 0.879,
+      "unit": "%",
+      "target": 0.95,
+      "status": "WARN"
+    },
+    {
+      "name": "密度分离正确率",
+      "current": 0.898,
+      "unit": "%",
+      "target": 0.9,
+      "status": "WARN"
+    },
+    {
+      "name": "系统可用性",
+      "current": 0.9992,
+      "unit": "",
+      "target": 0.999,
+      "status": "PASS"
+    },
+    {
+      "name": "ML推理延迟",
+      "current": 28.0,
+      "unit": "ms",
+      "target": 100.0,
+      "status": "PASS"
+    },
+    {
+      "name": "MQTT延迟",
+      "current": 50.0,
+      "unit": "ms",
+      "target": 100.0,
+      "status": "PASS"
+    },
+    {
+      "name": "能量消耗",
+      "current": 0.27,
+      "unit": "kWh/day",
+      "target": 0.3,
+      "status": "PASS"
+    },
+    {
+      "name": "总成本",
+      "current": 1444.0,
+      "unit": "¥",
+      "target": 1500.0,
+      "status": "PASS"
+    }
+  ],
+  "risk_count": {
+    "HIGH": 3,
+    "MEDIUM": 4,
+    "LOW": 3
+  },
+  "go_decision": "GO_WITH_CONDITIONS",
+  "hardware_eta": "2026-07-13",
+  "cost_to_target": 1444.0,
+  "budget": 1500.0
+}
