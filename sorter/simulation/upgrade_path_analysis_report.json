@@ -1,0 +1,38 @@
+{
+  "analysis_date": "2026-05-08",
+  "target_kgh": 2.0,
+  "baseline": {
+    "n_channels": 3,
+    "bpm": 50,
+    "motor": "28BYJ-48",
+    "throughput_kgh": 1.37,
+    "gap_to_target": 0.63
+  },
+  "recommended_path": {
+    "name": "方案A：3ch×73bpm Nema17升级",
+    "n_channels": 3,
+    "bpm": 73,
+    "motor": "Nema17",
+    "throughput_kgh": 2.1,
+    "one_time_cost": 740,
+    "timeline_weeks": 2,
+    "implementation_difficulty": "MEDIUM"
+  },
+  "viable_alternatives": [
+    {
+      "name": "方案B：4ch×52bpm",
+      "cost": 980,
+      "timeline_weeks": 3
+    },
+    {
+      "name": "方案C：5ch×50bpm",
+      "cost": 1200,
+      "timeline_weeks": 4
+    }
+  ],
+  "recommended_upgrade_plan": {
+    "week1": "硬件准备（Nema17订购+物理测试）",
+    "week2": "集成验证（固件升级+digital_twin验证）"
+  },
+  "key_finding": "3ch×73bpm Nema17升级是达标最低成本路径（¥740，2周，2.10kg/h）"
+}
