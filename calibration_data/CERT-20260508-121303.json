@@ -1,0 +1,259 @@
+{
+  "certificate_id": "CERT-20260508-121303",
+  "calibration_date": "2026-05-08T12:13:03+08:00",
+  "completion_date": "2026-05-08T12:13:06+08:00",
+  "duration_minutes": 0.05,
+  "operator": "FIELD_CALIBRATION_TOOLKIT",
+  "firmware_version": "v1.0",
+  "hardware_revision": "HUSKY-SORTER-001",
+  "mode": "SIMULATE",
+  "results": {
+    "VIBRATING_FEEDER": {
+      "passed": true,
+      "slope": 0.38802061855670106,
+      "intercept": -14.618556701030927,
+      "target_pwm_for_50bpm": 166.53382220096708,
+      "calibration_date": "2026-05-08T12:13:03+08:00",
+      "points": [
+        {
+          "pwm": 40,
+          "bpm": 8.2
+        },
+        {
+          "pwm": 60,
+          "bpm": 9.1
+        },
+        {
+          "pwm": 80,
+          "bpm": 7.6
+        },
+        {
+          "pwm": 100,
+          "bpm": 13.6
+        },
+        {
+          "pwm": 120,
+          "bpm": 42.1
+        },
+        {
+          "pwm": 150,
+          "bpm": 45.1
+        }
+      ],
+      "cv_pct": 3.6612213491679695,
+      "n_beans": 13,
+      "mean_g": 0.15349199473299407,
+      "std_g": 0.005619681680428154
+    },
+    "PHOTO_SENSORS": {
+      "passed": true,
+      "v_no_bean": 3.1799999999999997,
+      "v_bean": -0.04000000000000001,
+      "margin_mV": 3219.9999999999995,
+      "threshold_V": 1.5699999999999998,
+      "avg_ms": 0.13355871511802805,
+      "max_ms": 0.18002757993675272
+    },
+    "LOAD_CELL": {
+      "passed": true,
+      "reference_unit": 414.9818333333333,
+      "offset": 0.000225,
+      "calibration_date": "2026-05-08T12:13:04+08:00",
+      "max_error_g": 0.02300000000000324,
+      "points": [
+        {
+          "weight_g": 0.15,
+          "measured_g": 0.16549999999999998,
+          "error_g": 0.015499999999999986,
+          "passed": true
+        },
+        {
+          "weight_g": 0.2,
+          "measured_g": 0.21050000000000002,
+          "error_g": 0.01050000000000001,
+          "passed": true
+        },
+        {
+          "weight_g": 0.5,
+          "measured_g": 0.4825,
+          "error_g": -0.017500000000000016,
+          "passed": true
+        },
+        {
+          "weight_g": 1.0,
+          "measured_g": 0.982,
+          "error_g": -0.018000000000000016,
+          "passed": true
+        },
+        {
+          "weight_g": 5.0,
+          "measured_g": 4.984,
+          "error_g": -0.016000000000000014,
+          "passed": true
+        },
+        {
+          "weight_g": 10.0,
+          "measured_g": 9.9895,
+          "error_g": -0.010500000000000398,
+          "passed": true
+        },
+        {
+          "weight_g": 50.0,
+          "measured_g": 49.977,
+          "error_g": -0.02300000000000324,
+          "passed": true
+        },
+        {
+          "weight_g": 100.0,
+          "measured_g": 99.981,
+          "error_g": -0.019000000000005457,
+          "passed": true
+        }
+      ],
+      "temp_drift": {
+        "needs_compensation": true,
+        "max_drift_g": 0.4,
+        "results": [
+          {
+            "temp_c": 15,
+            "drift_g": -0.4
+          },
+          {
+            "temp_c": 20,
+            "drift_g": -0.2
+          },
+          {
+            "temp_c": 25,
+            "drift_g": 0.0
+          },
+          {
+            "temp_c": 30,
+            "drift_g": 0.2
+          },
+          {
+            "temp_c": 35,
+            "drift_g": 0.4
+          }
+        ],
+        "recommendation": "Add DS18B20 + auto-tare every 30s"
+      }
+    },
+    "MOISTURE_SENSOR": {
+      "passed": false,
+      "coefficients": {
+        "a": 0.22524999999999998,
+        "b": 0.020649999999999995,
+        "C1": 0.32849999999999996,
+        "C2": 0.5349999999999999,
+        "M1": 5.0,
+        "M2": 15.0
+      },
+      "calibration_date": "2026-05-08T12:13:04+08:00",
+      "sensitivity_pF_per_pct": 0.020649999999999995,
+      "results": [
+        {
+          "expected_pct": 8.0,
+          "measured_pct": 8.493946731234868,
+          "error_pct": 0.49394673123486754,
+          "passed": true
+        },
+        {
+          "expected_pct": 10.0,
+          "measured_pct": 9.69491525423729,
+          "error_pct": 0.3050847457627093,
+          "passed": true
+        },
+        {
+          "expected_pct": 12.0,
+          "measured_pct": 12.552058111380148,
+          "error_pct": 0.5520581113801484,
+          "passed": false
+        }
+      ],
+      "cable_analysis": {
+        "recommendation": "Use plug-in module directly on probe (<5cm)",
+        "rg174_30cm_exceeds_by_pF": 26.25,
+        "cat5e_30cm_exceeds_by_pF": 11.25
+      }
+    },
+    "COLOR_CAMERA": {
+      "passed": true,
+      "dark_mean_DN": 10.2,
+      "dark_noise_DN": 1.8,
+      "fpn_DN": 0.5,
+      "gains": {
+        "R": 0.96,
+        "G": 0.97,
+        "B": 0.98
+      },
+      "calibration_date": "2026-05-08T12:13:06+08:00",
+      "avg_latency_ms": 0.08898054571986502,
+      "max_latency_ms": 0.15087633680888093,
+      "all_latencies_ms": [
+        0.0881709998449959,
+        0.04595160142785806,
+        0.15087633680888093,
+        0.04751575968063161,
+        0.09385776618739773,
+        0.08705910834417543,
+        0.021223639204911243,
+        0.07158141096140827,
+        0.14002102597202362,
+        0.1435478087663674
+      ]
+    },
+    "DENSITY_FAN": {
+      "passed": true,
+      "slope": 0.03823999999999999,
+      "intercept": 0.1332000000000008,
+      "calibration_date": "2026-05-08T12:13:06+08:00",
+      "points": [
+        {
+          "pwm": 20,
+          "velocity_ms": 0.9080000000000001
+        },
+        {
+          "pwm": 40,
+          "velocity_ms": 1.6580000000000001
+        },
+        {
+          "pwm": 60,
+          "velocity_ms": 2.424
+        },
+        {
+          "pwm": 80,
+          "velocity_ms": 3.174
+        },
+        {
+          "pwm": 100,
+          "velocity_ms": 3.9739999999999998
+        }
+      ],
+      "accuracy": 0.9061243496341972,
+      "n_test": 100
+    },
+    "SYSTEM_INTEGRATION": {
+      "passed": true,
+      "tests": {
+        "GPIO_initialization": true,
+        "I2C_device_discovery": true,
+        "HX711_reading": true,
+        "AD7746_reading": true,
+        "Camera_initialization": true,
+        "MQTT_connection": true,
+        "REST_API_startup": true,
+        "Air_valve_test": true,
+        "Stepper_motor_test": true,
+        "Database_write": true
+      }
+    }
+  },
+  "overall_passed": false,
+  "warnings": [
+    "Load cell temperature compensation recommended (DS18B20)",
+    "AD7746 cable exceeds input range — use plug-in module"
+  ],
+  "next_recommended_calibration": "2026-08-06",
+  "total_steps": 7,
+  "passed_steps": 6
+}
