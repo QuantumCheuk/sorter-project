@@ -418,7 +418,7 @@ def run_physical_test_protocol():
     print(f"  12% → {probe.capacitance(12):.3f} pF")
     print(f"  15% → {probe.capacitance(15):.3f} pF")
     print(f"\n  灵敏度 @ 10%: {probe.sensitivity(10):.4f} pF/%")
-    print(f"  ±0.5% 对应 ΔC = {probe.sensitivity(10)*0.5:.3f} fF")
+    print(f"  ±0.5% 对应 \u0394C = {probe.sensitivity(10)*0.5:.3f} fF")
     
     print("\n✅ 测试协议就绪，待硬件采购完成后执行")
 

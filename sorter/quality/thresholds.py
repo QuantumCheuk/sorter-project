@@ -12,7 +12,7 @@ Design Principles (v2/v3):
 ===========================
 - Each sensor threshold defines the NORMAL (acceptable) range for that property
 - A measurement OUTSIDE the normal range = defect detected
-- Color uses ΔE (delta-E) from reference normal green: ΔE > threshold = defect
+- Color uses \u0394E (delta-E) from reference normal green: \u0394E > threshold = defect
 - Physical properties (weight/density/moisture/size): outside [min,max] = defect
 
 Semantic of is_triggered():
@@ -20,9 +20,9 @@ Semantic of is_triggered():
   - is_critical() returns True for extreme danger values (auto-reject)
   - contains() returns True when value is in NORMAL range (not defective)
 
-Color ΔE reference: L*=48, a*=+4, b*=+17 (typical green Arabica)
-  Normal beans: ΔE 0-8 from reference
-  Defect ΔE:     >10 from reference
+Color \u0394E reference: L*=48, a*=+4, b*=+17 (typical green Arabica)
+  Normal beans: \u0394E 0-8 from reference
+  Defect \u0394E:     >10 from reference
 
 Normal physical ranges:
   Weight:   0.10-0.28 g/bean
@@ -96,19 +96,19 @@ NORMAL_SIZE_MESH = (14.0, 19.0)
 @dataclass
 class ColorThreshold:
     """
-    L*a*b* color threshold using ΔE (color difference) from reference normal.
+    L*a*b* color threshold using \u0394E (color difference) from reference normal.
 
-    ΔE = sqrt((L-L_ref)² + (a-a_ref)² + (b-b_ref)²)
+    \u0394E = sqrt((L-L_ref)² + (a-a_ref)² + (b-b_ref)²)
 
-    Normal green coffee: ΔE 0-8 (imperceptible to slight variation)
-    Defect:              ΔE > threshold
+    Normal green coffee: \u0394E 0-8 (imperceptible to slight variation)
+    Defect:              \u0394E > threshold
 
     Reference normal: L*=48, a*=+4, b*=+17
     """
     L_ref: float = 48.0
     a_ref: float = 4.0
     b_ref: float = 17.0
-    # ΔE above this → defect detected
+    # \u0394E above this → defect detected
     delta_e_threshold: float = 10.0
     # Fast bounding-box pre-filter (must pass or immediate defect)
     L_min: float = 35.0
@@ -128,14 +128,14 @@ class ColorThreshold:
         """
         Returns True if color is NORMAL (acceptable).
         Returns False if color is DEFECTIVE.
-        Two-stage: bounding box pre-filter then full ΔE.
+        Two-stage: bounding box pre-filter then full \u0394E.
         """
         # Stage 1: bounding box
         if not (self.L_min <= L <= self.L_max
                 and self.a_min <= a <= self.a_max
                 and self.b_min <= b <= self.b_max):
             return False
-        # Stage 2: ΔE from reference
+        # Stage 2: \u0394E from reference
         return self.delta_e(L, a, b) <= self.delta_e_threshold
 
     def to_dict(self) -> dict:
@@ -273,15 +273,15 @@ class DefectThreshold:
 # 2. Normal weight: 0.10-0.28g. Broken <0.08g. Hollow <0.10g. No weight overlap.
 # 3. Normal density: 0.58-0.78 g/mL. Underdev <0.58. Dead <0.52. No overlap.
 # 4. Normal moisture: 8-14%. Overdry <8%. Overwet >14%. No overlap.
-# 5. Color: ΔE from L*=48/a*=+4/b*=+17 > threshold = defect
+# 5. Color: \u0394E from L*=48/a*=+4/b*=+17 > threshold = defect
 # 6. critical_high/low only for truly dangerous extremes, NOT for defect ranges
 
 DEFAULT_THRESHOLDS: Dict[DefectType, DefectThreshold] = {
 
     # ═══════════════════════════════════════════════════════════════════════
     # COLOR DEFECTS
-    # Normal ref: L*=48, a*=+4, b*=+17  →  ΔE=0
-    # Normal beans: ΔE 0-8 (L* 38-58, a* -1 to +10, b* 10-25)
+    # Normal ref: L*=48, a*=+4, b*=+17  →  \u0394E=0
+    # Normal beans: \u0394E 0-8 (L* 38-58, a* -1 to +10, b* 10-25)
     # ═══════════════════════════════════════════════════════════════════════
 
     DefectType.BLACK: DefectThreshold(

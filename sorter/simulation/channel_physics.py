@@ -147,7 +147,7 @@ NOZZLE_AREA = np.pi * (NOZZLE_DIAM / 2)**2  # m²
 # Available pressure scenarios
 pressures_kPa = [50, 100, 150, 200]  # kPa (gauge pressure)
 
-# Air jet velocity from nozzle: v = C * sqrt(2*ΔP/rho)
+# Air jet velocity from nozzle: v = C * sqrt(2*\u0394P/rho)
 # C = 0.61-0.95 (orifice discharge coefficient)
 C_DISCHARGE = 0.75  # typical for sharp orifice
 

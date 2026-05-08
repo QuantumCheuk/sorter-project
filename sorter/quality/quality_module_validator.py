@@ -73,7 +73,7 @@ def test_threshold_normal_ranges():
     if black_thresh:
         triggered, conf = black_thresh.is_triggered({"color_L": 48.0, "color_a": 4.0, "color_b": 17.0})
         if triggered:
-            print(f"  ❌ BLACK threshold triggered on normal bean (ΔE-based bug)")
+            print(f"  ❌ BLACK threshold triggered on normal bean (\u0394E-based bug)")
             return False
     
     # Check BROKEN not triggered
@@ -203,30 +203,30 @@ def test_batch_aggregation():
 
 
 def test_delta_e_calculation():
-    """Test ΔE color difference calculation."""
-    print("\nTEST 6: ΔE Color Calculation")
+    """Test \u0394E color difference calculation."""
+    print("\nTEST 6: \u0394E Color Calculation")
     print("-" * 40)
     
     from sorter.quality.thresholds import ColorThreshold
     
     ct = ColorThreshold()
     
-    # Normal bean: L=48, a=4, b=17 → ΔE=0
+    # Normal bean: L=48, a=4, b=17 → \u0394E=0
     de_normal = ct.delta_e(48.0, 4.0, 17.0)
-    print(f"  Normal (48,4,17): ΔE={de_normal:.2f} (expect 0)")
+    print(f"  Normal (48,4,17): \u0394E={de_normal:.2f} (expect 0)")
     if abs(de_normal) > 0.01:
-        print(f"  ❌ ΔE calculation error!")
+        print(f"  ❌ \u0394E calculation error!")
         return False
     
-    # Black bean: L=10, a=2, b=8 → should be high ΔE
+    # Black bean: L=10, a=2, b=8 → should be high \u0394E
     de_black = ct.delta_e(10.0, 2.0, 8.0)
-    print(f"  Black (10,2,8): ΔE={de_black:.2f} (expect high, >20)")
+    print(f"  Black (10,2,8): \u0394E={de_black:.2f} (expect high, >20)")
     
     # Brown/fermented: L=35, a=10, b=25
     de_ferm = ct.delta_e(35.0, 10.0, 25.0)
-    print(f"  Brown (35,10,25): ΔE={de_ferm:.2f}")
+    print(f"  Brown (35,10,25): \u0394E={de_ferm:.2f}")
     
-    print(f"  ✅ ΔE calculation OK")
+    print(f"  ✅ \u0394E calculation OK")
     return True
 
 
@@ -397,7 +397,7 @@ def main():
         ("Defect Detection", test_defect_detection),
         ("Grading Boundaries", test_grading_boundaries),
         ("Batch Aggregation", test_batch_aggregation),
-        ("ΔE Calculation", test_delta_e_calculation),
+        ("\u0394E Calculation", test_delta_e_calculation),
         ("Critical Auto-Reject", test_critical_defects_auto_reject),
         ("Config Persistence", test_config_persistence),
         ("Severity Mapping", test_severity_mapping),

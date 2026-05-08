@@ -419,7 +419,7 @@ ASSEMBLY_SEQUENCE: List[AssemblyStep] = [
                  "暗箱不透光，接缝处密封棉；相机焦距6mm时工作距离约50mm", "HIGH"),
     AssemblyStep(6, "相机标定", "白板标定+双摄重现性测试",
                  [5], 30, ["白板（Pantone 98%白）", "色卡"],
-                 "L*a*b*读数稳定性±1.0以内（连续10次）；top/bottom同一白板ΔE<2", "HIGH"),
+                 "L*a*b*读数稳定性±1.0以内（连续10次）；top/bottom同一白板\u0394E<2", "HIGH"),
     AssemblyStep(7, "Load Cell安装", "称重杯+Load Cell+电磁阀总成安装",
                  [1], 35, ["M3螺栓", "Load Cell", "水平仪"],
                  "Load Cell水平安装（±0.5°），称重杯与通道出口对中<0.5mm", "HIGH"),
@@ -688,7 +688,7 @@ def generate_report():
         ("相机系统", [
             "暗箱不透光（关灯用手电检查缝隙）",
             "白板标定：L*=98±1, a*=0±1, b*=0±1",
-            "top/bottom同一白板ΔE<2",
+            "top/bottom同一白板\u0394E<2",
             "相机USB不松动（用扎带固定）",
         ]),
         ("软件系统", [

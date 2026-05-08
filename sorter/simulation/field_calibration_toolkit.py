@@ -219,7 +219,7 @@ class LoadCellCalibrator:
             delta_t = temp - ref_temp
             drift_g = delta_t * 0.040
             status = "✅ OK" if abs(drift_g) <= 0.1 else "⚠️ WARNING"
-            print(f"  {temp:>2d}°C (Δ={delta_t:>+3d}°C): drift={drift_g:+.3f}g {status}")
+            print(f"  {temp:>2d}°C (\u0394={delta_t:>+3d}°C): drift={drift_g:+.3f}g {status}")
             results.append({"temp_c": temp, "drift_g": drift_g})
         max_drift = max(abs(r["drift_g"]) for r in results)
         print(f"\n  Max drift: {max_drift:.3f}g")
@@ -425,7 +425,7 @@ class ColorCameraCalibrator:
 
     PASS 标准：
       - 暗噪声 std < 5 DN
-      - 白平衡后 R=G=B (Δ < 5%)
+      - 白平衡后 R=G=B (\u0394 < 5%)
       - T1→T2 触发延迟 < 1ms
     """
 
@@ -478,7 +478,7 @@ class ColorCameraCalibrator:
         delta_G = abs(wb_G - 1.0)
         delta_B = abs(wb_B - 1.0)
         print(f"\n  White balance gains: R={wb_R:.3f}  G={wb_G:.3f}  B={wb_B:.3f}")
-        print(f"  Deviation from 1.0: ΔR={delta_R:.3f}  ΔG={delta_G:.3f}  ΔB={delta_B:.3f}")
+        print(f"  Deviation from 1.0: \u0394R={delta_R:.3f}  \u0394G={delta_G:.3f}  \u0394B={delta_B:.3f}")
         max_delta = max(delta_R, delta_G, delta_B)
         status = "✅ PASS" if max_delta < self.criteria["max_wb_delta"] else "⚠️ MARGINAL"
         print(f"  Max delta: {max_delta:.3f} ({self.criteria['max_wb_delta']} criterion) [{status}]")

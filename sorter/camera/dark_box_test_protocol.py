@@ -298,9 +298,9 @@ class DarkBoxPhysicalTester:
         3. 验证色偏是否在可接受范围
 
         评分标准：
-        - 所有区域ΔE < 3 → 100分（人眼无感知）
-        - ΔE 3-6 → 70分（轻微色偏）
-        - ΔE > 6 → 不合格（需改善遮光或LED分布）
+        - 所有区域\u0394E < 3 → 100分（人眼无感知）
+        - \u0394E 3-6 → 70分（轻微色偏）
+        - \u0394E > 6 → 不合格（需改善遮光或LED分布）
         """
         print("\n[TEST 3] 背景色一致性（色偏检测）")
         print("-" * 40)
@@ -340,7 +340,7 @@ class DarkBoxPhysicalTester:
         for name, vals in region_values.items():
             print(f"    {name}: L*={vals['L']:.1f}, a*={vals['a']:.1f}, b*={vals['b']:.1f}")
 
-        # 计算ΔE（以中心为参考）
+        # 计算\u0394E（以中心为参考）
         center = region_values["中心"]
         max_delta_e = 0
         delta_e_values = {}
@@ -352,7 +352,7 @@ class DarkBoxPhysicalTester:
             delta_e_values[name] = float(delta_e)
             max_delta_e = max(max_delta_e, delta_e)
 
-        print(f"  最大色偏ΔE: {max_delta_e:.2f}")
+        print(f"  最大色偏\u0394E: {max_delta_e:.2f}")
 
         if max_delta_e < 3:
             score = 100
@@ -362,14 +362,14 @@ class DarkBoxPhysicalTester:
             score = 75
             passed = True
             recommendations = [
-                f"检测到轻微色偏(ΔE={max_delta_e:.1f})，对颜色分析有轻微影响",
+                f"检测到轻微色偏(\u0394E={max_delta_e:.1f})，对颜色分析有轻微影响",
                 "建议检查LED是否均匀分布，内壁是否需要重新喷涂漫反射白漆"
             ]
         else:
             score = 40
             passed = False
             recommendations = [
-                f"色偏严重(ΔE={max_delta_e:.1f})，颜色检测结果不可靠",
+                f"色偏严重(\u0394E={max_delta_e:.1f})，颜色检测结果不可靠",
                 "检查内壁是否有反光（镜面反射），建议贴漫反射纸",
                 "检查4个LED是否全部点亮，位置是否对称"
             ]
@@ -399,10 +399,10 @@ class DarkBoxPhysicalTester:
         方法：
         1. 放置标准色卡（X-Rite Macbeth 24色 或 灰卡）
         2. 拍摄后用算法提取各色块的L*a*b*
-        3. 与色卡标准值对比，计算平均ΔE
+        3. 与色卡标准值对比，计算平均\u0394E
 
         评分标准：
-        - 平均ΔE < 3 → 100分（优秀）
+        - 平均\u0394E < 3 → 100分（优秀）
         - 3-6 → 80分（良好）
         - 6-10 → 60分（一般，需算法优化）
         - > 10 → 不合格
@@ -467,9 +467,9 @@ class DarkBoxPhysicalTester:
         avg_delta_E = (delta_E_white + delta_E_gray) / 2
 
         print(f"  白点实测: L*={white_L:.1f}, a*={white_a:.1f}, b*={white_b:.1f}")
-        print(f"  白点ΔE: {delta_E_white:.2f}")
-        print(f"  灰点ΔE: {delta_E_gray:.2f}")
-        print(f"  平均ΔE: {avg_delta_E:.2f}")
+        print(f"  白点\u0394E: {delta_E_white:.2f}")
+        print(f"  灰点\u0394E: {delta_E_gray:.2f}")
+        print(f"  平均\u0394E: {avg_delta_E:.2f}")
 
         if avg_delta_E < 3:
             score = 100

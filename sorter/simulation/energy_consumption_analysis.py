@@ -188,7 +188,7 @@ total_area = area_box + area_sides  # m²
 
 delta_t = total_heat / (5.7 * total_area)  # 自然对流 W/(m²·K)
 print(f"\n  估算外壳表面积: {total_area:.2f} m²")
-print(f"  温升估算: ΔT ≈ {delta_t:.1f}°C (环境30°C时外壳约{30+delta_t:.0f}°C)")
+print(f"  温升估算: \u0394T ≈ {delta_t:.1f}°C (环境30°C时外壳约{30+delta_t:.0f}°C)")
 print(f"  ⚠️  空压机+LED为主要热源，密闭外壳需加装散热风扇")
 
 # ============================================================

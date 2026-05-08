@@ -143,7 +143,7 @@ PERFORMANCE_METRICS = [
     MetricSpec("处理量 (3通道)", 2.0, 2.70, "kg/h", "PASS"),
     MetricSpec("称重精度", 0.01, 0.01, "g", "PASS"),  # HX711 24-bit
     MetricSpec("含水率精度", 0.5, 0.5, "%", "PASS"),  # AD7746 1fF
-    MetricSpec("颜色检测分辨率", 1.5, 0.70, "ΔE", "WARN"),  # 模拟值
+    MetricSpec("颜色检测分辨率", 1.5, 0.70, "\u0394E", "WARN"),  # 模拟值
     MetricSpec("缺陷融合召回率", 0.95, 0.879, "%", "WARN"),  # 贝叶斯融合
     MetricSpec("密度分离正确率", 0.90, 0.898, "%", "WARN"),  # 模拟值
     MetricSpec("系统可用性", 0.999, 0.9992, "", "PASS"),  # 3 通道 MTBF

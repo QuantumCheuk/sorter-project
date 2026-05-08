@@ -193,7 +193,7 @@ def main():
         dP_ch = [(0.65*A*np.sqrt(2*d/RHO_AIR))**2 * fan_Q_free**2 / (fan_Q_free/1000/60)**2
                   if d > 0 else 0 for d in dP_fan]
         ax.plot(Q_range*1000*60, dP_fan, ls=ls, lw=1.5, label=f'{w_mm}mm wide')
-    ax.set_xlabel('Flow Q (L/min)'); ax.set_ylabel('Backpressure ΔP (Pa)')
+    ax.set_xlabel('Flow Q (L/min)'); ax.set_ylabel('Backpressure \u0394P (Pa)')
     ax.set_title('Fan Curve + System Curves\n(Equilibrium = operating point)')
     ax.legend(fontsize=8); ax.grid(True, alpha=0.3)
 

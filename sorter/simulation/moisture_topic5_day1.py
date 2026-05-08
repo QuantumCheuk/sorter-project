@@ -248,8 +248,8 @@ class MeasurementCircuit:
         
         对于 ±0.5% 精度 @ 10% 含水率：
         - 10%含水率对应 C ≈ 几 pF
-        - 0.5% 精度 → ΔC = C × 0.005
-        - 若 C = 10pF: ΔC = 50fF (0.05 pF)
+        - 0.5% 精度 → \u0394C = C × 0.005
+        - 若 C = 10pF: \u0394C = 50fF (0.05 pF)
         
         AD7746 (24-bit): 可分辨 1fF → 完全满足需求
         """
@@ -353,7 +353,7 @@ def run_moisture_simulation():
     
     # ── 图6: 精度需求分析 ──
     ax6 = axes[1, 2]
-    # 展示5%-15%范围对应的ΔC
+    # 展示5%-15%范围对应的\u0394C
     C_vals = [probe.capacitance_with_bean(m, 0.3) * 1e12 for m in M_range]
     dC = np.diff(C_vals)
     dM = np.diff(M_range)
@@ -362,14 +362,14 @@ def run_moisture_simulation():
     ax6.bar(M_range[1:], sens_pct, width=0.05, color='teal', alpha=0.7)
     ax6.set_xlabel('Moisture Content (%, w.b.)')
     ax6.set_ylabel('dC/dM (pF per 1% moisture)')
-    ax6.set_title('Moisture Resolution: ΔC per 1% MC Change')
+    ax6.set_title('Moisture Resolution: \u0394C per 1% MC Change')
     ax6.grid(True, alpha=0.3, axis='y')
     
-    # 标出 ±0.5% 对应的 ΔC
+    # 标出 ±0.5% 对应的 \u0394C
     for target_err in [0.5, 1.0, 2.0]:
         required_dc = np.mean(sens_pct) * target_err
         ax6.axhline(required_dc, linestyle='--', alpha=0.7,
-                   label=f'±{target_err}% err → ΔC={required_dc:.4f}pF')
+                   label=f'±{target_err}% err → \u0394C={required_dc:.4f}pF')
     ax6.legend(fontsize=7)
     
     plt.tight_layout()
@@ -394,7 +394,7 @@ def run_moisture_simulation():
     print(f"  C @ 5%  = {C5*1e12:.4f} pF")
     print(f"  C @ 10% = {probe.capacitance_with_bean(10, 0.3)*1e12:.4f} pF")
     print(f"  C @ 15% = {C15*1e12:.4f} pF")
-    print(f"  ΔC (5-15%) = {(C15-C5)*1e12:.4f} pF")
+    print(f"  \u0394C (5-15%) = {(C15-C5)*1e12:.4f} pF")
     print(f"  平均灵敏度 = {np.mean(sensitivities):.4f} pF/%")
     
     print("\n📊 ±0.5% 精度对应的最小电容分辨率:")
@@ -402,7 +402,7 @@ def run_moisture_simulation():
     avg_C = probe.capacitance_with_bean(10, 0.3)
     required_fF = avg_C * 0.005 * 1e15
     print(f"  @ 10% moisture: C = {avg_C*1e12:.4f} pF")
-    print(f"  ±0.5% → ΔC = {required_fF:.2f} fF")
+    print(f"  ±0.5% → \u0394C = {required_fF:.2f} fF")
     print(f"  AD7746 (24-bit, ~1fF resolution) ✅ 完全满足")
     print(f"  555电路方案 → 需要额外放大/积分电路")
     

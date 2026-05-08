@@ -88,8 +88,8 @@ ACCEPTANCE_TESTS = [
     ("C-01", "White board L* stability", "color", "%", 98.0, 100.0, 0.15, -0.05),
     ("C-02", "White board a* stability", "color", "%", -1.0, 1.0, 0.10, 0.0),
     ("C-03", "White board b* stability", "color", "%", -1.0, 1.0, 0.10, 0.0),
-    ("C-04", "Dual-camera consistency ΔL*", "color", "ΔE", None, 2.0, 0.15, 0.1),
-    ("C-05", "Color detection resolution ΔE", "color", "ΔE", 1.5, None, 0.20, 0.30"),
+    ("C-04", "Dual-camera consistency dL*", "color", "dE", None, 2.0, 0.15, 0.1),
+    ("C-05", "Color detection resolution dE", "color", "dE", 1.5, None, 0.20, 0.30),
     ("C-06", "Dark box light blocking", "color", "lux", None, 50.0, 5.0, 2.0),
     # Weighing system (4)
     ("W-01", "Zero stability - 10 readings std", "weight", "mg", None, 10.0, 0.8, 0.3),
@@ -172,8 +172,8 @@ class AcceptanceTestSimulator:
             "C-01": (99.0, 0.15),   # white L* near 99
             "C-02": (0.0, 0.10),    # white a* near 0
             "C-03": (0.0, 0.10),    # white b* near 0
-            "C-04": (0.5, 0.15),    # ΔL* small difference
-            "C-05": (1.0, 0.20),    # ΔE small
+            "C-04": (0.5, 0.15),    # dL* small difference
+            "C-05": (1.0, 0.20),    # dE small
             "C-06": (10.0, 5.0),    # lux low in dark box
             "W-01": (2.0, 0.8),     # std in mg
             "W-02": (20.0, 3.5),    # calibration error mg

@@ -91,7 +91,7 @@ BENCHMARKS = {
     # --- 颜色检测 ---
     "color_lighting_stability": {
         "description": "LED光源稳定性（60秒采集10张图）",
-        "unit": "ΔL* (CIE L*)",
+        "unit": "\u0394L* (CIE L*)",
         "target": "< 2.0",
         "pass_threshold": 2.0,
         "fail_threshold": 5.0,
@@ -99,7 +99,7 @@ BENCHMARKS = {
     "color_reproducibility": {
         "description": "同一豆子5次检测重现性",
         "unit": "σ L*a*b*",
-        "pass_threshold": 1.5,  # ΔE00 < 1.5 人眼不可辨
+        "pass_threshold": 1.5,  # \u0394E00 < 1.5 人眼不可辨
         "fail_threshold": 3.0,
     },
 
@@ -217,7 +217,7 @@ def run_color_calibration(mock: bool = True) -> CalibrationRecord:
 
     步骤：
     1. 预热LED光源 5 分钟
-    2. 采集10张白板（参照卡）图像，检验 ΔL*
+    2. 采集10张白板（参照卡）图像，检验 \u0394L*
     3. 采集同一粒参考豆 5 次，检验重现性
     4. （真实硬件）用 ColorChecker 验证色彩还原
     """
@@ -241,18 +241,18 @@ def run_color_calibration(mock: bool = True) -> CalibrationRecord:
     phase = CalibrationPhase.ZERO.value
     white_readings = [random.gauss(95.0, 0.5) for _ in range(10)] if mock else []
     white_std = statistics.stdev(white_readings) if len(white_readings) > 1 else 0.0
-    # 模拟：转换到 ΔL* 指标（白板 L* ≈ 95，σ=0.5 → ΔL*=0.5）
+    # 模拟：转换到 \u0394L* 指标（白板 L* ≈ 95，σ=0.5 → \u0394L*=0.5）
     delta_L = white_std * 1.96  # 95% 置信区间
     bm = BENCHMARKS["color_lighting_stability"]
     if delta_L < bm["pass_threshold"]:
         result = "PASS"
-        notes = f"ΔL*={delta_L:.2f} < {bm['pass_threshold']} ✅"
+        notes = f"\u0394L*={delta_L:.2f} < {bm['pass_threshold']} ✅"
     elif delta_L < bm["fail_threshold"]:
         result = "WARNING"
-        notes = f"ΔL*={delta_L:.2f} 在临界区，建议检查LED驱动"
+        notes = f"\u0394L*={delta_L:.2f} 在临界区，建议检查LED驱动"
     else:
         result = "FAIL"
-        notes = f"ΔL*={delta_L:.2f} > {bm['fail_threshold']} 光源不稳定 ❌"
+        notes = f"\u0394L*={delta_L:.2f} > {bm['fail_threshold']} 光源不稳定 ❌"
 
     return CalibrationRecord(
         timestamp=timestamp, module=module, phase=phase,
