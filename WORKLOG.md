@@ -3,6 +3,8 @@
 
 ---
 
+| 2026-05-09 | WORKLOG v1.60：每日研究任务（21:06）— **批次调度与生产规划优化器**（sorter/simulation/batch_scheduling_optimizer.py，611行，v1.0）。目标：为硬件到位后的实际生产运行准备完整的批次排序和换班规划工具。覆盖内容：①BatchSchedulingOptimizer（优化多批次排序，最小化换班时间，3种产能配置分析）；②ProductionReportGenerator（ASCII班次报告+日汇总，含批次序列/品质分布/设备利用率）；③BeanDefectProfile（埃塞俄比亚耶加雪菲/哥伦比亚惠兰/巴西桑托斯3种原产地缺陷模型，含分级分布函数）；④5个基准测试场景：当前系统（3ch×50bpm=12.9kg/10h shift）/ Nema17升级（3ch×73bpm=19.8kg✅）/ 5通道扩展（5ch×50bpm=19.3kg✅）/ 换班优化（日节省375min）/ 多班次（日总产量15.5kg=77.5%目标）；⑤关键发现：当前系统每10小时班次产量12.9kg（仅达目标64.5%），Nema17升级后99%达标；日产量15.5kg（目标20kg），需Nema17升级才能持续达标。Git push成功（3ab9b33→e0e1e71）。 | v1.60 |
+
 | 2026-05-09 | WORKLOG v1.59：每日研究任务（15:10）— **预测性维护分析工具修复 + README版本同步**。①修复 `sorter/simulation/predictive_maintenance_analysis.py` 缺失的 `from datetime import datetime` 导入（line 8），使 `generate_maintenance_report()` 正常运行；②运行验证：Report ID MAINT-20260509-150900，年度维护成本 ¥872.20/年（配件¥477.27+停机损失¥394.93），加权MTBF 91.9个月，空压机（¥136.99/年）和HQ相机（¥39.95/年）为最高维护成本组件；③README.md版本同步更新：SPEC.md v0.8→v0.11，WORKLOG v1.27→v1.58；④关键发现汇总：空压机按需运行（非连续）可延长寿命3×；SD卡为Pi最薄弱环节建议使用SSD；HQ Camera和涡轮鼓风机交付周期60天需立即订购；⑤推荐备件库存总价值 ¥2,288（Pi4×2=¥580/涡轮鼓风机×2=¥400/空压机×2=¥400等17项）。Git push成功（c4f8b3b→1894d0e）。 | v1.59 |
 
 | 2026-05-09 | WORKLOG v1.58：每日研究任务（12:10）— **统计过程控制（SPC）与过程能力分析系统**（sorter/simulation/spc_quality_monitor.py，1551行，v1.0）。目标：为硬件到位后的现场质量控制和持续改进建立完整SPC体系，同时作为操作员质量监控培训工具。覆盖内容：①SPCParameter数据模型（5个关键质量参数：bean_weight/moisture_content/color_score/density/defect_rate）；②SPCMonitor监控引擎（I-MR图/X̄-R图/p-chart，8条Western Electric判定规则，自动告警）；③过程能力分析（Cp/Cpk/Pp/Ppk/Cpk_u/Cpk_l，含世界级/优秀/可接受/差/极差五级判定）；④帕累托分析（ABC分类：BROKEN/IMMATURE/FERRY为A类占77%，BLACK/OVERSIZE为B类，UNDERSIZE/MOLD为C类）；⑤ASCII可视化（X̄-R图/I-MR图/帕累托图/过程能力仪表盘/综合仪表板）；⑥SPCSimulator模拟器（蒙特卡洛仿真，4种场景：normal/gradual_drift/sudden_shift/improving）；⑦基准测试结果：Scenario1正常批次（Cpk=1.914 ✅ WORLD CLASS）；Scenario2漂移注入检测（Western Electric Rule 1/2/3/4触发⚠️）；Scenario3多批次趋势（5批次×500粒，moisture +0.8%/批次，缺陷率从2%→40%）；⑧JSON报告生成（sorter/reports/spc_quality_report.json）。关键发现：moisture和density的Cpk偏低（<1.0）说明-spec window设置过严或传感器分辨率需要提高；8条Western Electric规则可有效检测批次内的渐进漂移。Git push成功。 | v1.58 |
@@ -28,8 +30,8 @@
 ---
 
 ## 当前版本
-- **SPEC.md: v0.10 (2026-05-05)**
-- **WORKLOG.md: v1.50 (2026-05-07)** — Digital Twin Simulation (2026-05-07)
+- **SPEC.md: v0.11 (2026-05-09)**
+- **WORKLOG.md: v1.60 (2026-05-09)** — Batch Scheduling Optimizer
 
 ---
 
