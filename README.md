@@ -31,8 +31,8 @@ HUSKY-SORTER-001 是一款面向小型精品咖啡作坊的**全指標生豆分�
 
 ```
 sorter-project/
-├── SPEC.md              # 完整設計規範（v0.8）
-├── WORKLOG.md          # 項目進度追蹤（v1.27）
+├── SPEC.md              # 完整設計規範（v0.11）
+├── WORKLOG.md          # 項目進度追蹤（v1.58）
 ├── README.md            # 本文件
 ├── sorter/              # 樹莓派端主程序
 │   ├── camera/          # 圖像採集和分析（11文件）
@@ -97,7 +97,7 @@ sorter-project/
 
 | 文檔 | 說明 |
 |------|------|
-| [SPEC.md](./SPEC.md) | 完整設計規範（v0.8）|
+| [SPEC.md](./SPEC.md) | 完整設計規範（v0.11）|
 | [WORKLOG.md](./WORKLOG.md) | 項目進度追蹤 |
 | [sorter/docs/OPERATOR_MANUAL.md](./sorter/docs/OPERATOR_MANUAL.md) | **操作員手冊（v1.0）** |
 | [sorter/docs/ANNOTATION_GUIDE.md](./sorter/docs/ANNOTATION_GUIDE.md) | **ML標注指南（v1.0）** |
