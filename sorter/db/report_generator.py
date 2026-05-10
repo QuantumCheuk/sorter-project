@@ -74,9 +74,25 @@ class BatchReportGenerator:
 
         # Defect breakdown
         defect_counts = json.loads(batch.defect_counts_json or "{}")
-        report["defect_distribution"] = {
-            BeanDefect(int(k)).label: v for k, v in defect_counts.items()
-        }
+        report["defect_distribution"] = {}
+        for k, v in defect_counts.items():
+            # Handle both string keys ('MOLD', 'BROKEN') and integer keys
+            if k.isdigit():
+                report["defect_distribution"][BeanDefect(int(k)).label] = v
+            else:
+                # Try exact key first, fall back to _member_map_ key lookup
+                name = k.upper()
+                if hasattr(BeanDefect, name):
+                    report["defect_distribution"][BeanDefect[name].label] = v
+                else:
+                    # Defensive: try to find matching member by prefix (MOLD -> MOLDY)
+                    for member in BeanDefect:
+                        if member.name.startswith(name):
+                            report["defect_distribution"][member.label] = v
+                            break
+                    else:
+                        # Last resort: store as-is
+                        report["defect_distribution"][k] = v
 
         if include_beans:
             beans = self.db.get_beans_for_batch(batch_id)

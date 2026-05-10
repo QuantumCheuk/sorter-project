@@ -3,6 +3,8 @@
 
 ---
 
+| 2026-05-10 | WORKLOG v1.63：每日研究任务（09:13）— **系统鲁棒性测试框架**（sorter/simulation/robustness_test_framework.py，810行，v1.0）。目标：在硬件到位前建立完整的软件栈压力测试能力，验证系统在真实故障条件下的韧性。覆盖内容：①SensorNoiseInjector（高斯噪声注入，σ=10%/100%两档）；②NetworkLatencySimulator（500ms±100ms延迟+网络分区模拟）；③ResourceContentionSimulator（CPU多核压测+内存增长）；④DatabaseContentionSimulator（SQLite写锁模拟）；⑤CascadeFailureSimulator（级联故障→回退→恢复链）；⑥DataCorruptionSimulator（NaN/符号翻转/范围越界）；⑦9个测试场景（sensor_noise×2/sensor_drift/sensor_offline/network_latency/network_partition/cpu_overload/cascade_failure/corrupted_data）；⑧RobustnessTestRunner统一编排器+RobustnessMetrics评分系统+ASCII可视化。测试结果：9/9 PASS ✅，可用性100%，平均恢复时间0.35s，综合评分70/100（🟡GOOD）。关键发现：漂移检测成功（0.0207g漂移被检测⚠️）；HX711离线回退机制正常工作；数据范围验证成功拒绝异常读数。修复：SorterController初始化（simulate=True→get_sorter_config().to_dict()）；移除不存在的LoadCellSimulator/MoistureSensorSimulator导入。Git push成功（098d480）。 | v1.63 |
+
 | 2026-05-10 | WORKLOG v1.62：每日研究任务（06:13）— **OEE监控系统**（sorter/simulation/oee_monitor.py，699行，v1.0）。目标：为升级后系统（3ch×50bpm=2.70kg/h）建立完整的OEE跟踪体系，同时作为硬件到位后操作员现场诊断工具。覆盖内容：①OEECalculator（Availability×Performance×Quality公式，IDEAL_CYCLE_TIME_SEC=0.273s对应2kg/h目标@0.152g/bean）；②Six Big Losses追踪（unplanned/setup/small stops/reduced speed/defect rework/startup rejects，6类分钟损失+等效换算）；③5个场景标定到升级系统吞吐量（excellent: OEE=77.6% Rate=1.64kg/h / typical: OEE=45.7% Rate=1.27kg/h / startup_learning: OEE=12.3% Rate=0.56kg/h）；④ASCII可视化（OEE仪表盘/组件柱状图/六损失柱图/历史趋势）；⑤Monte Carlo仿真1000次（P10/P50/P90分布）；⑥World-Class对标（85%目标）差距分析；⑦JSON报告（含OEE/OAE/OPE/OQE全部指标+Grade A率+生产速率kg/h）。关键修复：IDEAL_CYCLE_TIME_SEC从1.0s（3600 beans/h理论最大值）修正为0.273s（219 beans/min=2kg/h目标）——原值导致性能计算严重失真（excellent场景OEE仅16.6%，修正后77.6%✅）。Git push成功（df702a3→最新的main）。 | v1.62 |
 
 | 2026-05-10 | WORKLOG v1.61：每日研究任务（00:12）— **ML模型现场验证框架**（sorter/camera/ml_field_validation.py，924行，v1.0）。目标：硬件到位后用于验证部署模型是否满足质量基准的完整测试套件，同时在预硬件阶段建立基线。覆盖内容：①SyntheticTestDatasetGenerator（合成测试数据集生成器，基于LAB颜色范围的14类咖啡豆图像）；②MLInferenceEngine（ML推理引擎，支持TFLite加载或模拟推理，伽马分布延迟建模）；③9项验证测试：InferenceLatency（p95=42.3ms<50ms✅）/ ConfidenceDistribution（高置信度15%<30%⚠️）/ CriticalDefectRecall（mold45%/fermented30%/black25%/foreign35%/insect45%，均值36%<85%⚠️）/ NormalClassSpecificity（15%<90%⚠️）/ ThroughputSustainability（✅Pi4可持续处理50+bpm）/ MultiChannelLoad（3ch×50bpm，0.3ms<<40ms✅）/ RobustnessNoise（10%噪声下准确率14%<70%⚠️）+PipelineIntegration（numpy/cv2/PIL✅，tflite缺失预期）/ ModelFileIntegrity（模型未训练，预期）。④MLFieldValidationOrchestrator（统一编排器+JSON报告生成+ASCII报告打印）；⑤评分归一化修复（修复前289009.8→修复后39.8/100）。基准测试结果：4/9 PASS✅，综合评分39.8/100（预硬件基线），硬件到位后预期大幅提升。关键发现：置信度和召回率低是模拟推理（随机baseline）的必然结果，真实TFLite模型训练后应显著改善；TFLite runtime缺失不影响pipeline验证（仅影响实际推理）；推理延迟29.5ms远低于50ms目标✅，Pi 4边缘部署可行。Git push成功（e0e1e71→1527384）。 | v1.61 |
@@ -33,7 +35,7 @@
 
 ## 当前版本
 - **SPEC.md: v0.11 (2026-05-09)**
-- **WORKLOG.md: v1.60 (2026-05-09)** — Batch Scheduling Optimizer
+- **WORKLOG.md: v1.63 (2026-05-10)** — Robustness Test Framework
 
 ---
 
