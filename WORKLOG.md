@@ -33,11 +33,13 @@
 
 ## 项目状态：✅ 所有课题完成（进入下一阶段：硬件采购+物理测试）
 
+| 2026-05-11 | WORKLOG v1.65：每日研究任务（03:05）— **ESP32固件管理工具三件套**（sorter/control/，3个文件，~750行，v1.0）。目标：为硬件组装阶段的固件更新、版本追踪和故障恢复建立完整工具链。覆盖内容：①`firmware_update_tool.py`（380行）：esptool.py封装，支持编译+上传、固件完整性验证（SHA256+大小检查）、当前版本查询（发送STATUS命令）；②`firmware_version_manager.py`（490行）：固件版本管理器，支持版本历史JSON追踪、多设备注册、版本对比（MAJOR/MINOR/PATCH语义）、自动生成CHANGELOG.md；③`esp32_bootloader_recovery.py`（330行）：ESP32砖机恢复工具，支持RTS强制bootloader模式、Flash全擦除、默认分区表恢复、芯片信息读取。语法验证全部通过✅。ESP32固件目前状态：v1.0.0 build-2026-05-03，767行代码，UART命令协议（JSON格式），3任务FreeRTOS架构，支持HX711/光电传感器/电磁阀/步进电机控制。Git push成功（5f1ef06）。 | v1.65 |
+
 ---
 
 ## 当前版本
 - **SPEC.md: v0.11 (2026-05-08)**
-- **WORKLOG.md: v1.64 (2026-05-11)** — CI/CD Validation Pipeline
+- **WORKLOG.md: v1.65 (2026-05-11)** — ESP32 firmware management tools
 
 ---
 
