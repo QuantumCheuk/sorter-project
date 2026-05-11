@@ -35,11 +35,13 @@
 
 | 2026-05-11 | WORKLOG v1.65：每日研究任务（03:05）— **ESP32固件管理工具三件套**（sorter/control/，3个文件，~750行，v1.0）。目标：为硬件组装阶段的固件更新、版本追踪和故障恢复建立完整工具链。覆盖内容：①`firmware_update_tool.py`（380行）：esptool.py封装，支持编译+上传、固件完整性验证（SHA256+大小检查）、当前版本查询（发送STATUS命令）；②`firmware_version_manager.py`（490行）：固件版本管理器，支持版本历史JSON追踪、多设备注册、版本对比（MAJOR/MINOR/PATCH语义）、自动生成CHANGELOG.md；③`esp32_bootloader_recovery.py`（330行）：ESP32砖机恢复工具，支持RTS强制bootloader模式、Flash全擦除、默认分区表恢复、芯片信息读取。语法验证全部通过✅。ESP32固件目前状态：v1.0.0 build-2026-05-03，767行代码，UART命令协议（JSON格式），3任务FreeRTOS架构，支持HX711/光电传感器/电磁阀/步进电机控制。Git push成功（5f1ef06）。 | v1.65 |
 
+| 2026-05-11 | WORKLOG v1.66：每日研究任务（12:10）— **生产调度器与批次优化工具**（sorter/simulation/production_scheduler.py，955行，v1.0）。目标：为硬件到位后的实际生产运营建立完整的批次调度与生产计划优化工具，整合OEE监控和蒙特卡洛生产分析，提供风险感知调度建议。覆盖内容：①GreenCoffeeLot数据模型（10大产区/4种处理法/紧急度评分/屏幕分级配比/screen_mix）；②ProductionScheduler（4种策略：FIFO/OEE_Optimized/Defect_Priority/Mixed，优先级=紧急度分数）；③班次管理（3班制Morning/Afternoon/Night，8h/班，含计划停机维护时间）；④OEE吞吐量建模（excellent=77.6%/typical=45.7%/startup=12.3%，基于v1.62 OEE分析）；⑤批次拆分算法（最优批次2.0kg/个以配合250g烘豆机容量）；⑥What-if场景对比（4策略×3 OEE场景=12种组合，FIFO+excellent OEE=88.0/100最优）；⑦MonteCarloScheduler（500次蒙特卡洛风险模拟，P10/P50/P90分布，Good Product=416±4kg/Lots at Risk=3/Utilization=99.2%）；⑧5维度评分体系（OEE 25%/Grade A 25%/Utilization 20%/Risk 15%/Efficiency 15%）；⑨ScheduleReport JSON输出（sorter/reports/schedule_report.json）。演示结果：6批次共470kg，236个2kg小批，3个lot处于风险（肯尼亚AA明天烘焙），总分73.0/100（typical OEE），Grade A率63.4%（低于85%世界级目标，原因是Brazil Natural等screen mix天然偏低）。修复：Shift._create_shifts中Night枚举错误（Night→ShiftType.NIGHT）/_calculate_metrics中引用未定义变量metrics.score→改用inline计算theoretical_min。Git push成功（fed8e9d）。 | v1.66 |
+
 ---
 
 ## 当前版本
 - **SPEC.md: v0.11 (2026-05-08)**
-- **WORKLOG.md: v1.65 (2026-05-11)** — ESP32 firmware management tools
+- **WORKLOG.md: v1.66 (2026-05-11)** — Production scheduler & batch optimizer
 
 ---
 
