@@ -419,7 +419,7 @@ ml_checks = []
 val_src = open(PROJECT_ROOT / "sorter/camera/ml_pipeline_validator.py").read()
 emo_src = open(PROJECT_ROOT / "sorter/camera/edge_model_optimization.py").read()
 qb_src = open(PROJECT_ROOT / "sorter/camera/quality_benchmark.py").read()
-ann_guide = PROJECT_ROOT / "sorter/camera/ANNOTATION_GUIDE.md"
+ann_guide = PROJECT_ROOT / "sorter/docs/ANNOTATION_GUIDE.md"
 
 ml_checks.append(("ML pipeline validator (8 tests, 93.8/100)", "93.8" in val_src))
 ml_checks.append(("SyntheticBeanGenerator tested", "SyntheticBeanGenerator" in val_src))
