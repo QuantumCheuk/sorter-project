@@ -3,6 +3,8 @@
 
 ---
 
+| 2026-05-13 | WORKLOG v1.71：每日研究任务（06:05）— **路径修复 + CI验证**。执行每日检查发现并修复`production_readiness_report.py`中的路径错误：`sorter/camera/ANNOTATION_GUIDE.md`→`sorter/docs/ANNOTATION_GUIDE.md`（文件实际位置）。全项目110个Python文件语法检查通过✅。CI管道验证：`PYTHONPATH=. python3 sorter/tests/ci_pipeline.py`→10/10 PASS ✅，评分100.0%，耗时0.90s。Git push成功（3c6dad4→829f0d1）。项目状态：所有课题完成，硬件采购阶段待机。 | v1.71 |
+
 | 2026-05-12 | WORKLOG v1.69：每日研究任务（18:05）— **批次配方管理系统**（sorter/production/batch_recipe_manager.py，757行，v1.0）。目标：为咖啡生豆分选建立产地/处理法对应的预设品质配置文件，让操作员直接加载配方而无需手动配置阈值。覆盖内容：①9个预定义批次配方（Ethiopian_Washed/Natural/Kenyan_Washed AA+AB/Colombian_Washed/Brazilian_Natural/Costa_Rican_Washed/Guatemalan_Washed/Yemen_Natural/Default_Commercial）；②7个数据类（ColorThresholds含top/bottom双摄像头L*a*b*/WeightThresholds/MoistureThresholds/DensityThresholds/DefectWeights/QualityTargets/BatchRecipe主类）；③RecipeManager类（get_recipe/validate_recipe/list_recipes/load_recipe/apply_recipe完整API）；④CLI支持（--list/--show/--load/--apply/--validate/--export）；⑤配方覆盖10大产区/4种处理法/9个豆种/2025收获年；⑥质量目标（defect_rate_max_pct/color_score_min/batch_size_kg/target_throughput_kg_h）；⑦操作员中文备注（Ethiopian_Washed："精品水洗豆，高端定位，颜色较浅是正常特征不要误判为缺陷"/Kenyan_Washed："肯尼亚AA高品质定位，严格剔除轻微缺陷，发酵过度检测优先级最高"）；⑧配方导出JSON（sorter/recipes/all_recipes_20260512.json，622行，9个配方，162个字段）。CLI验证：9个配方全部可列出✅/Ethiopian_Washed和Kenyan_Washed详情完整✅/配方验证Valid: True✅/导出成功✅/Python语法检查通过✅。Git push成功（04f32ee→14c7c02）。 | v1.69 |
 
 | 2026-05-13 | WORKLOG v1.70：每日研究任务（03:05）— **QC审核与合规认证系统**（sorter/quality/qc_audit_system.py，1663行，v1.0）。目标：在硬件到位前建立完整的生产质量审核与SCA合规文档生成能力，为实际操作与认证做准备。覆盖内容：①BatchAuditReport（完整批次审核追踪，含时间戳/传感器读数/缺陷计数/等级认证）；②SCABeanGradeSheet（SCA绿咖啡证书，预杯测质量评估，感官评分估算+产地特征描述）；③DefectDifferentialDiagnosisSystem（缺陷鉴别诊断系统，解决5类模糊分类问题：发霉vs发酵/过干vs碎豆/空心vs发育不全/虫蛀vs异物/黑豆vs过度发酵，基于ΔE/L*/重量/密度/含水率多传感器决策树）；④SupplierQualityProfile（供应商质量画像，批次历史聚合/一致性评分/风险等级/ Specialty批次率）；⑤ComplianceCertificate（ISO 22000/SCA合规证书，含6项合规检查+有效期）；⑥QCAuditReportGenerator统一编排器（generate_audit_report/generate_certificate/generate_sca_grade_sheet完整API）；⑦4产地演示运行（Ethiopian Yirgacheffe Natural/Kenyan Kirinyaga Washed/Brazilian Cerrado Natural/Colombian Huila Washed，3000豆/批次，5%缺陷率仿真）。发现并修复3个BUG：①ComplianceCertificate.overall_compliant为property而非method（调用处去掉()）修复；②SCABeanGradeSheet缺失total_score属性（改用preliminary_points）修复；③AuditSeverity字符串比较错误（"PRIMARY"/"SECONDARY"→AuditSeverity.CRITICAL/MAJOR）修复；④ComplianceCertificate.sca_eq_defects字段名与Certificate定义不匹配（保持cert内部一致）；⑤total_beans字段不存在（→total_beans_processed）修复。CLI验证：4产地全部处理成功✅/BatchAuditReport SCA评分范围54.6-58.3/Compliance率50%（Cat-1 primary defects存在）✅/缺陷鉴别诊断4场景全部正确（low_weight_hollow:85%/moldy_dark:70%/fermented:70%/normal:80%）✅/SupplierQualityProfile聚合正确✅/JSON+TEXT导出正常✅/Python语法检查通过✅。Git push成功（14c7c02→）。 | v1.70 |
@@ -47,7 +49,7 @@
 
 ## 当前版本
 - **SPEC.md: v0.11 (2026-05-08)**
-- **WORKLOG.md: v1.68 (2026-05-12)** — Commissioning project tracker
+- **WORKLOG.md: v1.71 (2026-05-13)** — Path fix + CI validation
 
 ---
 
