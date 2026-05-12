@@ -3,6 +3,8 @@
 
 ---
 
+| 2026-05-12 | WORKLOG v1.68：每日研究任务（12:08）— **设备安装调试项目跟踪器v1.0**（sorter/simulation/commissioning_project_tracker.py，1061行，v1.0）。目标：为硬件到位后的安装调试阶段建立完整的项目管理工具，跟踪30个任务、7个里程碑和9项风险。覆盖内容：①7阶段30任务（H-01收货验收→P-03最终验收，M/E/C/S/I/P六阶段）；②7个关键里程碑（MS-01硬件验收/MS-02机械组装/MS-03电气布线/MS-04软件部署/MS-05传感器标定/MS-06系统认证/MS-07生产就绪）；③设备交付预估：2026-07-13（HQ Camera+涡轮鼓风机约60天）；④目标生产就绪：2026-07-24；⑤风险登记册9项（R-01 HQ Camera货期/HQ相机货期/R-02 AD7746电缆效应/R-03 Nema17共振/R-04 GPIO接线错误等）；⑥ASCII进度条/甘特时间线/风险矩阵；⑦Phase 1-7详细任务清单（验收/组装/布线/部署/标定/认证/移交）。发现并修复2个BUG：①commissioning_project_tracker.py:660 语法错误（字符串未闭合，contingency字段多行合并→修复为单行）；②python314_compat_fix.py:39 Python 3.14语法警告（b'\u0394'无效转义→修复为b'\\u0394'→b'\\\\u0394'）。全项目Python文件语法检查通过（-Werror）。Git push成功（04f32ee→368f3ad）。 | v1.68 |
+
 | 2026-05-10 | WORKLOG v1.63：每日研究任务（09:13）— **系统鲁棒性测试框架**（sorter/simulation/robustness_test_framework.py，810行，v1.0）。目标：在硬件到位前建立完整的软件栈压力测试能力，验证系统在真实故障条件下的韧性。覆盖内容：①SensorNoiseInjector（高斯噪声注入，σ=10%/100%两档）；②NetworkLatencySimulator（500ms±100ms延迟+网络分区模拟）；③ResourceContentionSimulator（CPU多核压测+内存增长）；④DatabaseContentionSimulator（SQLite写锁模拟）；⑤CascadeFailureSimulator（级联故障→回退→恢复链）；⑥DataCorruptionSimulator（NaN/符号翻转/范围越界）；⑦9个测试场景（sensor_noise×2/sensor_drift/sensor_offline/network_latency/network_partition/cpu_overload/cascade_failure/corrupted_data）；⑧RobustnessTestRunner统一编排器+RobustnessMetrics评分系统+ASCII可视化。测试结果：9/9 PASS ✅，可用性100%，平均恢复时间0.35s，综合评分70/100（🟡GOOD）。关键发现：漂移检测成功（0.0207g漂移被检测⚠️）；HX711离线回退机制正常工作；数据范围验证成功拒绝异常读数。修复：SorterController初始化（simulate=True→get_sorter_config().to_dict()）；移除不存在的LoadCellSimulator/MoistureSensorSimulator导入。Git push成功（098d480）。 | v1.63 |
 
 | 2026-05-11 | WORKLOG v1.64：每日研究任务（00:07）— **CI/CD验证管道v1.0**（sorter/tests/ci_pipeline.py，631行，v1.0）。目标：为项目建立自动化代码质量门禁，确保每次push的软件质量基线。覆盖内容：①10项测试：Python语法验证（102文件✅）/ 模块导入验证（17模块✅）/ 数据模型完整性（BeanDefect/BatchState/SortGrade/BeanRecord✅）/ 配置schema验证（8配置节✅）/ 状态机覆盖（9状态15事件✅）/ 数据库schema（4表✅）/ 报告生成器（JSON/CSV/TEXT 3格式✅）/ 仿真模块冒烟测试（SPCMonitor/RobustnessTestRunner/OEECalculator✅）/ 文档完整性（9文档✅）/ Git状态。初始运行发现3个BUG：①generate_csv()签名错误（返回str而非file path），导致CSV MISSING→修复；②\\033 ANSI转义序列在Python 3.14中警告→修复为\\x1b；③sorter.simulation.spill_quality_monitor（不存在）→更正为spc_quality_monitor。同时修复report_generator.py中BeanDefect键查找问题（支持数字key如"BROKEN"）。最终结果：10/10 PASS ✅，评分100.0%，耗时1.11s。Git push成功（9ffc727）。 | v1.64 |
@@ -41,7 +43,7 @@
 
 ## 当前版本
 - **SPEC.md: v0.11 (2026-05-08)**
-- **WORKLOG.md: v1.66 (2026-05-11)** — Production scheduler & batch optimizer
+- **WORKLOG.md: v1.68 (2026-05-12)** — Commissioning project tracker
 
 ---
 
