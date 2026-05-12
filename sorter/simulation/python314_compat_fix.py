@@ -36,7 +36,7 @@ def fix_file(path):
         return False
     
     # Check if file is already using \u0394 (no fix needed)
-    if b'\\u0394' in content or b'\u0394' in content:
+    if b'\\u0394' in content or b'\\u0394' in content:
         return False
     
     # Replace UTF-8 Δ (CE 94) with Python unicode escape \u0394
