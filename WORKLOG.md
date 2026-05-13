@@ -3,6 +3,10 @@
 
 ---
 
+| 2026-05-13 | WORKLOG v1.72：每日研究任务（12:04）— **Bug修复 × 2**。①`batch_tracking_system.py`时间戳格式BUG：Python 3.25+ datetime.now().isoformat()已包含"+00:00"，再追加"Z"导致双重时区（+00:00+00:00）→ ValueError。修复：`created.isoformat().replace("+00:00", "Z")`，确保单一时区后缀；修复后CLI功能正常（list/track/trace/summary/recall全部验证✅）。②`dark_box_test_protocol.py` line 537残留TODO（真实样本缺陷检测逻辑）：实现完整真实样本测试管道——遍历defect_samples_dir/{defect_type}/目录，加载.png/.jpg图像，计算LAB均值，用阈值法回退检测，计算P/R/F1指标；支持8类缺陷（bleached/moldy/fermented/broken/immature/insect/black/good）。CI管道验证：10/10 PASS ✅，评分100.0%，耗时0.87s。Git push成功（15b8df1→4cceae8）。项目状态：所有课题完成，硬件采购阶段待机。 | v1.72 |
+
+---
+
 | 2026-05-13 | WORKLOG v1.71：每日研究任务（06:05）— **路径修复 + CI验证**。执行每日检查发现并修复`production_readiness_report.py`中的路径错误：`sorter/camera/ANNOTATION_GUIDE.md`→`sorter/docs/ANNOTATION_GUIDE.md`（文件实际位置）。全项目110个Python文件语法检查通过✅。CI管道验证：`PYTHONPATH=. python3 sorter/tests/ci_pipeline.py`→10/10 PASS ✅，评分100.0%，耗时0.90s。Git push成功（3c6dad4→829f0d1）。项目状态：所有课题完成，硬件采购阶段待机。 | v1.71 |
 
 | 2026-05-12 | WORKLOG v1.69：每日研究任务（18:05）— **批次配方管理系统**（sorter/production/batch_recipe_manager.py，757行，v1.0）。目标：为咖啡生豆分选建立产地/处理法对应的预设品质配置文件，让操作员直接加载配方而无需手动配置阈值。覆盖内容：①9个预定义批次配方（Ethiopian_Washed/Natural/Kenyan_Washed AA+AB/Colombian_Washed/Brazilian_Natural/Costa_Rican_Washed/Guatemalan_Washed/Yemen_Natural/Default_Commercial）；②7个数据类（ColorThresholds含top/bottom双摄像头L*a*b*/WeightThresholds/MoistureThresholds/DensityThresholds/DefectWeights/QualityTargets/BatchRecipe主类）；③RecipeManager类（get_recipe/validate_recipe/list_recipes/load_recipe/apply_recipe完整API）；④CLI支持（--list/--show/--load/--apply/--validate/--export）；⑤配方覆盖10大产区/4种处理法/9个豆种/2025收获年；⑥质量目标（defect_rate_max_pct/color_score_min/batch_size_kg/target_throughput_kg_h）；⑦操作员中文备注（Ethiopian_Washed："精品水洗豆，高端定位，颜色较浅是正常特征不要误判为缺陷"/Kenyan_Washed："肯尼亚AA高品质定位，严格剔除轻微缺陷，发酵过度检测优先级最高"）；⑧配方导出JSON（sorter/recipes/all_recipes_20260512.json，622行，9个配方，162个字段）。CLI验证：9个配方全部可列出✅/Ethiopian_Washed和Kenyan_Washed详情完整✅/配方验证Valid: True✅/导出成功✅/Python语法检查通过✅。Git push成功（04f32ee→14c7c02）。 | v1.69 |
