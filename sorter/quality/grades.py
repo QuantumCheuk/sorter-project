@@ -232,6 +232,9 @@ def grade_from_score(score: float, defect_rate: float = 0.0) -> QualityGrade:
     """
     Map a quality score (and optional defect rate) to a grade.
 
+    Uses AND logic: a bean must satisfy BOTH the score threshold
+    AND the defect rate threshold to qualify for a grade.
+
     Args:
         score: Quality score 0-100
         defect_rate: Defect rate percentage
@@ -239,11 +242,11 @@ def grade_from_score(score: float, defect_rate: float = 0.0) -> QualityGrade:
     Returns:
         QualityGrade enum value
     """
-    if score >= 95.0 or defect_rate < 1.0:
+    if score >= 95.0 and defect_rate < 1.0:
         return QualityGrade.A
-    elif score >= 85.0 or defect_rate < 3.0:
+    elif score >= 85.0 and defect_rate < 3.0:
         return QualityGrade.B
-    elif score >= 70.0 or defect_rate < 10.0:
+    elif score >= 70.0 and defect_rate < 10.0:
         return QualityGrade.C
     else:
         return QualityGrade.REJECT

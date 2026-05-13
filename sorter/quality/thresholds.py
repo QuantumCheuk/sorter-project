@@ -204,8 +204,18 @@ class DefectThreshold:
         """
         Returns (is_defective: bool, confidence: float 0-1).
 
-        A defect is triggered when a measurement falls OUTSIDE
-        the normal range for that sensor type.
+        A defect is triggered when a measurement falls INSIDE
+        the defect's defined sensor ranges.
+
+        For color sensors: contains() returns True if NORMAL (not defective).
+          → triggered = NOT contains() = color is abnormal
+        For physical sensors (weight/density/moisture/size):
+          → The defect's range IS the abnormal range (e.g., BROKEN = 0.02-0.08g, below normal).
+          → triggered = contains() = value IS in the defect range.
+
+        Only sensors that have a threshold definition for THIS defect
+        are checked. A sensor being absent from the defect's definition means
+        that sensor is not relevant to detecting this defect type.
         """
         if not self.enabled:
             return False, 0.0
@@ -214,45 +224,40 @@ class DefectThreshold:
         if confidence < self.min_confidence:
             return False, confidence
 
-        triggered_sensors: List[SensorType] = []
-        total_checks = 0
+        # Only check sensors that are actually defined for this defect threshold
+        sensor_checks: List[Tuple[SensorType, bool]] = []
 
         if self.color and "color_L" in measurements:
-            total_checks += 1
             L = measurements["color_L"]
             a = measurements.get("color_a", self.color.a_ref)
             b = measurements.get("color_b", self.color.b_ref)
-            # contains() = True if NORMAL → NOT triggered
-            # contains() = False if DEFECTIVE → triggered
-            if not self.color.contains(L, a, b):
-                triggered_sensors.append(SensorType.COLOR)
+            # Color: contains() = True if NORMAL → NOT triggered
+            #       contains() = False if DEFECTIVE → triggered
+            sensor_checks.append((SensorType.COLOR, not self.color.contains(L, a, b)))
 
         if self.weight and "weight_g" in measurements:
-            total_checks += 1
             w = measurements["weight_g"]
-            if self.weight.is_critical(w) or not self.weight.contains(w):
-                triggered_sensors.append(SensorType.WEIGHT)
+            # Physical: the defect's range IS the abnormal range
+            # triggered = value IS in the defect range (contains = True)
+            sensor_checks.append((SensorType.WEIGHT, self.weight.contains(w)))
 
         if self.density and "density" in measurements:
-            total_checks += 1
             d = measurements["density"]
-            if self.density.is_critical(d) or not self.density.contains(d):
-                triggered_sensors.append(SensorType.DENSITY)
+            sensor_checks.append((SensorType.DENSITY, self.density.contains(d)))
 
         if self.moisture and "moisture_pct" in measurements:
-            total_checks += 1
             m = measurements["moisture_pct"]
-            if self.moisture.is_critical(m) or not self.moisture.contains(m):
-                triggered_sensors.append(SensorType.MOISTURE)
+            sensor_checks.append((SensorType.MOISTURE, self.moisture.contains(m)))
 
         if self.size and "size_mesh" in measurements:
-            total_checks += 1
             s = measurements["size_mesh"]
-            if self.size.is_critical(s) or not self.size.contains(s):
-                triggered_sensors.append(SensorType.SIZE)
+            sensor_checks.append((SensorType.SIZE, self.size.contains(s)))
 
-        if total_checks == 0:
+        if not sensor_checks:
             return False, confidence
+
+        total_checks = len(sensor_checks)
+        triggered_sensors = [st for st, triggered in sensor_checks if triggered]
 
         if self.require_all_sensors:
             triggered = len(triggered_sensors) == total_checks
@@ -290,9 +295,9 @@ DEFAULT_THRESHOLDS: Dict[DefectType, DefectThreshold] = {
         severity=5,
         color=ColorThreshold(
             delta_e_threshold=20.0,   # Obvious black/dark brown
-            L_min=0.0, L_max=28.0,   # Must be very dark
-            a_min=-5.0, a_max=12.0,
-            b_min=0.0, b_max=18.0,
+            L_min=0.0, L_max=65.0,   # Very wide — color diff >20 is the real detector, not L box
+            a_min=-5.0, a_max=15.0,
+            b_min=0.0, b_max=30.0,
         ),
         min_confidence=0.8,
     ),
@@ -303,9 +308,9 @@ DEFAULT_THRESHOLDS: Dict[DefectType, DefectThreshold] = {
         severity=5,
         color=ColorThreshold(
             delta_e_threshold=15.0,   # Clear discoloration + possible greenish tint
-            L_min=15.0, L_max=42.0,  # Darker than normal (normal L*: 38-58)
-            a_min=-3.0, a_max=14.0,
-            b_min=3.0, b_max=30.0,
+            L_min=0.0, L_max=65.0,   # Very wide — color diff >15 is the real detector, not L box
+            a_min=-5.0, a_max=18.0,
+            b_min=0.0, b_max=35.0,
         ),
         min_confidence=0.75,
     ),
@@ -316,9 +321,9 @@ DEFAULT_THRESHOLDS: Dict[DefectType, DefectThreshold] = {
         severity=4,
         color=ColorThreshold(
             delta_e_threshold=12.0,   # Brownish/reddish discoloration
-            L_min=22.0, L_max=60.0,  # Often more brown, may be lighter
-            a_min=-4.0, a_max=18.0,   # More brown (higher a*)
-            b_min=5.0, b_max=35.0,    # More yellow/brown (higher b*)
+            L_min=15.0, L_max=70.0,  # Very wide — color diff >12 is the real detector
+            a_min=-5.0, a_max=20.0,  # More brown (higher a*)
+            b_min=3.0, b_max=38.0,   # More yellow/brown (higher b*)
         ),
         min_confidence=0.7,
     ),
