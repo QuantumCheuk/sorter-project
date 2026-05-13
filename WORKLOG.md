@@ -3,6 +3,10 @@
 
 ---
 
+| 2026-05-14 | WORKLOG v1.73：每日研究任务（00:07）— **生产工作流集成测试修复**（sorter/simulation/production_workflow_integration.py，~750行，v1.73）。发现并修复昨日未提交文件中的10个API不匹配问题：①BatchLot缺少required字段stage和updated_at（→RECEIVED + iso timestamp）；②BatchMetrics不含beans_grade_b/beans_grade_c（字段定义只有beans_sorted/beans_grade_a/beans_rejected）；③BatchAuditReport创建：DefectCount需要category/eq_full_defects而非percentage；④DefectCategory：PRIMARY=moldy/fermented，SECONDARY=其他；⑤SCABeanGradeSheet使用to_dict()而非to_json()，检查sca_pass属性而非total_score；⑥SupplierQualityProfile直接batch_history.append()而非add_batch()；⑦SCAGrade枚举只有SPECIALTY/PREMIUM/COMMERCIAL/BELOW_STANDARD（无SUPERIOR）；⑧SensorReadingSummary正确字段：channel/n_samples/mean/std/min_val/max_val/median/cv_pct/out_of_spec_count（而非avg_val/std_val/unit）；⑨Diagnose签名：bean_id/weight_g/moisture_pct/density_g_mL/lab_color/color_std（字典参数传入）；⑩generate_certificate/sca_grade_sheet需要BatchAuditReport对象而非原始参数。增加_make_batch_audit_report和_make_defect_counts辅助函数。运行结果：43/43 PASS（100%），CI 10/10 PASS（100.0%）。Git push成功（eb21335→47ed7cf）。项目状态：所有课题完成，硬件采购阶段待机。 | v1.73 |
+
+---
+
 | 2026-05-13 | WORKLOG v1.72：每日研究任务（12:04）— **Bug修复 × 2**。①`batch_tracking_system.py`时间戳格式BUG：Python 3.25+ datetime.now().isoformat()已包含"+00:00"，再追加"Z"导致双重时区（+00:00+00:00）→ ValueError。修复：`created.isoformat().replace("+00:00", "Z")`，确保单一时区后缀；修复后CLI功能正常（list/track/trace/summary/recall全部验证✅）。②`dark_box_test_protocol.py` line 537残留TODO（真实样本缺陷检测逻辑）：实现完整真实样本测试管道——遍历defect_samples_dir/{defect_type}/目录，加载.png/.jpg图像，计算LAB均值，用阈值法回退检测，计算P/R/F1指标；支持8类缺陷（bleached/moldy/fermented/broken/immature/insect/black/good）。CI管道验证：10/10 PASS ✅，评分100.0%，耗时0.87s。Git push成功（15b8df1→4cceae8）。项目状态：所有课题完成，硬件采购阶段待机。 | v1.72 |
 
 ---
