@@ -3,7 +3,7 @@
 
 ---
 
-| 2026-05-14 | WORKLOG v1.73：每日研究任务（00:07）— **生产工作流集成测试修复**（sorter/simulation/production_workflow_integration.py，~750行，v1.73）。发现并修复昨日未提交文件中的10个API不匹配问题：①BatchLot缺少required字段stage和updated_at（→RECEIVED + iso timestamp）；②BatchMetrics不含beans_grade_b/beans_grade_c（字段定义只有beans_sorted/beans_grade_a/beans_rejected）；③BatchAuditReport创建：DefectCount需要category/eq_full_defects而非percentage；④DefectCategory：PRIMARY=moldy/fermented，SECONDARY=其他；⑤SCABeanGradeSheet使用to_dict()而非to_json()，检查sca_pass属性而非total_score；⑥SupplierQualityProfile直接batch_history.append()而非add_batch()；⑦SCAGrade枚举只有SPECIALTY/PREMIUM/COMMERCIAL/BELOW_STANDARD（无SUPERIOR）；⑧SensorReadingSummary正确字段：channel/n_samples/mean/std/min_val/max_val/median/cv_pct/out_of_spec_count（而非avg_val/std_val/unit）；⑨Diagnose签名：bean_id/weight_g/moisture_pct/density_g_mL/lab_color/color_std（字典参数传入）；⑩generate_certificate/sca_grade_sheet需要BatchAuditReport对象而非原始参数。增加_make_batch_audit_report和_make_defect_counts辅助函数。运行结果：43/43 PASS（100%），CI 10/10 PASS（100.0%）。Git push成功（eb21335→47ed7cf）。项目状态：所有课题完成，硬件采购阶段待机。 | v1.73 |
+| 2026-05-14 | WORKLOG v1.74：每日研究任务（12:04）— **备件与耗材管理文档**（sorter/docs/MAINTENANCE_GUIDE.md，~250行，v1.0）。目标：在硬件到位前建立完整的备件库存与耗材管理策略，为持续运行提供保障。覆盖内容：①29项备件清单（机械8项/电气10项/传感器4项），含规格/数量/单价/预计寿命/供应商；②10项耗材清单（C-01至C-10，涵盖3D打印线材/气路管/清洁剂/螺丝固定胶/导热硅脂/SD卡等）；③备件状态三级分类（✅常备/⚠️建议备/○按需备）；④年度备件预算¥2,300（机械¥500/电气¥800/传感器¥600/耗材¥400）；⑤A/B/C库存警戒体系；⑥备件更换标准流程（紧急更换6步/预防性更换6步）；⑦供應商資訊（6家，淘寶/天貓/京東/1688/官網，含交期）；⑧附錄A備件庫存記錄表模板。CI管道验证：10/10 PASS ✅，评分100.0%，耗时0.86s。Git push成功（e67da7a）。项目状态：所有课题完成，硬件采购阶段待机。 | v1.74 |
 
 ---
 
@@ -57,7 +57,7 @@
 
 ## 当前版本
 - **SPEC.md: v0.11 (2026-05-08)**
-- **WORKLOG.md: v1.71 (2026-05-13)** — Path fix + CI validation
+- **WORKLOG.md: v1.74 (2026-05-14)** — Maintenance guide + CI 100%
 
 ---
 
