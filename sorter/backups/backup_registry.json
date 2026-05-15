@@ -1,0 +1,57 @@
+[
+  {
+    "backup_id": "BK-20260515_071321",
+    "timestamp": "2026-05-15T07:13:21Z",
+    "level": "full",
+    "rotation": "daily",
+    "size_bytes": 26309,
+    "sha256": "53f50366f1e3947fd652fb26309915cb8ce47341f92422f7c1f1e559a524ebb9",
+    "components": {
+      "database": {
+        "success": true,
+        "size_bytes": 4137,
+        "sha256": "d456506ae2d28af63e6120207a4fb4b96d71d61a13ee6e086f0ed08c5fb241b4",
+        "error": "",
+        "duration_ms": 2
+      },
+      "config": {
+        "success": true,
+        "size_bytes": 84900,
+        "sha256": "b9ab701818f1e1f4e61e8252950f9dbbcfcc67fb9fe1d478785e9825d0ea4950",
+        "error": "",
+        "duration_ms": 8
+      },
+      "ml_models": {
+        "success": true,
+        "size_bytes": 0,
+        "sha256": "",
+        "error": "",
+        "duration_ms": 0
+      },
+      "calibration": {
+        "success": true,
+        "size_bytes": 0,
+        "sha256": "",
+        "error": "",
+        "duration_ms": 0
+      },
+      "firmware": {
+        "success": true,
+        "size_bytes": 0,
+        "sha256": "",
+        "error": "",
+        "duration_ms": 0
+      }
+    },
+    "database_version": "v1 (0 tables)",
+    "firmware_version": "",
+    "ml_model_version": "",
+    "status": "verified",
+    "error_message": "",
+    "cloud_synced": false,
+    "cloud_url": "",
+    "restore_count": 0,
+    "verified_at": "2026-05-15T07:13:21Z",
+    "expires_at": ""
+  }
+]

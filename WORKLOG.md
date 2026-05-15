@@ -55,9 +55,13 @@
 
 ---
 
+| 2026-05-15 | WORKLOG v1.79：每日研究任务（12:04）— **灾难恢复与备份系统**（sorter/production/disaster_recovery.py，~950行，v1.0）。目标：在硬件到位前建立完整的备份/恢复能力，确保生产数据（批次记录/标定证书/配置文件/ML模型/固件）可恢复、可追溯、可轮换。覆盖内容：①5大组件备份（DatabaseBacker/SQLite在线备份+SQL dump gzip压缩/ConfigBacker/config.py+recipes+thresholds快照/ModelBacker/TFLite+H5权重+训练管道/CalibrationBacker/CERT-*.json+yaml标定证书/FirmwareBacker/ESP32 .hex+.bin固件）；②BackupArchiver（gzip压缩tar归档，SHA256完整性校验）；③BackupRegistry（JSON注册表，追踪所有备份元数据）；④CloudSync（通用HTTP PUT offsite备份接口，支持token认证）；⑤轮换策略（DAILY=7天/WEEKLY=4周/MONTHLY=12月保留期，auto-rotate）；⑥自动轮换调度（schedule命令，根据weekday/month-day自动选择daily/weekly/monthly）；⑦RestoreManager（选择性组件恢复，restore_count追踪）；⑧CLI支持（backup/restore/schedule/list/show/status/rotate/verify/cloud-sync/extract十个子命令）。首次运行验证：备份创建成功✅（BK-20260515_071321，25.7KB，SHA256验证通过），所有5组件备份成功（database 4.0KB/config 82.9KB/models/calibration/firmware 0.0B预期），状态verified✅。清理2个stale运行中条目（运行失败残留）。CI管道验证：10/10 PASS ✅，评分100.0%，耗时0.90s，119个Python文件全部有效。Git push成功（main→latest）。项目状态：所有课题完成，硬件采购阶段待机，production模块新增灾难恢复能力，备份系统就绪待配置offsite endpoint。 | v1.79 |
+
+---
+
 ## 当前版本
 - **SPEC.md: v0.11 (2026-05-08)**
-- **WORKLOG.md: v1.74 (2026-05-14)** — Maintenance guide + CI 100%
+- **WORKLOG.md: v1.79 (2026-05-15)** — Disaster Recovery v1.0 + CI 100%
 
 ---
 
