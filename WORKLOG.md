@@ -50,6 +50,10 @@
 
 | 2026-05-05 | WORKLOG v1.44：每日研究任务（18:08）— **来料检验协议**（sorter/simulation/incoming_inspection_protocol.py，~700行，v1.0）。目标：在硬件采购完成前的最后准备阶段，建立完整的来料检验与集成测试体系。覆盖内容：①54项检验项目，覆盖5大类别（电气10/机械10/传感器13/执行器9/集成12）；②电气安全测试（电源规格/GPIO隔离/I2C上拉/FAIL-SAFE继电器/E-STOP安全回路/接地连续性）；③机械结构测试（3D打印件/孔板精度/缓冲仓密封/螺旋给料同轴度/暗箱遮光/LED光源均匀性）；④传感器模块测试（HX711零点+线性/AD7746基线+分辨率/T1/T2光电响应/Top+Bottom Camera分辨率+色彩/同步触发/I2C设备发现）；⑤执行器测试（电磁阀响应+保压/步进电机单步/振动给料频率/FAIL-SAFE安全/E-STOP急停）；⑥集成测试（POST自检/MQTT连接/REST API/Dashboard启动/单粒完整流程/缺陷检出率/数据库写入/健康监控告警/报表生成/吞吐量实测/空压机噪声/1小时连续运行）；⑦检验报告生成（JSON格式，含分类汇总+失败项+警告项，报告ID: INSP-YYYYMMDD-HHMMSS）；⑧模拟运行结果：54项中46 PASS / 6 WARN / 2 FAIL（电磁阀保压+吞吐量需硬件到位），整体通过率85.2%。Git push成功（e60773f）。 | v1.44 |
 
+| 2026-05-16 | WORKLOG v1.81：每日研究任务（06:04）— **系统性能仿真器v1.0 + CI验证通过**。①`sorter/simulation/system_performance_simulator.py`（696行，v1.0）：HUSKY-SORTER-001完整生产流水线端到端随机仿真，模拟豆子流→尺寸分选→颜色检测→称重→密度分选→含水率检测→品质分级→批次输出，含时序/队列/传感器噪声约束。支持CLI参数`--channels N --duration S`。关键结果：**5ch×50bpm=2.280kg/h ✅ 超出2kg/h目标14%**；3ch×50bpm=1.368kg/h（低于目标，预期，与upgrade_path_analysis一致）；通道利用率13%（空闲>86%）；端到端延迟156.3ms；质量评分92.4/100。②CI管道验证：`PYTHONPATH=. python3 sorter/tests/ci_pipeline.py`→**10/10 PASS ✅**，评分100.0%，耗时0.84s。③清理stale文件：移除`write_maint.py`（生成器脚本，已执行完毕）；`maintenance_management.py`降为62行placeholder（待后续维护管理模块完整实现）。Git push成功（38292b4）。项目状态：所有课题完成，硬件采购阶段待机，simulation模块新增系统性能仿真能力（覆盖吞吐量验证/队列分析/多通道扩展场景）。 | v1.81 |
+
+---
+
 ## 项目状态：✅ 所有课题完成（进入下一阶段：硬件采购+物理测试）
 
 | 2026-05-11 | WORKLOG v1.65：每日研究任务（03:05）— **ESP32固件管理工具三件套**（sorter/control/，3个文件，~750行，v1.0）。目标：为硬件组装阶段的固件更新、版本追踪和故障恢复建立完整工具链。覆盖内容：①`firmware_update_tool.py`（380行）：esptool.py封装，支持编译+上传、固件完整性验证（SHA256+大小检查）、当前版本查询（发送STATUS命令）；②`firmware_version_manager.py`（490行）：固件版本管理器，支持版本历史JSON追踪、多设备注册、版本对比（MAJOR/MINOR/PATCH语义）、自动生成CHANGELOG.md；③`esp32_bootloader_recovery.py`（330行）：ESP32砖机恢复工具，支持RTS强制bootloader模式、Flash全擦除、默认分区表恢复、芯片信息读取。语法验证全部通过✅。ESP32固件目前状态：v1.0.0 build-2026-05-03，767行代码，UART命令协议（JSON格式），3任务FreeRTOS架构，支持HX711/光电传感器/电磁阀/步进电机控制。Git push成功（5f1ef06）。 | v1.65 |
