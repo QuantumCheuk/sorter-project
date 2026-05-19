@@ -31,11 +31,19 @@ class BufferBinState(Enum):
 
 @dataclass
 class SpiralFeederConfig:
-    """Spiral feeder configuration."""
-    # Motor (28BYJ-48 + DRV8833)
-    dir_pin: int = 20       # GPIO20 = DRV8833 DIR
-    step_pin: int = 21      # GPIO21 = DRV8833 STEP
-    enable_pin: int = 16    # GPIO16 = DRV8833 ENABLE (active LOW)
+    """Spiral feeder configuration.
+
+    v2 2026-05-17: GPIO pins synced with config.py GPIOConfig.
+    Previous defaults caused conflicts:
+    - dir_pin 20→28 (was WEIGHING_RELEASE)
+    - step_pin 21→15 (was BUFFER_SELECT)
+    - enable_pin 16→14 (was AIR_JET_VALVE)
+    - distributor_step_pin 19→13 (was FEEDER_DIR)
+    """
+    # Spiral feeder motor (28BYJ-48 + DRV8833)
+    dir_pin: int = 28       # SPIRAL_MOTOR_DIR (v2 from 20)
+    step_pin: int = 15      # SPIRAL_MOTOR_STEP (v2 from 21)
+    enable_pin: int = 14    # SPIRAL_MOTOR_EN (v2 from 16)
 
     # Geometry (φ20mm tube, 15mm pitch)
     tube_id_mm: float = 20.0
@@ -51,10 +59,10 @@ class SpiralFeederConfig:
     step_angle_deg: float = 5.625
     steps_per_rev: int = 64        # 360/5.625
 
-    # GPIO (rotary distributor motor)
-    distributor_dir_pin: int = 12
-    distributor_step_pin: int = 19
-    distributor_enable_pin: int = 13
+    # Rotary distributor motor (buffer bin)
+    distributor_dir_pin: int = 12   # DISTRIBUTOR_DIR (unchanged)
+    distributor_step_pin: int = 13 # DISTRIBUTOR_PUL (v2 from 19→13, was FEEDER_DIR)
+    distributor_enable_pin: int = 7 # RELAY_K3_MOTOR via distributor (v2 from 13→7)
 
     # Dispensing
     target_batch_weight_g: float = 250.0  # 250g per batch to roaster

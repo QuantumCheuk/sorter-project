@@ -6,6 +6,7 @@
 import csv
 import io
 import json
+import logging
 import uuid
 from collections import Counter
 from dataclasses import asdict
@@ -15,6 +16,33 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from .database import Database
 from .models import BeanDefect, BatchRecord, BatchState, SortGrade
+
+logger = logging.getLogger(__name__)
+
+
+# ─── P2-07: clean defect key → label resolution ──────────────────────────────
+
+def _defect_key_to_label(key: str) -> str:
+    """Resolve a defect key from JSON storage to a human-readable label.
+
+    Handles integer keys ("1" → "Moldy") and enum-name keys ("MOLDY" → "Moldy").
+    Returns the raw key as fallback and logs a warning for unknown keys.
+    """
+    # Integer key (JSON stores all dict keys as strings)
+    if key.isdigit():
+        try:
+            return BeanDefect(int(key)).label
+        except ValueError:
+            pass
+
+    # Exact enum name match
+    name = key.upper()
+    if hasattr(BeanDefect, name):
+        return BeanDefect[name].label
+
+    # Unknown key — log and return as-is
+    logger.warning("Unknown defect key in report: %r", key)
+    return key
 
 
 # ─── Report Types ────────────────────────────────────────────────────────────
@@ -72,27 +100,12 @@ class BatchReportGenerator:
             "reject": round(batch.grade_reject_count / total * 100, 1) if total else 0,
         }
 
-        # Defect breakdown
+        # Defect breakdown (P2-07: simplified key resolution)
         defect_counts = json.loads(batch.defect_counts_json or "{}")
         report["defect_distribution"] = {}
         for k, v in defect_counts.items():
-            # Handle both string keys ('MOLD', 'BROKEN') and integer keys
-            if k.isdigit():
-                report["defect_distribution"][BeanDefect(int(k)).label] = v
-            else:
-                # Try exact key first, fall back to _member_map_ key lookup
-                name = k.upper()
-                if hasattr(BeanDefect, name):
-                    report["defect_distribution"][BeanDefect[name].label] = v
-                else:
-                    # Defensive: try to find matching member by prefix (MOLD -> MOLDY)
-                    for member in BeanDefect:
-                        if member.name.startswith(name):
-                            report["defect_distribution"][member.label] = v
-                            break
-                    else:
-                        # Last resort: store as-is
-                        report["defect_distribution"][k] = v
+            label = _defect_key_to_label(k)
+            report["defect_distribution"][label] = v
 
         if include_beans:
             beans = self.db.get_beans_for_batch(batch_id)
@@ -221,9 +234,13 @@ class BatchReportGenerator:
 
     # ─── Text Report ───────────────────────────────────────────────────────────
 
-    def generate_text(self, batch_id: str) -> str:
+    def generate_text(self, batch_id: str, safe_ascii: bool = False) -> str:
         """
         Generate a human-readable text report for printing or display.
+
+        Args:
+            batch_id: The batch to report on
+            safe_ascii: P3-06: if True, strip emojis for safe export (CSV, legacy encodings)
         """
         batch = self.db.get_batch(batch_id)
         if not batch:
@@ -276,11 +293,19 @@ class BatchReportGenerator:
         ]
 
         # Sort defects by count descending
+        # P3-06: use ASCII-safe icons when safe_ascii=True
+        if safe_ascii:
+            sev_map = {4: "[CRIT]", 3: "[MAJ]", 2: "[MIN]", 1: "[INF]"}
+            bar_char = "#"
+        else:
+            sev_map = {4: "🔴", 3: "🟠", 2: "🟡", 1: "⚪"}
+            bar_char = "█"
+
         for defect_id, count in sorted(defect_counts.items(), key=lambda x: -x[1]):
             defect = BeanDefect(defect_id)
             pct = count / total * 100
-            bar = "█" * int(pct / 2)
-            sev = {4: "🔴", 3: "🟠", 2: "🟡", 1: "⚪"}.get(defect.severity, "⚪")
+            bar = bar_char * int(pct / 2)
+            sev = sev_map.get(defect.severity, sev_map.get(1, "?"))
             lines.append(f"  {sev} {defect.label:<18}: {count:>6,}  ({pct:>5.1f}%)  {bar}")
 
         lines += [
@@ -302,12 +327,14 @@ class BatchReportGenerator:
                 "  QUALITY ASSESSMENT",
                 "-" * 70,
             ]
-            status = "✅ PASS" if quality["pass"] else "❌ FAIL"
+            status = ("PASS" if quality["pass"] else "FAIL") if safe_ascii else ("✅ PASS" if quality["pass"] else "❌ FAIL")
             lines.append(f"  Overall Status  : {status}")
+            warn_prefix = "!! " if safe_ascii else "⚠ "
+            crit_prefix = ">> " if safe_ascii else "🔴 "
             for w in quality["warnings"]:
-                lines.append(f"  ⚠  {w}")
+                lines.append(f"  {warn_prefix}{w}")
             for c in quality["critical"]:
-                lines.append(f"  🔴 {c}")
+                lines.append(f"  {crit_prefix}{c}")
 
         lines += [
             "",

@@ -77,19 +77,22 @@ class DefectCategory(str, Enum):
 
 SCA_DEFECT_EQUIVALENTS: Dict[str, Tuple[DefectCategory, float]] = {
     # (category, SCA full-defect equivalent per occurrence)
+    # P-009 fix: keys must match DefectType enum values from thresholds.py
     "mold":           (DefectCategory.PRIMARY,    3.0),
     "fermented":      (DefectCategory.PRIMARY,    2.0),
     "black":          (DefectCategory.PRIMARY,    2.0),
     "dead":           (DefectCategory.PRIMARY,    2.0),
-    "insect_damaged": (DefectCategory.PRIMARY,    1.5),
+    "insect":         (DefectCategory.PRIMARY,    1.5),  # was "insect_damaged"
     "foreign":        (DefectCategory.PRIMARY,    5.0),  # Most severe
     "overweight":     (DefectCategory.SECONDARY,  0.5),
     "underweight":    (DefectCategory.SECONDARY,  0.5),
     "broken":         (DefectCategory.SECONDARY,  0.3),
-    "stunted":        (DefectCategory.SECONDARY,  0.3),
+    "underdev":       (DefectCategory.SECONDARY,  0.3),  # was "stunted"
     "hollow":         (DefectCategory.SECONDARY,  0.3),
-    "over_dry":       (DefectCategory.SECONDARY,  0.3),
-    "over_wet":       (DefectCategory.SECONDARY,  0.5),
+    "overdry":        (DefectCategory.SECONDARY,  0.3),  # was "over_dry"
+    "overwet":        (DefectCategory.SECONDARY,  0.5),  # was "over_wet"
+    "mold_precursor": (DefectCategory.SECONDARY,  0.2),  # new: pre-mold
+    "unknown":        (DefectCategory.SECONDARY,  0.1),
     "normal":         (DefectCategory.SECONDARY,  0.0),
 }
 
@@ -660,7 +663,7 @@ class DefectDifferentialDiagnosisSystem:
             else:
                 findings.append("→ NORMAL DENSITY + LOW WEIGHT → UNDERWEIGHT or STUNTED")
                 hypotheses.append(("underweight", 0.6))
-                hypotheses.append(("stunted", 0.4))
+                hypotheses.append(("underdev", 0.4))
         elif weight_g > 0.28:
             findings.append(f"HIGH WEIGHT: {weight_g:.4f}g > 0.28g")
             hypotheses.append(("overweight", 0.9))
@@ -684,7 +687,7 @@ class DefectDifferentialDiagnosisSystem:
             if moisture_pct > 14.5:
                 findings.append("→ DARK + HIGH MOISTURE → MOLD risk")
                 hypotheses.append(("mold", 0.60))
-                hypotheses.append(("over_wet", 0.4))
+                hypotheses.append(("overwet", 0.4))
             else:
                 findings.append("→ MILD discoloration → possible early fermentation")
                 hypotheses.append(("fermented", 0.50))
@@ -707,10 +710,10 @@ class DefectDifferentialDiagnosisSystem:
         # ── Moisture-based discrimination ───────────────────────────────────
         if moisture_pct < 8.0:
             findings.append(f"LOW MOISTURE: {moisture_pct:.1f}% < 8% → OVER-DRY")
-            hypotheses.append(("over_dry", 0.85))
+            hypotheses.append(("overdry", 0.85))
         elif moisture_pct > 14.5:
             findings.append(f"HIGH MOISTURE: {moisture_pct:.1f}% > 14.5% → OVER-WET or MOLD")
-            hypotheses.append(("over_wet", 0.55))
+            hypotheses.append(("overwet", 0.55))
             hypotheses.append(("mold", 0.45))
 
         # Sort hypotheses by confidence descending
@@ -727,9 +730,9 @@ class DefectDifferentialDiagnosisSystem:
             "foreign":     "REJECT — foreign matter, food safety hazard",
             "overweight":  "RECLASSIFY to oversized bin",
             "underweight": "RECLASSIFY to lightweight bin",
-            "stunted":     "RECLASSIFY as Grade C or below",
-            "over_dry":    "RECLASSIFY as Grade C — brittleness risk",
-            "over_wet":    "REJECT — mold risk, shelf-life compromised",
+            "underdev":     "RECLASSIFY as Grade C or below",
+            "overdry":      "RECLASSIFY as Grade C — brittleness risk",
+            "overwet":      "REJECT — mold risk, shelf-life compromised",
             "normal":      "ACCEPT — Grade A candidate",
         }
 
@@ -1597,8 +1600,8 @@ if __name__ == "__main__":
     for origin, process, variety, harvest, supplier in origins:
         # Simulate bean records with ~5% defect rate
         bean_records = []
-        defect_types = ["broken", "stunted", "fermented", "underweight", "mold",
-                        "black", "hollow", "over_dry", "over_wet", "insect_damaged"]
+        defect_types = ["broken", "underdev", "fermented", "underweight", "mold",
+                        "black", "hollow", "overdry", "overwet", "insect"]
 
         for i in range(3000):
             is_defect = random.random() < 0.05

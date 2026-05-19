@@ -114,15 +114,23 @@ class Database:
     """
     Thread-safe SQLite database manager.
     Uses connection-per-thread pattern for safety.
+
+    v2 2026-05-17: Added WAL auto-checkpoint (P0-23 fix).
+    WAL mode without checkpoint causes unbounded disk growth and
+    degraded read performance. Checkpoint runs every N writes or on demand.
     """
 
-    def __init__(self, db_path: Optional[str] = None):
+    def __init__(self, db_path: Optional[str] = None,
+                 wal_checkpoint_interval: int = 1000):
         if db_path is None:
             base = Path.home() / ".husky_sorter"
             base.mkdir(exist_ok=True)
             db_path = str(base / "sorter_data.db")
         self.db_path = db_path
         self._local = threading.local()
+        self._write_counter = 0
+        self._wal_checkpoint_interval = wal_checkpoint_interval  # 0 = disabled
+        self._checkpoint_lock = threading.Lock()
         self._init_db()
 
     def _conn(self) -> sqlite3.Connection:
@@ -145,14 +153,57 @@ class Database:
         try:
             yield conn
             conn.commit()
+            self._write_counter += 1
+            self._maybe_checkpoint(conn)
         except Exception:
             conn.rollback()
             raise
+
+    def _maybe_checkpoint(self, conn: sqlite3.Connection) -> None:
+        """Run WAL checkpoint if write threshold reached (P0-23 fix)."""
+        if self._wal_checkpoint_interval <= 0:
+            return
+        if self._write_counter < self._wal_checkpoint_interval:
+            return
+
+        with self._checkpoint_lock:
+            # Double-check under lock
+            if self._write_counter < self._wal_checkpoint_interval:
+                return
+            try:
+                conn.execute("PRAGMA wal_checkpoint(PASSIVE)")
+                self._write_counter = 0
+            except sqlite3.OperationalError:
+                pass  # Checkpoint failed (DB locked) — retry next interval
+
+    def wal_checkpoint(self, mode: str = "PASSIVE") -> None:
+        """Manually trigger a WAL checkpoint.
+
+        Args:
+            mode: "PASSIVE" (non-blocking), "FULL" (wait for readers),
+                  "RESTART" (full + truncate WAL)
+        """
+        conn = self._conn()
+        try:
+            conn.execute(f"PRAGMA wal_checkpoint({mode})")
+            self._write_counter = 0
+        except sqlite3.OperationalError as e:
+            raise RuntimeError(f"WAL checkpoint failed: {e}") from e
 
     def _init_db(self) -> None:
         """Create schema if not exists."""
         with self.transaction() as conn:
             conn.executescript(SCHEMA)
+
+    def close(self) -> None:
+        """Close thread-local connection and run final checkpoint."""
+        if hasattr(self._local, "conn") and self._local.conn is not None:
+            try:
+                self.wal_checkpoint("RESTART")
+            except RuntimeError:
+                pass
+            self._local.conn.close()
+            self._local.conn = None
 
     # ─── Batch operations ─────────────────────────────────────────────────────
 

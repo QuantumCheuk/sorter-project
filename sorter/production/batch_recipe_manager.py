@@ -610,7 +610,9 @@ class RecipeManager:
         errors = []
         warnings = []
 
-        # Check required fields
+        # Check required fields (P-010: non-empty validation)
+        if not recipe.recipe_id:
+            errors.append("Missing recipe_id")
         if not recipe.origin_country:
             errors.append("Missing origin_country")
         if not recipe.variety:
@@ -618,15 +620,42 @@ class RecipeManager:
         if not recipe.process:
             errors.append("Missing process")
 
-        # Check threshold consistency
+        # Check threshold consistency (P1-15: full range ordering validation)
         if recipe.color.top_L_min >= recipe.color.top_L_max:
             errors.append(f"Color top L range invalid: {recipe.color.top_L_min} >= {recipe.color.top_L_max}")
 
         if recipe.weight.normal_min_g >= recipe.weight.normal_max_g:
             errors.append(f"Weight normal range invalid: {recipe.weight.normal_min_g} >= {recipe.weight.normal_max_g}")
 
+        # P1-15 fix: validate full weight range ordering
+        wt = recipe.weight
+        if wt.undersize_g >= wt.light_g:
+            errors.append(f"Weight undersize >= light: {wt.undersize_g} >= {wt.light_g}")
+        if wt.light_g >= wt.normal_min_g:
+            errors.append(f"Weight light >= normal_min: {wt.light_g} >= {wt.normal_min_g}")
+        if wt.normal_max_g >= wt.heavy_g:
+            errors.append(f"Weight normal_max >= heavy: {wt.normal_max_g} >= {wt.heavy_g}")
+        if wt.heavy_g >= wt.oversize_g:
+            errors.append(f"Weight heavy >= oversize: {wt.heavy_g} >= {wt.oversize_g}")
+
         if recipe.moisture.target_min_pct >= recipe.moisture.target_max_pct:
             errors.append(f"Moisture target range invalid")
+
+        # P1-15 fix: validate moisture range ordering
+        mt = recipe.moisture
+        if mt.too_dry_pct >= mt.target_min_pct:
+            errors.append(f"Moisture too_dry >= target_min: {mt.too_dry_pct} >= {mt.target_min_pct}")
+        if mt.target_max_pct >= mt.too_wet_pct:
+            errors.append(f"Moisture target_max >= too_wet: {mt.target_max_pct} >= {mt.too_wet_pct}")
+
+        # Density range ordering
+        dt = recipe.density
+        if dt.light >= dt.medium_min:
+            errors.append(f"Density light >= medium_min: {dt.light} >= {dt.medium_min}")
+        if dt.medium_min >= dt.medium_max:
+            errors.append(f"Density medium range invalid: {dt.medium_min} >= {dt.medium_max}")
+        if dt.medium_max >= dt.heavy:
+            errors.append(f"Density medium_max >= heavy: {dt.medium_max} >= {dt.heavy}")
 
         # Check quality targets
         if recipe.quality.defect_rate_max_pct > 10:

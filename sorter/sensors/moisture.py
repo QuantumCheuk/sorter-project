@@ -153,60 +153,188 @@ class AD7746Driver:
     """
     
     I2C_ADDRESS = 0x48  # ADDR pin = GND
-    
-    # 寄存器地址
-    REG_STATUS   = 0x00
-    REG_CAP_DATA = 0x01  # 24-bit
-    REG_VT_DATA  = 0x03  # voltage/temp
-    REG_CAP_SETUP = 0x07
-    REG_VT_SETUP  = 0x08
-    REG_MODE      = 0x0A
-    REG_CFG       = 0x0B
-    
-    def __init__(self, i2c_bus=1):
+
+    # ── AD7746 Register Map (datasheet rev.G) ──
+    REG_STATUS     = 0x00
+    REG_CAP_DATA_H = 0x01  # 24-bit capacitance data (3 bytes)
+    REG_CAP_DATA_M = 0x02
+    REG_CAP_DATA_L = 0x03
+    REG_VT_DATA_H  = 0x04  # voltage/temp data (3 bytes)
+    REG_VT_DATA_M  = 0x05
+    REG_VT_DATA_L  = 0x06
+    REG_CAP_SETUP  = 0x07
+    REG_VT_SETUP   = 0x08
+    REG_EXC_SETUP  = 0x09
+    REG_CFG        = 0x0A
+    REG_CAP_DAC_A  = 0x0B
+    REG_CAP_DAC_B  = 0x0C
+
+    # ── Configuration bitfields ──
+    # REG_CAP_SETUP (0x07): CAPEN | CAPFILT | MD0 | MD1 | MD2 | 0 | 0 | 0
+    #   CAPEN(7)=1: enable capacitive input
+    #   CAPFILT(6)=1: enable filter
+    #   MD[2:0]: conversion rate (000=10Hz, 001=20Hz, 010=50Hz, 011=100Hz)
+    CAP_SETUP_10HZ  = 0x80  # CAPEN=1, rate=10Hz
+    CAP_SETUP_50HZ  = 0x82  # CAPEN=1, rate=50Hz
+    CAP_SETUP_100HZ = 0x83  # CAPEN=1, rate=100Hz
+
+    # REG_CFG (0x0A): VTEN | VTMD[1:0] | EXCM | EXST[1:0] | VTRFS | CAPCHOP
+    CFG_DEFAULT = 0x00  # all disabled, capacitive mode only
+
+    # Conversion rate → sample interval (ms)
+    RATE_INTERVAL = {10: 100, 20: 50, 50: 20, 100: 10}
+
+    def __init__(self, i2c_bus=1, rate_hz=50, cable_length_cm=3):
+        """
+        参数:
+            i2c_bus: I2C 总线编号
+            rate_hz: 转换速率 (10/20/50/100 Hz)
+            cable_length_cm: 探头到 AD7746 的引线长度 (cm)
+        """
         self.i2c_bus = i2c_bus
         self._initialized = False
-        self._simulate = False  # 是否模拟模式（无真实硬件）
-    
+        self._simulate = False
+        self.rate_hz = rate_hz
+        self.sample_interval_ms = self.RATE_INTERVAL.get(rate_hz, 20)
+
+        # 寄生电容警告（AD7746 输入范围仅 ±4pF）
+        if cable_length_cm > 5:
+            print(f"[AD7746] WARNING: cable length {cable_length_cm}cm > 5cm recommended max")
+            print("  Cable parasitic capacitance may saturate ±4pF input range")
+            print("  Solution: mount AD7746 module within 5cm of probe, use I2C buffer to Pi")
+
+        self.cable_length_cm = cable_length_cm
+        self._cap_dac_offset = 0.0  # pF, auto-tared baseline
+
     def init(self):
-        """初始化 AD7746"""
+        """初始化 AD7746: 打开 I2C 总线 + 写入配置寄存器"""
         try:
             import smbus2
             self.bus = smbus2.SMBus(self.i2c_bus)
             self._simulate = False
+
+            # 写入 CAP_SETUP: 使能电容输入 + 设置转换速率
+            cap_setup = self.CAP_SETUP_10HZ
+            if self.rate_hz == 50:
+                cap_setup = self.CAP_SETUP_50HZ
+            elif self.rate_hz == 100:
+                cap_setup = self.CAP_SETUP_100HZ
+            self.bus.write_byte_data(self.I2C_ADDRESS, self.REG_CAP_SETUP, cap_setup)
+
+            # 写入 CFG: 电容模式
+            self.bus.write_byte_data(self.I2C_ADDRESS, self.REG_CFG, self.CFG_DEFAULT)
+
+            # 写入 EXC_SETUP: 使能激励引脚 (EXCA=1, EXCB=0, 32kHz)
+            self.bus.write_byte_data(self.I2C_ADDRESS, self.REG_EXC_SETUP, 0x30)
+
             self._initialized = True
+            print(f"[AD7746] Initialized: rate={self.rate_hz}Hz, cable={self.cable_length_cm}cm")
         except ImportError:
-            print("[MoistureSensor] smbus2 not available, using simulation mode")
+            print("[AD7746] smbus2 not available, using simulation mode")
             self._simulate = True
             self._initialized = True
         except Exception as e:
-            print(f"[MoistureSensor] I2C init failed: {e}, using simulation mode")
+            print(f"[AD7746] I2C init failed: {e}, using simulation mode")
             self._simulate = True
             self._initialized = True
-    
+
     def _read_capacitance_raw(self) -> float:
-        """读取原始电容值（pF）"""
+        """
+        读取原始电容值（pF）
+
+        AD7746 24-bit 数据: 3 字节 (MSB first), signed two's complement
+        满量程 ±4pF → 1 LSB = 8pF / 2^24 = 0.476 fF
+
+        返回: 电容值 (pF)，扣除 auto-tare 偏移
+        """
         if self._simulate:
-            # 模拟模式：返回标称值
-            return 1.47  # pF ≈ 10% moisture
-    
+            import random
+            # 模拟: 10% moisture ≈ 1.47 pF ± 0.02 noise
+            return 1.47 + random.gauss(0, 0.02)
+
+        # 硬件模式: 读 3 字节电容数据
+        import smbus2
+        data = self.bus.read_i2c_block_data(
+            self.I2C_ADDRESS, self.REG_CAP_DATA_H, 3
+        )
+
+        # 24-bit signed two's complement
+        raw = (data[0] << 16) | (data[1] << 8) | data[2]
+        if raw & 0x800000:
+            raw -= 0x1000000  # sign extend
+
+        # Convert to pF: 1 LSB = 8pF / 2^24
+        C_pF = (raw / (1 << 24)) * 8.0
+
+        # Subtract auto-tare offset
+        C_pF -= self._cap_dac_offset
+
+        return C_pF
+
     def read_moisture(self, probe: MoistureProbe) -> Optional[float]:
         """
         读取含水率
-        
+
         返回: 含水率 (%)，或 None（读取失败）
         """
         if not self._initialized:
             self.init()
-        
+
         C_pF = self._read_capacitance_raw()
+        if C_pF is None:
+            return None
+
+        # 范围检查（AD7746 ±4pF）
+        if abs(C_pF) > 4.0:
+            print(f"[AD7746] WARNING: capacitance {C_pF:.3f}pF exceeds ±4pF range")
+            print("  Possible cable parasitic saturation — check wiring")
+
         return probe.moisture_from_capacitance(C_pF)
-    
+
     def read_capacitance(self) -> float:
         """读取电容（pF）"""
         if not self._initialized:
             self.init()
         return self._read_capacitance_raw()
+
+    def auto_tare(self, n_samples: int = 20) -> float:
+        """
+        自动去皮: 多次读取空载基线，设为偏移量
+
+        调用前确保测量槽内无豆子。
+
+        返回: 偏移量 (pF)
+        """
+        if not self._initialized:
+            self.init()
+
+        readings = []
+        for _ in range(n_samples):
+            c = self._read_capacitance_raw()
+            if c is not None:
+                readings.append(c)
+            time.sleep(self.sample_interval_ms / 1000.0)
+
+        if not readings:
+            print("[AD7746] auto_tare: no readings obtained")
+            return 0.0
+
+        self._cap_dac_offset = sum(readings) / len(readings)
+        print(f"[AD7746] Auto-tare: offset = {self._cap_dac_offset:.4f} pF ({len(readings)} samples)")
+        return self._cap_dac_offset
+
+    def set_conversion_rate(self, rate_hz: int):
+        """动态切换转换速率"""
+        if rate_hz not in self.RATE_INTERVAL:
+            raise ValueError(f"Unsupported rate: {rate_hz}Hz (valid: 10/20/50/100)")
+        self.rate_hz = rate_hz
+        self.sample_interval_ms = self.RATE_INTERVAL[rate_hz]
+        if not self._simulate and self._initialized:
+            cap_setup_map = {10: self.CAP_SETUP_10HZ, 50: self.CAP_SETUP_50HZ,
+                             100: self.CAP_SETUP_100HZ, 20: 0x81}
+            self.bus.write_byte_data(
+                self.I2C_ADDRESS, self.REG_CAP_SETUP, cap_setup_map[rate_hz]
+            )
 
 
 # ─────────────────────────────────────────────
@@ -305,14 +433,18 @@ class MoistureSensor:
     def measure(self, samples: int = 5) -> Optional[float]:
         """
         测量单粒豆子含水率
-        
+
         参数:
             samples: 采样次数，取平均
-        
+
         返回:
             含水率 (%)，或 None（测量失败）
         """
         readings = []
+        sample_delay = 0.05  # default
+        if self.circuit_type == 'AD7746':
+            sample_delay = self.driver.sample_interval_ms / 1000.0
+
         for _ in range(samples):
             if self.circuit_type == 'AD7746':
                 val = self.driver.read_moisture(self.probe)
@@ -320,34 +452,36 @@ class MoistureSensor:
                 val = self.driver.measure_moisture(self.probe)
             if val is not None:
                 readings.append(val)
-            time.sleep(0.05)
-        
+            time.sleep(sample_delay)
+
         if not readings:
             return None
-        
+
         # 去极值平均
         readings.sort()
         if len(readings) > 2:
             readings = readings[1:-1]  # 去掉最大最小
         return sum(readings) / len(readings)
-    
-    def auto_tare(self, n_samples: int = 10):
+
+    def auto_tare(self, n_samples: int = 20):
         """
         自动去皮：测量空载（无豆）基线
         用于补偿温度漂移和零点偏移
+
+        AD7746: 委托给 driver.auto_tare()
+        555: 使用探头理论基线
         """
-        baseline_C = []
-        for _ in range(n_samples):
-            if self.circuit_type == 'AD7746':
-                c = self.driver.read_capacitance()
-            else:
+        if self.circuit_type == 'AD7746':
+            return self.driver.auto_tare(n_samples=n_samples)
+        else:
+            baseline_C = []
+            for _ in range(n_samples):
                 c = self.probe.capacitance(0)
-            baseline_C.append(c)
-            time.sleep(0.05)
-        
-        self._baseline_C = sum(baseline_C) / len(baseline_C)
-        print(f"[MoistureSensor] Tare: baseline = {self._baseline_C:.4f} pF")
-        return self._baseline_C
+                baseline_C.append(c)
+                time.sleep(0.05)
+            self._baseline_C = sum(baseline_C) / len(baseline_C)
+            print(f"[MoistureSensor] Tare: baseline = {self._baseline_C:.4f} pF")
+            return self._baseline_C
 
 
 # ─────────────────────────────────────────────

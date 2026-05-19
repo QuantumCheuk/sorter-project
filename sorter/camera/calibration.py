@@ -324,6 +324,13 @@ class ColorCalibrator:
         print("=" * 60)
 
 
+def _lab_to_bgr(L: float, a: float, b: float) -> Tuple[int, int, int]:
+    """P2-03 fix: convert LAB values to BGR correctly via cv2.COLOR_LAB2BGR."""
+    lab = np.array([[[L * 255 / 100, a + 128, b + 128]]], dtype=np.uint8)
+    bgr = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
+    return tuple(int(v) for v in bgr[0, 0])
+
+
 def generate_synthetic_samples(n_good: int = 20, n_bleached: int = 5,
                                 n_moldy: int = 5, n_fermented: int = 5) -> List[Dict]:
     """
@@ -336,31 +343,32 @@ def generate_synthetic_samples(n_good: int = 20, n_bleached: int = 5,
     # 正常豆：L∈[35,50], a∈[-1,5], b∈[12,25]
     for i in range(n_good):
         L_mean = np.random.uniform(38, 48)
+        a_mean = np.random.uniform(-1, 5)
+        b_mean = np.random.uniform(12, 25)
+        bgr = _lab_to_bgr(L_mean, a_mean, b_mean)
         img = np.zeros(size, dtype=np.uint8)
-        # 模拟 LAB -> BGR
-        img[:, :] = [int(L_mean * 2.5), int(np.random.uniform(-1, 5) + 128), int(np.random.uniform(12, 25) + 128)]
-        img = cv2.convertScaleAbs(img)
+        img[:, :] = bgr
         samples.append({"image": img, "label": "good", "path": f"synthetic_good_{i}"})
 
     # 漂白豆：L≥75, a≈0, b≈0
     for i in range(n_bleached):
+        bgr = _lab_to_bgr(78, 0, 0)
         img = np.zeros(size, dtype=np.uint8)
-        img[:, :] = [200, 128, 130]  # 高L, 中性a,b
-        img = cv2.convertScaleAbs(img)
+        img[:, :] = bgr
         samples.append({"image": img, "label": "bleached", "path": f"synthetic_bleached_{i}"})
 
     # 发霉豆：L≤45, a≤-5, b≥8
     for i in range(n_moldy):
+        bgr = _lab_to_bgr(40, -5, 10)
         img = np.zeros(size, dtype=np.uint8)
-        img[:, :] = [100, 120, 140]  # 暗绿
-        img = cv2.convertScaleAbs(img)
+        img[:, :] = bgr
         samples.append({"image": img, "label": "moldy", "path": f"synthetic_moldy_{i}"})
 
     # 发酵过度：a≥8, b≥18
     for i in range(n_fermented):
+        bgr = _lab_to_bgr(45, 10, 20)
         img = np.zeros(size, dtype=np.uint8)
-        img[:, :] = [110, 138, 148]  # 偏红棕
-        img = cv2.convertScaleAbs(img)
+        img[:, :] = bgr
         samples.append({"image": img, "label": "fermented", "path": f"synthetic_fermented_{i}"})
 
     return samples

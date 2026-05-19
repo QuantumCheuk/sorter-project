@@ -41,7 +41,7 @@ class WeighingStationConfig:
     total_cycle_ms: int = 80        # Total cycle time
     
     # Solenoid GPIO
-    solenoid_gpio: int = 26        # GPIO pin for solenoid (active HIGH)
+    solenoid_gpio: int = 10        # GPIO pin for solenoid (v2: from 26→10, was FEEDER_PUL conflict)
     
     # Bean weight range
     min_bean_weight_g: float = 0.08
@@ -123,7 +123,7 @@ class WeighingStation:
         """Initialize the load cell."""
         hx711_config = HX711Config(
             data_pin=5,
-            clock_pin=6,
+            clock_pin=27,  # SPEC v0.6: migrated from GPIO6 to GPIO27
             gain=128,
             reference_unit=1.0,
             offset=0.0

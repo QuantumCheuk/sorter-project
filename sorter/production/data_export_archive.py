@@ -219,7 +219,7 @@ class ArchivalManager:
     DEFAULT_RETENTION_DAYS = 90
     def __init__(self, db, archive_root=None):
         self.db = db
-        self.archive_root = Path(archive_root or "/Users/quantumcheuk/.openclaw/workspace/sorter-project/sorter/data/archive")
+        self.archive_root = Path(archive_root or (Path.home() / ".husky_sorter" / "data" / "archive"))
         self.archive_root.mkdir(parents=True, exist_ok=True)
         self.manifest_path = self.archive_root / "archive_manifest.json"
         if not self.manifest_path.exists():
@@ -290,7 +290,7 @@ class ArchivalManager:
 class ExportManager:
     def __init__(self, db, output_dir=None):
         self.db = db
-        self.output_dir = Path(output_dir or "/Users/quantumcheuk/.openclaw/workspace/sorter-project/sorter/data/exports")
+        self.output_dir = Path(output_dir or (Path.home() / ".husky_sorter" / "data" / "exports"))
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.reg_path = self.output_dir / "export_registry.json"
         if not self.reg_path.exists():

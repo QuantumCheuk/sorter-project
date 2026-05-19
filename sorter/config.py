@@ -25,34 +25,102 @@ logger = logging.getLogger("config")
 # =============================================================================
 @dataclass
 class GPIOConfig:
-    """GPIO 引脚分配"""
-    # 传感器输入
-    T1_SENSOR:       int = 4    # 顶部光电传感器
-    T2_SENSOR:       int = 17   # 底部光电传感器
-    HX711_DT:        int = 5    # HX711 Data
-    LEVEL_SENSOR:    int = 24   # 液位传感器 DATA
+    """GPIO 引脚分配 — 中央注册表 (v2 2026-05-17)
 
-    # 执行器输出
-    AIR_JET_VALVE:   int = 16   # 气喷电磁阀
-    WEIGHING_RELEASE:int = 20   # 称重杯释放电磁阀
-    BUFFER_SELECT:   int = 21   # 缓冲仓分配器选择阀
+    唯一真实来源: 所有模块必须从此获取引脚号。
+    禁止在各模块内硬编码 GPIO 引脚。
 
-    # 步进电机
-    FEEDER_PUL:      int = 26   # 振动给料 PUL
-    FEEDER_DIR:      int = 19   # 振动给料 DIR
-    DISTRIBUTOR_PUL: int = 13   # 旋转分配器 PUL
-    DISTRIBUTOR_DIR: int = 12   # 旋转分配器 DIR
-    SPIRAL_PUL:      int = 18   # 螺旋给料 PUL
-    SPIRAL_DIR:      int = 23   # 螺旋给料 DIR
+    冲突修复记录:
+    - GPIO12: 原 DISTRIBUTOR_DIR + FAN_PWM → FAN_PWM 迁至 GPIO22
+    - GPIO20: 原 WEIGHING_RELEASE + spiral_feeder DIR → spiral DIR 迁至 GPIO28
+    - GPIO21: 原 BUFFER_SELECT + spiral_feeder STEP → spiral STEP 迁至 GPIO15
+    - GPIO16: 原 AIR_JET_VALVE + spiral_feeder EN → spiral EN 迁至 GPIO14
+    - GPIO26: 原 FEEDER_PUL + solenoid_gate → solenoid 迁至 GPIO10
+    - GPIO6:  原 HX711 SCK (冲突 DRV8833 DIR) → 已迁至 GPIO27 (v0.6)
 
-    # 专用功能
-    HX711_SCK:       int = 27   # HX711 Clock (已从GPIO6迁移 ✅)
-    LEVEL_SENSOR_CLK:int = 25   # 液位传感器 CLK
-    FAN_PWM:         int = 12   # 5015风扇 PWM
+    禁止使用的引脚: GPIO0, GPIO1, GPIO2, GPIO3 (Boot/UART/strapping)
+
+    Pi 4 可用 GPIO: 4-27, 28 (共25个), 已分配24个, 余量1个
+    """
+    # ── 传感器输入 (INPUT) ──
+    T1_SENSOR:         int = 4   # 顶部光电传感器 (NPN NO, 下降沿)
+    T2_SENSOR:         int = 17  # 底部光电传感器 (NPN NO, 下降沿)
+    HX711_DT:          int = 5   # HX711 Data
+    HX711_SCK:         int = 27  # HX711 Clock (v0.6 从 GPIO6 迁移)
+    LEVEL_SENSOR_DATA: int = 24  # 液位传感器 DATA
+    LEVEL_SENSOR_CLK:  int = 25  # 液位传感器 CLK
+    E_STOP_MONITOR:    int = 22  # E-STOP 回路状态监控 (INPUT_PULLUP)
+
+    # ── 执行器输出 (OUTPUT) ──
+    AIR_JET_VALVE:     int = 16  # 气喷电磁阀 (缺陷豆剔除)
+    WEIGHING_RELEASE:  int = 20  # 称重杯释放电磁阀
+    BUFFER_SELECT:     int = 21  # 缓冲仓分配器选择阀
+    SOLENOID_WEIGHING: int = 10  # 称重站电磁阀 (v2 从 GPIO26 迁移)
+
+    # ── 步进电机 — 振动给料 (OUTPUT) ──
+    FEEDER_PUL:        int = 26  # 振动给料 PUL
+    FEEDER_DIR:        int = 19  # 振动给料 DIR
+
+    # ── 步进电机 — 旋转分配器 (OUTPUT) ──
+    DISTRIBUTOR_PUL:   int = 13  # 旋转分配器 PUL
+    DISTRIBUTOR_DIR:   int = 12  # 旋转分配器 DIR
+
+    # ── 步进电机 — 螺旋给料 (OUTPUT) ──
+    SPIRAL_PUL:        int = 18  # 螺旋给料 PUL
+    SPIRAL_DIR:        int = 23  # 螺旋给料 DIR
+
+    # ── 步进电机 — DRV8833 控制信号 (OUTPUT, v2 修复冲突) ──
+    # spiral_feeder.py 内部的 DRV8833 电机控制引脚
+    SPIRAL_MOTOR_DIR:  int = 28  # 螺旋电机 DIR (v2 从 GPIO20 迁移)
+    SPIRAL_MOTOR_STEP: int = 15  # 螺旋电机 STEP (v2 从 GPIO21 迁移)
+    SPIRAL_MOTOR_EN:   int = 14  # 螺旋电机 ENABLE (v2 从 GPIO16 迁移)
+
+    # ── PWM 输出 ──
+    FAN_PWM:           int = 11  # 5015 风扇 PWM (v2 从 GPIO12 迁移)
+
+    # ── 安全回路继电器 (OUTPUT) ──
+    RELAY_K2_SOLENOID: int = 6   # 电磁阀组电源继电器
+    RELAY_K3_MOTOR:    int = 7   # 电机驱动电源继电器
+    RELAY_K4_AIR:      int = 8   # 气源电源继电器
+
+    # ── 禁止使用的引脚 ──
+    RESERVED: tuple = (0, 1, 2, 3)  # Boot/UART/strapping
 
     @classmethod
     def from_dict(cls, d: Dict[str, int]) -> "GPIOConfig":
         return cls(**{k: v for k, v in d.items() if k in cls.__dataclass_fields__})
+
+    def validate(self) -> List[str]:
+        """检测 GPIO 引脚冲突和非法分配。
+
+        Returns: 冲突/错误列表，空=通过
+        """
+        errors: List[str] = []
+        pin_usage: Dict[int, List[str]] = {}
+
+        for field_name in self.__dataclass_fields__:
+            if field_name == "RESERVED":
+                continue
+            pin = getattr(self, field_name, None)
+            if pin is None or not isinstance(pin, int):
+                continue
+            pin_usage.setdefault(pin, []).append(field_name)
+
+        # Check for duplicates
+        for pin, names in pin_usage.items():
+            if len(names) > 1:
+                errors.append(
+                    f"GPIO{pin} assigned to {len(names)} functions: {', '.join(names)}"
+                )
+
+        # Check reserved pins
+        for pin, names in pin_usage.items():
+            if pin in self.RESERVED:
+                errors.append(
+                    f"GPIO{pin} is RESERVED (boot/strapping), used by: {', '.join(names)}"
+                )
+
+        return errors
 
 
 @dataclass

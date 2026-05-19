@@ -10,6 +10,7 @@ Run: python sorter/production/alarm_manager.py --demo
 """
 
 import json
+import logging
 import math
 import time
 import uuid
@@ -18,6 +19,8 @@ from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any, Optional
+
+logger = logging.getLogger(__name__)
 
 import sys
 _project_root = Path(__file__).parent.parent.parent
@@ -322,8 +325,8 @@ class AlarmNotifier:
             topic = f"sorter/alarms/{alarm.category.value}/{alarm.severity.value}"
             try:
                 self._mqtt.publish(topic, json.dumps(payload, ensure_ascii=False), qos=1)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning("Alarm MQTT publish failed (%s): %s", alarm.alarm_id, e)
 
         if self._rest_url:
             try:
@@ -336,8 +339,8 @@ class AlarmNotifier:
                 )
                 with urllib.request.urlopen(req, timeout=5):
                     pass
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning("Alarm REST callback failed (%s): %s", alarm.alarm_id, e)
 
         icon = {"emergency": "🆘", "critical": "🔴", "warning": "⚠️", "info": "ℹ️"}.get(alarm.severity.value, "💬")
         print(f"  {icon} [{alarm.severity.value.upper()}/{alarm.category.value.upper()}] {alarm.alarm_name}: {alarm.message}")

@@ -18,12 +18,106 @@ Default: http://0.0.0.0:5000
 """
 
 from flask import Flask, jsonify, request, abort
+import functools
+import hashlib
+import os
+import secrets
 import threading
 import time
 import json
-import os
 
 app = Flask(__name__)
+
+# ============================================================
+# API Key Authentication (P0-023 fix, v2 2026-05-17)
+# ============================================================
+
+_API_KEYS: dict = {}  # key_hash → {"name": str, "created": str, "last_used": float}
+_API_KEYS_LOCK = threading.Lock()
+_VALID_BINS = {"A1", "A2", "A3", "B1", "B2", "C1", "C2", "BF"}
+_VALID_MOTORS = {"vibrating_feeder", "size_sorter", "spiral_feeder", "rotary_distributor"}
+_MOTOR_RPM_RANGE = {
+    "vibrating_feeder": (10, 200),
+    "size_sorter": (5, 60),
+    "spiral_feeder": (10, 200),
+    "rotary_distributor": (5, 60),
+}
+
+
+def _hash_key(key: str) -> str:
+    return hashlib.sha256(key.encode()).hexdigest()
+
+
+def init_api_keys(keys: list = None):
+    """Load API keys from env or generate defaults.
+
+    Keys can be set via SORTER_API_KEYS env var (comma-separated).
+    If not set, a random key is generated and printed to stdout.
+    """
+    global _API_KEYS
+    with _API_KEYS_LOCK:
+        if keys:
+            for k in keys:
+                _API_KEYS[_hash_key(k)] = {
+                    "name": k[:8] + "...",
+                    "created": time.strftime("%Y-%m-%d"),
+                    "last_used": 0,
+                }
+            return
+
+        env_keys = os.environ.get("SORTER_API_KEYS", "")
+        if env_keys:
+            for k in env_keys.split(","):
+                k = k.strip()
+                if k:
+                    _API_KEYS[_hash_key(k)] = {
+                        "name": k[:8] + "...",
+                        "created": time.strftime("%Y-%m-%d"),
+                        "last_used": 0,
+                    }
+            print(f"[API] Loaded {len(_API_KEYS)} API keys from SORTER_API_KEYS")
+            return
+
+        # Generate a random key
+        random_key = secrets.token_urlsafe(32)
+        _API_KEYS[_hash_key(random_key)] = {
+            "name": "default",
+            "created": time.strftime("%Y-%m-%d"),
+            "last_used": 0,
+        }
+        print(f"[API] ⚠ No SORTER_API_KEYS set. Generated random key:")
+        print(f"[API]   {random_key}")
+        print(f"[API] Set SORTER_API_KEYS env var to persist keys across restarts.")
+
+
+def require_api_key(f):
+    """Decorator: require valid API key in X-API-Key header."""
+
+    @functools.wraps(f)
+    def decorated(*args, **kwargs):
+        auth_required = os.environ.get("SORTER_API_AUTH_REQUIRED", "true").lower() in ("1", "true", "yes")
+        if not auth_required:
+            return f(*args, **kwargs)
+
+        key = request.headers.get("X-API-Key", "")
+        if not key:
+            return jsonify({"status": "error", "message": "X-API-Key header required"}), 401
+
+        key_hash = _hash_key(key)
+        with _API_KEYS_LOCK:
+            if key_hash not in _API_KEYS:
+                return jsonify({"status": "error", "message": "Invalid API key"}), 403
+            _API_KEYS[key_hash]["last_used"] = time.time()
+
+        return f(*args, **kwargs)
+
+    return decorated
+
+
+def get_api_keys_info() -> list:
+    """List registered API keys (name, created, last_used)."""
+    with _API_KEYS_LOCK:
+        return list(_API_KEYS.values())
 
 # ============================================================
 # System state (injected from main sorter process)
@@ -131,6 +225,22 @@ class SystemState:
 # Global state
 _state = SystemState()
 
+# P1-09 fix: optional SorterController reference for real hardware mode
+# When set, read endpoints proxy to controller; write endpoints call controller
+_controller = None  # type: Optional[Any]
+
+
+def inject_controller(sorter_controller):
+    """Inject the real SorterController instance.
+
+    Call this from main.py after creating the controller:
+        from sorter.api import inject_controller
+        inject_controller(controller)
+    """
+    global _controller
+    _controller = sorter_controller
+    print("[API] SorterController injected — API now proxies to real controller")
+
 
 # ============================================================
 # Utility helpers
@@ -158,7 +268,21 @@ def health():
 
 @app.route("/status", methods=["GET"])
 def status():
-    """Full system status."""
+    """Full system status. P1-09: reads from real controller when injected."""
+    if _controller is not None:
+        try:
+            ctrl_status = _controller.get_status()
+            return ok({
+                "state": ctrl_status.get("state", "UNKNOWN"),
+                "substate": ctrl_status.get("substate", ""),
+                "active": _controller._running,
+                "stats": ctrl_status.get("stats", {}),
+                "current_batch": ctrl_status.get("current_batch"),
+                "buffer_size": ctrl_status.get("buffer_size", 0),
+                "controller_connected": True,
+            })
+        except Exception as e:
+            return ok({"error": f"Controller error: {e}", "controller_connected": False})
     s = _state.get_all()
     return ok({
         "uptime_s": s["uptime_s"],
@@ -168,6 +292,7 @@ def status():
         "mqtt_connected": s["mqtt_connected"],
         "sensors": s["sensors"],
         "motors": s["motors"],
+        "controller_connected": False,
     })
 
 @app.route("/status/simple", methods=["GET"])
@@ -194,21 +319,28 @@ def get_bins():
 @app.route("/bins/<bin_id>", methods=["GET"])
 def get_bin(bin_id):
     """Get fill level for specific bin."""
-    if bin_id not in ["A1", "A2", "A3", "B1", "B2", "C1", "C2", "BF"]:
+    if bin_id not in _VALID_BINS:
         return error(f"Unknown bin: {bin_id}", 404)
     level = _state.get_bin_levels().get(bin_id, 0.0)
     return ok({"bin_id": bin_id, "level_g": level, "capacity_g": 100.0})
 
 @app.route("/bins/<bin_id>", methods=["PUT"])
+@require_api_key
 def set_bin(bin_id):
     """Manually set bin fill level (for testing/calibration)."""
-    if bin_id not in ["A1", "A2", "A3", "B1", "B2", "C1", "C2", "BF"]:
+    if bin_id not in _VALID_BINS:
         return error(f"Unknown bin: {bin_id}", 404)
     data = request.get_json() or {}
     level = data.get("level_g")
     if level is None:
         return error("level_g required")
-    _state.set_bin_level(bin_id, float(level))
+    try:
+        level = float(level)
+        if level < 0:
+            return error("level_g must be >= 0")
+    except (TypeError, ValueError):
+        return error("level_g must be a number")
+    _state.set_bin_level(bin_id, level)
     return ok({"bin_id": bin_id, "level_g": level})
 
 
@@ -218,7 +350,24 @@ def set_bin(bin_id):
 
 @app.route("/batch/current", methods=["GET"])
 def current_batch():
-    """Get current batch statistics."""
+    """Get current batch statistics. P1-09: reads from real controller."""
+    if _controller is not None:
+        try:
+            batch = _controller._current_batch
+            if batch is None:
+                return ok({"active": False, "batch": None})
+            return ok({
+                "active": True,
+                "batch": {
+                    "batch_id": batch.batch_id,
+                    "timestamp": batch.timestamp,
+                    "total_weight_kg": batch.total_weight_kg,
+                    "feed_sequence": batch.feed_sequence,
+                    "beans_count": len(batch.beans),
+                },
+            })
+        except Exception as e:
+            return ok({"error": f"Controller error: {e}"})
     s = _state.get_all()
     batch = s.get("current_batch")
     if not batch:
@@ -247,6 +396,7 @@ def get_config():
     return ok(_state.get_config())
 
 @app.route("/config", methods=["PUT", "PATCH"])
+@require_api_key
 def update_config():
     """Update configuration (partial or full)."""
     data = request.get_json() or {}
@@ -261,6 +411,7 @@ def update_config():
 # ============================================================
 
 @app.route("/calibration/weight", methods=["POST"])
+@require_api_key
 def calibrate_weight():
     """
     Trigger weight sensor calibration.
@@ -276,6 +427,7 @@ def calibrate_weight():
     })
 
 @app.route("/calibration/color", methods=["POST"])
+@require_api_key
 def calibrate_color():
     """
     Trigger color sensor calibration with reference tiles.
@@ -292,6 +444,7 @@ def calibrate_color():
     })
 
 @app.route("/calibration/moisture", methods=["POST"])
+@require_api_key
 def calibrate_moisture():
     """
     Trigger moisture probe calibration.
@@ -322,27 +475,44 @@ def calibration_status():
 # ============================================================
 
 @app.route("/control/start", methods=["POST"])
+@require_api_key
 def control_start():
-    """Start the sorting process."""
-    data = request.get_json() or {}
-    _state.update({
-        "active": True,
-        "state": "sorting",
-    })
+    """Start the sorting process. P1-09: calls real controller."""
+    if _controller is not None:
+        try:
+            from sorter.control.main import Event
+            _controller.post_event(Event.START)
+            return ok({"action": "start", "state": _controller._state.name})
+        except Exception as e:
+            return error(f"Controller error: {e}", 500)
+    _state.update({"active": True, "state": "sorting"})
     return ok({"action": "start", "state": "sorting"})
 
 @app.route("/control/stop", methods=["POST"])
+@require_api_key
 def control_stop():
-    """Stop the sorting process."""
-    _state.update({
-        "active": False,
-        "state": "idle",
-    })
+    """Stop the sorting process. P1-09: calls real controller."""
+    if _controller is not None:
+        try:
+            from sorter.control.main import Event
+            _controller.post_event(Event.STOP)
+            return ok({"action": "stop", "state": _controller._state.name})
+        except Exception as e:
+            return error(f"Controller error: {e}", 500)
+    _state.update({"active": False, "state": "idle"})
     return ok({"action": "stop", "state": "idle"})
 
 @app.route("/control/pause", methods=["POST"])
+@require_api_key
 def control_pause():
-    """Pause the sorting process."""
+    """Pause the sorting process. P1-09: calls real controller."""
+    if _controller is not None:
+        try:
+            from sorter.control.main import Event
+            _controller.post_event(Event.PAUSE)
+            return ok({"action": "pause", "state": _controller._state.name})
+        except Exception as e:
+            return error(f"Controller error: {e}", 500)
     _state.update({"state": "paused"})
     return ok({"action": "pause", "state": "paused"})
 
@@ -355,20 +525,29 @@ def motor_status(motor_name):
     return ok({motor_name: motor})
 
 @app.route("/control/motor/<motor_name>", methods=["PUT"])
+@require_api_key
 def motor_control(motor_name):
     """
     Enable/disable or set RPM for a motor.
     Body: {"enabled": true, "rpm": 60}
     """
-    valid_motors = ["vibrating_feeder", "size_sorter", "spiral_feeder", "rotary_distributor"]
-    if motor_name not in valid_motors:
+    if motor_name not in _VALID_MOTORS:
         return error(f"Unknown motor: {motor_name}", 404)
     data = request.get_json() or {}
     updates = {}
     if "enabled" in data:
+        if not isinstance(data["enabled"], bool):
+            return error("enabled must be a boolean")
         updates[f"motors.{motor_name}.enabled"] = data["enabled"]
     if "rpm" in data:
-        updates[f"motors.{motor_name}.rpm"] = data["rpm"]
+        try:
+            rpm = float(data["rpm"])
+        except (TypeError, ValueError):
+            return error("rpm must be a number")
+        rpm_range = _MOTOR_RPM_RANGE.get(motor_name)
+        if rpm_range and not (rpm_range[0] <= rpm <= rpm_range[1]):
+            return error(f"rpm must be {rpm_range[0]}-{rpm_range[1]} for {motor_name}")
+        updates[f"motors.{motor_name}.rpm"] = rpm
     _state.update(updates)
     return ok({motor_name: _state.get_motor_state(motor_name)})
 
@@ -389,6 +568,7 @@ def mqtt_status():
     })
 
 @app.route("/mqtt/publish", methods=["POST"])
+@require_api_key
 def mqtt_publish():
     """
     Manually publish MQTT message (for testing).
@@ -405,6 +585,17 @@ def mqtt_publish():
         "published": True,
         "note": "In production, route via SorterMQTTClient"
     })
+
+
+# ============================================================
+# API Key Management
+# ============================================================
+
+@app.route("/api-keys", methods=["GET"])
+@require_api_key
+def list_api_keys():
+    """List registered API keys (names only, never exposes hashes)."""
+    return ok({"keys": get_api_keys_info()})
 
 
 # ============================================================
@@ -426,7 +617,10 @@ def server_error(e):
 
 def run_server(host="0.0.0.0", port=5000, debug=False):
     """Run the Flask API server."""
+    init_api_keys()
     print(f"[API] Starting HUSKY-SORTER REST API on {host}:{port}")
+    auth_mode = "enabled" if os.environ.get("SORTER_API_AUTH_REQUIRED", "true").lower() in ("1", "true", "yes") else "disabled"
+    print(f"[API] Authentication: {auth_mode}")
     app.run(host=host, port=port, debug=debug, threaded=True)
 
 

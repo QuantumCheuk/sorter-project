@@ -183,7 +183,7 @@ class DatabaseBacker:
             size = db_copy.stat().st_size
             sha = compute_sha256(db_copy)
 
-            # SQL dump for extra safety
+            # SQL dump for extra safety (P1-16 fix: parameterized escaping)
             dump_path = backup_dir / "sorter_dump.sql.gz"
             conn = sqlite3.connect(str(DB_PATH))
             cur = conn.cursor()
@@ -193,9 +193,17 @@ class DatabaseBacker:
                 for table in tables:
                     cur.execute(f"SELECT * FROM {table}")
                     cols = [d[0] for d in cur.description]
-                    for row in cur.fetchall():
-                        vals = ",".join(f"'{v}'" if v is not None else "NULL" for v in row)
-                        dump.write(f"INSERT INTO {table} ({','.join(cols)}) VALUES ({vals});\n")
+                    # P3-07: use fetchmany() to avoid loading entire table into memory
+                    while True:
+                        rows = cur.fetchmany(1000)
+                        if not rows:
+                            break
+                        for row in rows:
+                            vals = ",".join(
+                                f"'{str(v).replace(chr(39), chr(39)+chr(39))}'" if v is not None else "NULL"
+                                for v in row
+                            )
+                            dump.write(f"INSERT INTO {table} ({','.join(cols)}) VALUES ({vals});\n")
             conn.close()
             dump_size = dump_path.stat().st_size
 

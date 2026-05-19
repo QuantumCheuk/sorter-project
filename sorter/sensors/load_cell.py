@@ -96,22 +96,27 @@ class HX711:
             return True
         return self._gpio.input(self.config.data_pin) == 0
     
-    def _wait_ready(self, timeout_ms: int = 1000) -> bool:
-        """Wait for data to be ready with timeout."""
+    def _wait_ready(self, timeout_ms: int = 65) -> bool:
+        """Wait for data to be ready with timeout.
+
+        P2-05 fix: default timeout reduced from 1000ms to 65ms.
+        HX711 at 10Hz = 100ms cycle, 80Hz = 12.5ms.
+        65ms covers worst-case with margin, avoiding 2kg/h bottleneck.
+        """
         start = time.time()
         timeout = timeout_ms / 1000.0
-        
+
         if self._use_mock:
-            time.sleep(0.001)  # Small delay in mock mode
+            time.sleep(0.001)
             return True
-        
+
         while time.time() - start < timeout:
             if self._is_data_ready():
                 return True
             time.sleep(0.0001)  # 0.1ms poll interval
-        
+
         return False
-    
+
     def _read_raw(self) -> int:
         """
         Read raw 24-bit signed value from HX711.
@@ -161,20 +166,17 @@ class HX711:
             
             return value
     
-    def read(self, samples: int = 5, timeout_ms: int = 1000) -> Optional[float]:
+    def read(self, samples: int = 5, timeout_ms: int = 65) -> Optional[float]:
         """
         Read weight value with averaging.
-        
+
         Args:
             samples: Number of samples to average (default 5)
             timeout_ms: Timeout in milliseconds for waiting for data
-            
-        Returns:
-            Weight in grams, or None if read failed/timeout
         """
         if not self._wait_ready(timeout_ms):
             return None
-        
+
         readings = []
         for _ in range(samples):
             raw = self._read_raw()
@@ -182,7 +184,7 @@ class HX711:
                 continue
             readings.append(raw)
             if _ < samples - 1:
-                time.sleep(0.02)  # 20ms between samples
+                time.sleep(0.0125)  # P2-05: 12.5ms (HX711 80Hz cycle) between samples
         
         if not readings:
             return None
@@ -430,7 +432,7 @@ if __name__ == "__main__":
     # Initialize with default config
     config = HX711Config(
         data_pin=5,
-        clock_pin=6,
+        clock_pin=27,  # SPEC v0.6: migrated from GPIO6 to GPIO27 (DRV8833 conflict)
         gain=128,
         reference_unit=1.0,
         offset=0.0

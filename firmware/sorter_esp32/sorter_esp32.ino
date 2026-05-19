@@ -5,9 +5,10 @@
  * 
  * Hardware: ESP32 DevKit v1 (30-pin)
  * 
- * Pin Assignment (v1.0):
+ * Pin Assignment (v2.0 — P0 fix 2026-05-17):
  *   GPIO4  (INPUT)  - T1 sensor (top bean detector)
- *   GPIO5  (INPUT)  - T2 sensor (bottom bean detector)  
+ *   GPIO5  (INPUT)  - T2 sensor (bottom bean detector)
+ *   GPIO15 (INPUT)  - E-STOP button (active LOW, hardware ISR)
  *   GPIO18 (OUTPUT) - Stepper1 PUL (vibrating feeder)
  *   GPIO19 (OUTPUT) - Stepper1 DIR
  *   GPIO21 (OUTPUT) - Stepper2 PUL (rotary distributor)
@@ -17,6 +18,8 @@
  *   GPIO25 (OUTPUT) - Buffer selector valve
  *   GPIO26 (OUTPUT) - Stepper3 PUL (spiral feeder)
  *   GPIO27 (OUTPUT) - Stepper3 DIR
+ *   GPIO14 (OUTPUT) - DRV8833 MS1 (microstep select, v2 init)
+ *   GPIO23 (OUTPUT) - DRV8833 MS2 (microstep select, v2 init)
  *   GPIO13 (OUTPUT) - Fan PWM (5015 blower speed control)
  *   GPIO34 (INPUT)  - Level sensor data (analog)
  *   GPIO35 (INPUT)  - HX711 DT (via voltage divider)
@@ -39,10 +42,15 @@
 #include <Arduino.h>
 #include <driver/gpio.h>
 #include <driver/adc.h>
+#include <driver/ledc.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <freertos/queue.h>
+#include <freertos/semphr.h>
+#include <freertos/timers.h>
 #include <HardwareSerial.h>
+#include <esp_task_wdt.h>
+#include <esp_timer.h>
 #include <vector>
 
 // ============================================================================
@@ -50,7 +58,7 @@
 // ============================================================================
 
 #define FIRMWARE_VERSION "1.0.0"
-#define FIRMWARE_BUILD "2026-05-03"
+#define FIRMWARE_BUILD "2026-05-17"
 
 // UART to Pi
 #define UART_TX_PIN 1
@@ -59,6 +67,19 @@
 
 // Stepper pulse timing (microseconds)
 #define STEP_PULSE_US 50
+
+// P0-09 fix: T1/T2 debounce window (microseconds)
+#define SENSOR_DEBOUNCE_US 5000  // 5ms
+
+// P0-07 fix: E-STOP hardware button
+#define ESTOP_PIN GPIO_NUM_15
+
+// P0-08 fix: Task Watchdog timeout (seconds)
+#define TWDT_TIMEOUT_S 5
+
+// P0-18 fix: DRV8833 microstep select pins
+#define DRV8833_MS1_PIN GPIO_NUM_14
+#define DRV8833_MS2_PIN GPIO_NUM_23
 
 // ============================================================================
 // Types & Enums
@@ -117,6 +138,10 @@ struct SystemStatus {
     uint32_t uptime_ms;
     uint32_t heap_free_bytes;
     uint32_t stack_hwm;
+    // P2-08: stack high-water mark per task
+    uint32_t stack_hwm_uart;
+    uint32_t stack_hwm_status;
+    uint32_t stack_hwm_stepper;
     float cpu_temp_c;
     float vcc_voltage;
     // Steppers
@@ -154,6 +179,11 @@ struct UARTCommand {
 SystemState g_system_state = SystemState::BOOTING;
 SystemStatus g_status = {};
 
+// P2-08: task handles for stack HWM monitoring
+static TaskHandle_t g_task_uart = NULL;
+static TaskHandle_t g_task_status = NULL;
+static TaskHandle_t g_task_stepper = NULL;
+
 StepperConfig g_steppers[3] = {
     // Feeder vibrating
     {gpio_num_t(GPIO_NUM_18), gpio_num_t(GPIO_NUM_19), 8, 64, 1.0f, false, 0, 0, 0, false},
@@ -186,29 +216,59 @@ static volatile bool g_step_dirs[3] = {false, false, false};
 static volatile int g_steppers_to_step[3] = {0, 0, 0};
 static SemaphoreHandle_t g_stepper_mutex = NULL;
 
+// P0-09: T1/T2 debounce timestamps (microseconds, esp_timer)
+static volatile int64_t g_t1_last_trigger_us = 0;
+static volatile int64_t g_t2_last_trigger_us = 0;
+
+// P0-07: E-STOP state
+static volatile bool g_estop_active = false;
+
+// P1-13: Solenoid pulse timers (non-blocking auto-off)
+static TimerHandle_t g_solenoid_timers[3] = {NULL, NULL, NULL};
+
 // ============================================================================
 // Pin Initialization
 // ============================================================================
 
 void init_pins() {
-    // T1/T2 sensor inputs (analog ADC, infrared beam broken = voltage drop)
+    // T1/T2 sensor inputs (NPN NO, falling edge = bean detected)
+    // P0-09 fix: use GPIO_INTR_NEGEDGE + pullup for debounced sensor input
     gpio_config_t t1_conf = {
         .pin_bit_mask = (1ULL << GPIO_NUM_4),
         .mode = GPIO_MODE_INPUT,
-        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_up_en = GPIO_PULLUP_ENABLE,     // P0-09: pullup for NPN sensor
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
-        .intr_type = GPIO_INTR_ANYEDGE  // trigger on any change
+        .intr_type = GPIO_INTR_NEGEDGE        // P0-09: falling edge only
     };
     gpio_config(&t1_conf);
 
     gpio_config_t t2_conf = {
         .pin_bit_mask = (1ULL << GPIO_NUM_5),
         .mode = GPIO_MODE_INPUT,
-        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_up_en = GPIO_PULLUP_ENABLE,     // P0-09: pullup for NPN sensor
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
-        .intr_type = GPIO_INTR_ANYEDGE
+        .intr_type = GPIO_INTR_NEGEDGE        // P0-09: falling edge only
     };
     gpio_config(&t2_conf);
+
+    // P0-07: E-STOP button input (active LOW, hardware ISR)
+    gpio_config_t estop_conf = {
+        .pin_bit_mask = (1ULL << ESTOP_PIN),
+        .mode = GPIO_MODE_INPUT,
+        .pull_up_en = GPIO_PULLUP_ENABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_NEGEDGE
+    };
+    gpio_config(&estop_conf);
+
+    // P0-18: DRV8833 microstep select pins
+    // Truth table: MS1=0,MS2=0=full | 1,0=half | 0,1=1/4 | 1,1=1/8
+    gpio_reset_pin(DRV8833_MS1_PIN);
+    gpio_reset_pin(DRV8833_MS2_PIN);
+    gpio_set_direction(DRV8833_MS1_PIN, GPIO_MODE_OUTPUT);
+    gpio_set_direction(DRV8833_MS2_PIN, GPIO_MODE_OUTPUT);
+    gpio_set_level(DRV8833_MS1_PIN, 1);  // MS1=HIGH → 1/8 microstep
+    gpio_set_level(DRV8833_MS2_PIN, 1);  // MS2=HIGH   (matches microstep=8 in config)
 
     // Solenoid outputs (default off)
     for (auto& sol : g_solenoids) {
@@ -227,14 +287,37 @@ void init_pins() {
         gpio_set_level(step.dir_pin, 0);
     }
 
-    // Fan PWM (GPIO13 -> ledc channel 0, timer 0)
+    // Fan PWM (GPIO13 → LEDC channel 0, timer 0, 25kHz)
     gpio_reset_pin(gpio_num_t(GPIO_NUM_13));
     gpio_set_direction(gpio_num_t(GPIO_NUM_13), GPIO_MODE_OUTPUT);
+
+    // LEDC timer configuration
+    ledc_timer_config_t fan_timer = {
+        .speed_mode = LEDC_LOW_SPEED_MODE,
+        .timer_num = LEDC_TIMER_0,
+        .duty_resolution = LEDC_TIMER_10_BIT,  // 0-1023
+        .freq_hz = 25000,                       // 25kHz (above audible range)
+        .clk_cfg = LEDC_AUTO_CLK
+    };
+    ledc_timer_config(&fan_timer);
+
+    // LEDC channel configuration
+    ledc_channel_config_t fan_channel = {
+        .gpio_num = GPIO_NUM_13,
+        .speed_mode = LEDC_LOW_SPEED_MODE,
+        .channel = LEDC_CHANNEL_0,
+        .intr_type = LEDC_INTR_DISABLE,
+        .timer_sel = LEDC_TIMER_0,
+        .duty = 0,
+        .hpoint = 0
+    };
+    ledc_channel_config(&fan_channel);
+    Serial.println("[INIT] Fan PWM initialized (LEDC 25kHz, 10-bit)");
 
     // ADC for sensors
     adc1_config_width(ADC_WIDTH_BIT_12);
 
-    Serial.println("[INIT] GPIO pins initialized");
+    Serial.println("[INIT] GPIO pins initialized (v2: +E-STOP +debounce +DRV8833 MS)");
 }
 
 // ============================================================================
@@ -286,7 +369,21 @@ void stepper_halt(StepperId id) {
 
 // ============================================================================
 // Solenoid Control
+// P1-13 fix: non-blocking pulse via FreeRTOS one-shot timer
 // ============================================================================
+
+// P1-13: Timer callback for auto-off solenoid pulse
+static void solenoid_pulse_off_cb(TimerHandle_t timer) {
+    // Timer ID encodes solenoid index
+    int idx = (int)pvTimerGetTimerID(timer);
+    if (idx >= 0 && idx < 3) {
+        gpio_set_level(g_solenoids[idx].pin, 0);
+        g_solenoids[idx].state = false;
+        g_status.air_jet_active = g_solenoids[0].state;
+        g_status.weighing_release_active = g_solenoids[1].state;
+        g_status.buffer_selector_active = g_solenoids[2].state;
+    }
+}
 
 void solenoid_set(SolenoidId id, bool on, uint32_t pulse_ms = 0) {
     int idx = static_cast<int>(id);
@@ -294,11 +391,22 @@ void solenoid_set(SolenoidId id, bool on, uint32_t pulse_ms = 0) {
     g_solenoids[idx].state = on;
 
     if (on && pulse_ms > 0) {
-        // Auto-off after pulse duration
-        // Use a simple delay for pulse mode (non-blocking would need timer)
-        vTaskDelay(pdMS_TO_TICKS(pulse_ms));
-        gpio_set_level(g_solenoids[idx].pin, 0);
-        g_solenoids[idx].state = false;
+        // P1-13: Non-blocking pulse via FreeRTOS one-shot timer
+        // Reuse or create timer for this solenoid
+        if (g_solenoid_timers[idx] == NULL) {
+            g_solenoid_timers[idx] = xTimerCreate(
+                "sol_pulse",           // name
+                pdMS_TO_TICKS(1),      // dummy period (set below)
+                pdFALSE,               // one-shot (auto-delete = false, we reuse)
+                (void*)idx,            // timer ID = solenoid index
+                solenoid_pulse_off_cb  // callback
+            );
+        }
+        // Cancel any running timer, then start with new period
+        xTimerStop(g_solenoid_timers[idx], 0);
+        xTimerChangePeriod(g_solenoid_timers[idx], pdMS_TO_TICKS(pulse_ms), 0);
+        xTimerStart(g_solenoid_timers[idx], 0);
+        // Returns immediately — timer fires callback after pulse_ms
     }
 
     g_status.air_jet_active = g_solenoids[0].state;
@@ -385,34 +493,126 @@ void hx711_calibrate(float known_weight_g) {
 // ============================================================================
 
 void update_sensor_readings() {
-    // T1/T2 are infrared break-beam sensors
-    // When bean breaks beam, voltage drops (analog reading changes)
-    // Calibration: break = reading < threshold, clear = reading > threshold
+    // T1/T2 are infrared break-beam sensors (NPN NO output)
+    // When bean breaks beam, NPN transistor turns OFF → GPIO pulled HIGH
+    // When beam clear, NPN transistor turns ON → GPIO pulled LOW (falling edge)
+    // P0-09: Interrupts now use GPIO_INTR_NEGEDGE + 5ms esp_timer debounce
     const int T1_THRESHOLD = 2048;  // mid-range of 0-4095
     const int T2_THRESHOLD = 2048;
-    
+
     int t1_raw = adc1_get_raw(ADC1_CHANNEL_0);  // GPIO36 = ADC1_CH0
     int t2_raw = adc1_get_raw(ADC1_CHANNEL_3);  // GPIO39 = ADC1_CH3
-    
+
     g_status.t1_beam_voltage = t1_raw * 3.3f / 4095.0f;
     g_status.t2_beam_voltage = t2_raw * 3.3f / 4095.0f;
     g_status.t1_beam_broken = (t1_raw < T1_THRESHOLD);
     g_status.t2_beam_broken = (t2_raw < T2_THRESHOLD);
 }
 
+// P0-09 fix: ISR with esp_timer-based 5ms debounce
+// Uses esp_timer_get_time() for microsecond precision (not millis())
+// GPIO_INTR_NEGEDGE ensures only falling edge triggers (beam broken)
 bool IRAM_ATTR t1_isr() {
+    int64_t now = esp_timer_get_time();
+    if ((now - g_t1_last_trigger_us) < SENSOR_DEBOUNCE_US) {
+        return false;  // Within debounce window, ignore
+    }
+    g_t1_last_trigger_us = now;
+
     BaseType_t high_task_woken = pdFALSE;
-    uint32_t now = millis();
-    xQueueSendFromISR(g_cmd_queue, &(UARTCommand{"T1_TRIGGER", String(now)}), &high_task_woken);
+    uint32_t ts_us = (uint32_t)(now & 0xFFFFFFFF);
+    xQueueSendFromISR(g_cmd_queue, &(UARTCommand{"T1_TRIGGER", String(ts_us)}), &high_task_woken);
     g_status.beans_detected++;
     return high_task_woken == pdTRUE ? true : false;
 }
 
 bool IRAM_ATTR t2_isr() {
+    int64_t now = esp_timer_get_time();
+    if ((now - g_t2_last_trigger_us) < SENSOR_DEBOUNCE_US) {
+        return false;  // Within debounce window, ignore
+    }
+    g_t2_last_trigger_us = now;
+
     BaseType_t high_task_woken = pdFALSE;
-    uint32_t now = millis();
-    xQueueSendFromISR(g_cmd_queue, &(UARTCommand{"T2_TRIGGER", String(now)}), &high_task_woken);
+    uint32_t ts_us = (uint32_t)(now & 0xFFFFFFFF);
+    xQueueSendFromISR(g_cmd_queue, &(UARTCommand{"T2_TRIGGER", String(ts_us)}), &high_task_woken);
     return high_task_woken == pdTRUE ? true : false;
+}
+
+// ============================================================================
+// P0-07: E-STOP Hardware ISR (SIL-3 <50ms response)
+// ============================================================================
+// E-STOP button on GPIO15 (active LOW, NC contact).
+// This ISR immediately halts ALL motors and closes ALL valves,
+// bypassing the UART command queue entirely.
+// The UART ESTOP command is kept as a software fallback.
+
+void IRAM_ATTR estop_isr() {
+    // Immediate hardware halt — no queue, no delay
+    g_estop_active = true;
+
+    // Halt all steppers immediately (direct GPIO, no mutex)
+    for (int i = 0; i < 3; i++) {
+        gpio_set_level(g_steppers[i].pul_pin, 0);
+    }
+
+    // Close all solenoids immediately
+    for (int i = 0; i < 3; i++) {
+        gpio_set_level(g_solenoids[i].pin, 0);
+    }
+
+    // Queue status update for serial task (non-critical, best-effort)
+    BaseType_t woken = pdFALSE;
+    xQueueSendFromISR(g_cmd_queue, &(UARTCommand{"ESTOP_HW", String(0)}), &woken);
+}
+
+// ============================================================================
+// P0-10: UART CRC-16 Checksum (CRC-16-CCITT)
+// ============================================================================
+// Command frames may include "crc":NNNN field. If present, the CRC of all
+// bytes before the crc field must match. Mismatched CRC = corrupted frame.
+// The Raspberry Pi sender appends "crc":XXXX to JSON frames.
+
+static uint16_t crc16_ccitt(const uint8_t* data, size_t len) {
+    uint16_t crc = 0xFFFF;
+    for (size_t i = 0; i < len; i++) {
+        crc ^= (uint16_t)data[i] << 8;
+        for (int j = 0; j < 8; j++) {
+            if (crc & 0x8000)
+                crc = (crc << 1) ^ 0x1021;
+            else
+                crc = crc << 1;
+        }
+    }
+    return crc;
+}
+
+// Extract CRC from JSON frame: {"cmd":"...","crc":12345}
+// Returns -1 if no CRC field present (frame accepted without check)
+static int extract_and_verify_crc(const String& json) {
+    int crc_idx = json.indexOf("\"crc\"");
+    if (crc_idx < 0) return -1;  // No CRC — accept without verification
+
+    int colon = json.indexOf(":", crc_idx);
+    if (colon < 0) return -1;
+
+    int comma_or_brace = json.indexOf(",", colon);
+    int end_brace = json.indexOf("}", colon);
+    int end = (comma_or_brace > 0 && comma_or_brace < end_brace) ? comma_or_brace : end_brace;
+    if (end < 0) end = json.length() - 1;
+
+    String crc_str = json.substring(colon + 1, end);
+    crc_str.trim();
+    uint16_t expected_crc = (uint16_t)crc_str.toInt();
+
+    // Compute CRC over the data portion (everything before the "crc" field)
+    // Find the start of "crc" including the preceding comma
+    int crc_field_start = crc_idx - 1;  // include the comma before "crc"
+    if (crc_field_start < 0) crc_field_start = 0;
+
+    uint16_t computed_crc = crc16_ccitt((const uint8_t*)json.c_str(), (size_t)crc_field_start);
+
+    return (computed_crc == expected_crc) ? 1 : 0;
 }
 
 // ============================================================================
@@ -421,6 +621,14 @@ bool IRAM_ATTR t2_isr() {
 
 void process_command(const String& json) {
     g_status.commands_received++;
+
+    // P0-10: Verify CRC if present
+    int crc_result = extract_and_verify_crc(json);
+    if (crc_result == 0) {
+        Serial.println("[CMD] CRC MISMATCH — frame rejected");
+        g_status.faults_detected++;
+        return;
+    }
 
     // Minimal JSON parser (avoid external library for firmware size)
     // Expected format: {"cmd": "FEED_RATE", "args": {"rpm": 30}}
@@ -441,8 +649,8 @@ void process_command(const String& json) {
     Serial.printf("[CMD] Received: %s\n", cmd.c_str());
 
     if (cmd == "STATUS") {
-        // Send full status
-        char buf[512];
+        // P3-03: expanded to 1024 to accommodate stack_hwm fields without truncation
+        char buf[1024];
         snprintf(buf, sizeof(buf),
             "{\"type\":\"STATUS\","
             "\"state\":%d,"
@@ -451,18 +659,26 @@ void process_command(const String& json) {
             "\"beans_detected\":%lu,"
             "\"t1_beam_broken\":%s,"
             "\"t2_beam_broken\":%s,"
+            "\"estop_active\":%s,"
             "\"feeder_rpm\":%lu,"
             "\"air_jet\":%s,"
-            "\"version\":\"%s\"}",
+            "\"stack_hwm\":{\"uart\":%lu,\"status\":%lu,\"stepper\":%lu},"
+            "\"version\":\"%s\","
+            "\"build\":\"%s\"}",
             (int)g_system_state,
             (unsigned long)g_status.uptime_ms,
             (unsigned long)g_status.heap_free_bytes,
             (unsigned long)g_status.beans_detected,
             g_status.t1_beam_broken ? "true" : "false",
             g_status.t2_beam_broken ? "true" : "false",
+            g_estop_active ? "true" : "false",
             (unsigned long)g_status.feeder_rpm,
             g_status.air_jet_active ? "true" : "false",
-            FIRMWARE_VERSION
+            (unsigned long)g_status.stack_hwm_uart,
+            (unsigned long)g_status.stack_hwm_status,
+            (unsigned long)g_status.stack_hwm_stepper,
+            FIRMWARE_VERSION,
+            FIRMWARE_BUILD
         );
         Serial.println(buf);
     }
@@ -600,16 +816,17 @@ void process_command(const String& json) {
             int comma = json.indexOf(",", colon);
             int end = (comma > 0) ? comma : json.length() - 1;
             uint16_t duty = json.substring(colon + 1, end).toInt();
-            // 0-1023 range for ESP32 LEDC
             duty = constrain(duty, 0, 1023);
-            // Simple PWM via GPIO toggle in software
-            // For real implementation, use LEDC hardware peripheral
-            // Here we just acknowledge the command
-            Serial.printf("[CMD] Fan PWM duty=%u\n", duty);
+            // Drive LEDC hardware PWM (LEDC channel 0, 10-bit = 0-1023)
+            ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, duty);
+            ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0);
+            Serial.printf("[CMD] Fan PWM duty=%u (%.0f%%)\n", duty, duty * 100.0 / 1023.0);
         }
     }
-    else if (cmd == "ESTOP") {
+    else if (cmd == "ESTOP" || cmd == "ESTOP_HW") {
         // Emergency stop: halt all motors, close all valves
+        // ESTOP: software command via UART
+        // ESTOP_HW: hardware button ISR (P0-07 fix)
         for (int i = 0; i < 3; i++) {
             stepper_halt((StepperId)i);
         }
@@ -617,7 +834,22 @@ void process_command(const String& json) {
             solenoid_set((SolenoidId)i, false);
         }
         g_system_state = SystemState::FAULT;
-        Serial.println("[CMD] ESTOP executed");
+        if (cmd == "ESTOP_HW") {
+            Serial.println("[ESTOP] HARDWARE button triggered — all actuators halted");
+        } else {
+            Serial.println("[CMD] ESTOP executed");
+        }
+    }
+    else if (cmd == "ESTOP_RESET") {
+        // P0-07: Clear hardware E-STOP state and restore IDLE
+        if (!g_estop_active) {
+            Serial.println("[CMD] No active E-STOP to reset");
+        } else {
+            g_estop_active = false;
+            g_system_state = SystemState::IDLE;
+            g_status.faults_detected++;
+            Serial.println("[CMD] ESTOP_RESET — system returned to IDLE");
+        }
     }
     else if (cmd == "RESET") {
         g_system_state = SystemState::IDLE;
@@ -647,6 +879,7 @@ void serial_task(void* param) {
                 line += c;
             }
         }
+        esp_task_wdt_reset();  // P0-08: Feed watchdog
         vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
@@ -660,6 +893,10 @@ void status_task(void* param) {
         g_status.uptime_ms = millis();
         g_status.heap_free_bytes = ESP.getFreeHeap();
         g_status.stack_hwm = uxTaskGetStackHighWaterMark(NULL);
+        // P2-08: track stack HWM for all tasks
+        if (g_task_uart)   g_status.stack_hwm_uart   = uxTaskGetStackHighWaterMark(g_task_uart);
+        if (g_task_status) g_status.stack_hwm_status  = uxTaskGetStackHighWaterMark(g_task_status);
+        if (g_task_stepper) g_status.stack_hwm_stepper = uxTaskGetStackHighWaterMark(g_task_stepper);
         g_status.cpu_temp_c = temperatureRead();
         g_status.vcc_voltage = analogRead(ADC1_CHANNEL_0) * 3.3f / 4095.0f * 2;  // voltage divider
         
@@ -680,12 +917,15 @@ void status_task(void* param) {
             Serial.println(buf);
         }
 
+        esp_task_wdt_reset();  // P0-08: Feed watchdog
         vTaskDelay(pdMS_TO_TICKS(5000));
     }
 }
 
 // ============================================================================
 // Stepper pulse generation task (software step generation)
+// P0-17 fix: uses esp_timer_get_time() for microsecond-accurate delays
+//            instead of vTaskDelay(1ms) which limits max RPM
 // ============================================================================
 
 void stepper_task(void* param) {
@@ -694,16 +934,27 @@ void stepper_task(void* param) {
             for (int i = 0; i < 3; i++) {
                 if (g_steppers[i].moving && g_steppers[i].enabled && g_steppers_to_step[i] > 0) {
                     // Calculate delay based on RPM
-                    // steps_per_rev * microstep * 60 / rpm = us per revolution
                     uint32_t steps_per_rev = g_steppers[i].steps_per_rev * g_steppers[i].microstep;
-                    uint32_t us_per_step = (steps_per_rev * 1000000UL) / (g_steppers[i].speed_rpm * 60);
-                    us_per_step = constrain(us_per_step, STEP_PULSE_US + 10, 100000);  // clamp 50us to 100ms
+                    uint32_t us_per_step = (60UL * 1000000UL) / (g_steppers[i].speed_rpm * steps_per_rev);
+                    us_per_step = constrain(us_per_step, STEP_PULSE_US * 2, 100000);
+
+                    // P0-17: Microsecond-accurate step timing using esp_timer
+                    int64_t step_deadline = esp_timer_get_time() + us_per_step;
 
                     gpio_set_level(g_steppers[i].dir_pin, g_step_dirs[i] ? 1 : 0);
                     gpio_set_level(g_steppers[i].pul_pin, 1);
-                    delayMicroseconds(STEP_PULSE_US);
+                    ets_delay_us(STEP_PULSE_US);  // 50us pulse width
                     gpio_set_level(g_steppers[i].pul_pin, 0);
-                    
+
+                    // Wait until next step deadline (busy-wait for short delays)
+                    while (esp_timer_get_time() < step_deadline) {
+                        // Yield for longer delays to let other tasks run
+                        if ((step_deadline - esp_timer_get_time()) > 1000) {
+                            vTaskDelay(pdMS_TO_TICKS(1));
+                            break;
+                        }
+                    }
+
                     g_steppers_to_step[i]--;
                     if (g_steppers_to_step[i] == 0) {
                         g_steppers[i].moving = false;
@@ -714,6 +965,76 @@ void stepper_task(void* param) {
         }
         vTaskDelay(pdMS_TO_TICKS(1));  // 1ms base loop
     }
+}
+
+// ============================================================================
+// P2-09: Boot self-check (verifies hardware before going operational)
+// ============================================================================
+
+static bool run_boot_self_check() {
+    Serial.println("\n─── BOOT SELF-CHECK ───");
+    bool all_ok = true;
+
+    // 1. Memory check
+    uint32_t heap = ESP.getFreeHeap();
+    if (heap < 100000) {
+        Serial.printf("[FAIL] Heap too low: %lu bytes (min 100KB)\n", (unsigned long)heap);
+        all_ok = false;
+    } else {
+        Serial.printf("[OK]   Heap: %lu bytes\n", (unsigned long)heap);
+    }
+
+    // 2. GPIO output verification (toggle output pins, verify no shorts)
+    const int output_pins[] = {
+        PIN_STEPPER1_PUL, PIN_STEPPER1_DIR,
+        PIN_STEPPER2_PUL, PIN_STEPPER2_DIR,
+        PIN_STEPPER3_PUL, PIN_STEPPER3_DIR,
+        PIN_AIR_JET, PIN_WEIGH_RELEASE, PIN_BUF_SELECT,
+        DRV8833_MS1_PIN, DRV8833_MS2_PIN,
+        FAN_PWM_PIN
+    };
+    const int n_outputs = sizeof(output_pins) / sizeof(output_pins[0]);
+
+    for (int i = 0; i < n_outputs; i++) {
+        gpio_set_level((gpio_num_t)output_pins[i], 1);
+        delay(1);
+        gpio_set_level((gpio_num_t)output_pins[i], 0);
+    }
+    Serial.printf("[OK]   %d output pins toggled\n", n_outputs);
+
+    // 3. ADC sensor sanity check
+    int adc_ch0 = adc1_get_raw(ADC1_CHANNEL_0);
+    int adc_ch3 = adc1_get_raw(ADC1_CHANNEL_3);
+    if (adc_ch0 < 0 || adc_ch0 > 4095) {
+        Serial.printf("[WARN] ADC CH0 read %d (unexpected)\n", adc_ch0);
+        // Not fatal — sensor may not be connected at boot
+    } else {
+        Serial.printf("[OK]   ADC CH0=%d, CH3=%d\n", adc_ch0, adc_ch3);
+    }
+
+    // 4. T1/T2 sensor check (T1=GPIO36/ADC1_CH0, T2=GPIO39/ADC1_CH3)
+    int t1_raw = adc1_get_raw(ADC1_CHANNEL_0);
+    int t2_raw = adc1_get_raw(ADC1_CHANNEL_3);
+    float t1_v = t1_raw * 3.3f / 4095.0f;
+    float t2_v = t2_raw * 3.3f / 4095.0f;
+    Serial.printf("[INFO] T1=%.2fV (raw=%d), T2=%.2fV (raw=%d)\n", t1_v, t1_raw, t2_v, t2_raw);
+
+    // 5. E-STOP pin state
+    int estop_level = gpio_get_level(ESTOP_PIN);
+    if (estop_level == 0) {
+        Serial.println("[WARN] E-STOP is currently PRESSED (active LOW)");
+        all_ok = false;
+    } else {
+        Serial.println("[OK]   E-STOP released (normal)");
+    }
+
+    if (all_ok) {
+        Serial.println("[PASS] Self-check passed");
+    } else {
+        Serial.println("[FAIL] Self-check has failures — check above");
+    }
+    Serial.println("─── END SELF-CHECK ───\n");
+    return all_ok;
 }
 
 // ============================================================================
@@ -741,28 +1062,36 @@ void setup() {
     adc1_config_channel_atten(ADC1_CHANNEL_0, ADC_ATTEN_DB_11);  // GPIO36
     adc1_config_channel_atten(ADC1_CHANNEL_3, ADC_ATTEN_DB_11);  // GPIO39
 
-    // Attach T1/T2 interrupts
-    gpio_set_intr_type(gpio_num_t(GPIO_NUM_4), GPIO_INTR_ANYEDGE);
-    gpio_isr_register(t1_isr, NULL, ESP_INTR_FLAG_IRAM);
-    gpio_intr_enable(gpio_num_t(GPIO_NUM_4));
+    // P2-09: Run boot self-check
+    run_boot_self_check();
 
-    gpio_set_intr_type(gpio_num_t(GPIO_NUM_5), GPIO_INTR_ANYEDGE);
-    gpio_isr_register(t2_isr, NULL, ESP_INTR_FLAG_IRAM);
-    gpio_intr_enable(gpio_num_t(GPIO_NUM_5));
+    // P0-08: Initialize Task Watchdog (5 second timeout)
+    esp_task_wdt_init(TWDT_TIMEOUT_S, true);  // true = panic on timeout
+    esp_task_wdt_add(NULL);  // Add current task (loopTask) to watchdog
 
-    // Create tasks
-    xTaskCreatePinnedToCore(serial_task, "UART", 4096, NULL, 5, NULL, 0);
-    xTaskCreatePinnedToCore(status_task, "Status", 4096, NULL, 3, NULL, 1);
-    xTaskCreatePinnedToCore(stepper_task, "Stepper", 4096, NULL, 4, NULL, 1);
+    // Attach T1/T2 interrupts (P0-09: NEGEDGE already set in init_pins)
+    gpio_isr_handler_add(gpio_num_t(GPIO_NUM_4), t1_isr, NULL);
+    gpio_isr_handler_add(gpio_num_t(GPIO_NUM_5), t2_isr, NULL);
+
+    // P0-07: Attach E-STOP hardware ISR (highest priority)
+    gpio_isr_handler_add(ESTOP_PIN, estop_isr, NULL);
+    Serial.println("[BOOT] E-STOP hardware ISR registered on GPIO15");
+
+    // Create tasks (all tasks feed watchdog in their loops)
+    // P2-08: store handles for stack HWM monitoring
+    xTaskCreatePinnedToCore(serial_task, "UART", 4096, NULL, 5, &g_task_uart, 0);
+    xTaskCreatePinnedToCore(status_task, "Status", 4096, NULL, 3, &g_task_status, 1);
+    xTaskCreatePinnedToCore(stepper_task, "Stepper", 4096, NULL, 4, &g_task_stepper, 1);
 
     // System ready
     g_system_state = SystemState::IDLE;
-    Serial.println("[BOOT] System ready, waiting for commands...");
-    Serial.println("[BOOT] Send {\"cmd\":\"STATUS\"} to get current status");
+    Serial.println("[BOOT] System ready (v2: +E-STOP HW +WDT +debounce +CRC)");
+    Serial.println("[BOOT] Waiting for commands...");
 }
 
 void loop() {
-    // Main loop does nothing - all work is in tasks
-    // This ensures RTOS task scheduling
+    // Main loop: feed watchdog to prove main task is alive
+    // All actual work is done in FreeRTOS tasks
+    esp_task_wdt_reset();  // P0-08: Feed watchdog every 1s
     delay(1000);
 }

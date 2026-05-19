@@ -100,6 +100,7 @@ class Event(Enum):
 class BeanRecord:
     """单粒豆子数据记录"""
     bean_id:        int
+    batch_id:       Optional[str] = None    # 关联批次（追溯用）
     timestamp:      str = field(default_factory=lambda: datetime.now().isoformat())
     size_grade:    Optional[int] = None
     weight_g:      Optional[float] = None
@@ -484,8 +485,13 @@ class SorterController:
         # 运行控制
         self._running = False
         self._pause_event = threading.Event()
+        self._pause_event.set()  # initially not paused
         self._lock = threading.Lock()
         self._start_time: Optional[float] = None
+
+        # E-STOP: immediate flag checked before event queue (SIL-3 requirement)
+        self._estop_flag = False
+        self._estop_lock = threading.Lock()
 
         logger.info(f"SorterController initialized (simulate={self.simulate})")
 
@@ -516,19 +522,32 @@ class SorterController:
         logger.debug(f"EVENT: {event.name}" + (f" data={data}" if data else ""))
 
     def process_events(self) -> None:
-        """处理事件队列（非阻塞）"""
+        """处理事件队列（非阻塞）
+
+        E-STOP 优先于所有事件立即执行（SIL-3 安全要求）
+        """
+        # E-STOP bypasses event queue — checked first every cycle
+        with self._estop_lock:
+            if self._estop_flag:
+                self._estop_flag = False
+                self._on_estop({})
+                return  # E-STOP consumed, stop processing
+
         while self._event_queue:
             event, data = self._event_queue.popleft()
             self._handle_event(event, data)
 
     def _handle_event(self, event: Event, data: Optional[Dict]) -> None:
         """处理单个事件"""
+        # E-STOP event from queue is handled through the flag path instead
+        if event == Event.ESTOP:
+            self.trigger_estop()
+            return
         handler_map: Dict[Event, Callable] = {
             Event.START:               self._on_start,
             Event.STOP:                self._on_stop,
             Event.PAUSE:              self._on_pause,
             Event.RESUME:             self._on_resume,
-            Event.ESTOP:              self._on_estop,
             Event.RESET:              self._on_reset,
             Event.LOAD_BEANS:         self._on_load_beans,
             Event.BATCH_START:        self._on_batch_start,
@@ -577,6 +596,19 @@ class SorterController:
         if self._state == MachineState.PAUSED:
             self._pause_event.clear()
             self.transition(MachineState.RUNNING)
+
+    def trigger_estop(self) -> None:
+        """
+        立即触发 E-STOP（线程安全，非阻塞）
+
+        SIL-3 安全要求: <50ms 响应时间
+        设置标志位 + 释放 pause_event，确保主循环下一个周期即可检测并执行
+        """
+        with self._estop_lock:
+            self._estop_flag = True
+        # Unblock pause_event so the main loop wakes immediately
+        self._pause_event.set()
+        logger.warning("E-STOP FLAG SET — will execute on next cycle")
 
     def _on_estop(self, data: Dict) -> None:
         """急停 — 立即关闭所有执行器"""
@@ -656,7 +688,12 @@ class SorterController:
 
         try:
             while self._running:
-                self._pause_event.wait()  # 暂停时阻塞
+                # Timeout ensures E-STOP flag is checked even when PAUSED
+                # 100ms timeout → max E-STOP latency from pause = 100ms
+                if self._state == MachineState.PAUSED:
+                    self._pause_event.wait(timeout=0.1)
+                else:
+                    self._pause_event.wait()
                 self.process_events()
                 self._poll_sensors()
                 self._update_stats()
@@ -695,7 +732,10 @@ class SorterController:
         result = self.top_camera.capture_top()
         if result:
             bean_id = result["bean_id"]
-            record = BeanRecord(bean_id=bean_id)
+            record = BeanRecord(
+                bean_id=bean_id,
+                batch_id=self._current_batch.batch_id if self._current_batch else None,
+            )
             self._bean_buffer[bean_id] = record
             self._bean_counter += 1
             logger.debug(f"Bean {bean_id}: T1 triggered, top captured")
@@ -817,10 +857,12 @@ class SignalHandler:
         signal.signal(signal.SIGTERM, self._handler)
 
     def _handler(self, signum, frame) -> None:
-        logger.info(f"Signal {signum} received")
-        self.controller.post_event(Event.ESTOP)
-        time.sleep(0.1)
+        logger.info(f"Signal {signum} received — triggering E-STOP immediately")
+        # Direct E-STOP: set flag + unblock pause_event (no event queue)
+        self.controller.trigger_estop()
         self.controller.stop()
+        # Give the main loop one cycle to execute _on_estop (actuators off)
+        time.sleep(0.05)
         sys.exit(0)
 
 
@@ -886,9 +928,9 @@ def main():
             elif cmd in ("cal",):
                 controller.post_event(Event.CALIBRATE_ALL)
             elif cmd in ("estop", "e"):
-                controller.post_event(Event.ESTOP)
+                controller.trigger_estop()
             elif cmd in ("quit", "q", "exit"):
-                controller.post_event(Event.ESTOP)
+                controller.trigger_estop()
                 controller.stop()
                 break
             else:

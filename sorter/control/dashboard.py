@@ -154,7 +154,7 @@ class SorterDashboard(tk.Tk):
     CHART_HISTORY_S    = 120   # 图表保留时间（秒）
     LOG_LINES_MAX      = 200
 
-    def __init__(self, simulate: bool = True, controller_host: Optional[str] = None):
+    def __init__(self, simulate: bool = True, controller_host: Optional[str] = None, controller=None):
         super().__init__()
         self.title("🐕 生豆分选机监控仪表盘 — HUSKY-SORTER-001")
         self.geometry("1280x800")
@@ -163,8 +163,9 @@ class SorterDashboard(tk.Tk):
 
         self.simulate = simulate
         self.controller_host = controller_host
+        self._controller = controller  # P2-06: optional SorterController reference
 
-        # ── 状态机状态 ──────────────────────────────────────────────────────
+        # ── 状态机状态 (仅模拟模式使用; 有控制器时从控制器读取) ───────
         self._state         = "IDLE"
         self._substate      = ""
         self._running        = False
@@ -215,10 +216,49 @@ class SorterDashboard(tk.Tk):
 
         if self.simulate:
             self._append_log("💡 模拟模式启动（无需硬件）")
+        elif self._controller is not None:
+            self._append_log("🔌 已连接真实控制器")
         else:
             self._append_log(f"🔌 连接控制器: {controller_host}")
 
         logger.info("Dashboard initialized")
+
+    # ── P2-06: read state from real controller when injected ────────────────
+    def _get_effective_state(self) -> Dict[str, Any]:
+        """Return current state dict. Prefers real controller over local mock state."""
+        if self._controller is not None:
+            try:
+                ctrl = self._controller
+                status = ctrl.get_status()
+                return {
+                    "state": status.get("state", self._state),
+                    "substate": status.get("substate", self._substate),
+                    "running": getattr(ctrl, "_running", self._running),
+                    "paused": self._paused,
+                    "mqtt_connected": self._mqtt_connected,
+                    "uptime_start": self._uptime_start,
+                }
+            except Exception:
+                pass
+        return {
+            "state": self._state,
+            "substate": self._substate,
+            "running": self._running,
+            "paused": self._paused,
+            "mqtt_connected": self._mqtt_connected,
+            "uptime_start": self._uptime_start,
+        }
+
+    def _send_to_controller(self, event):
+        """Post event to controller if available, return True on success."""
+        if self._controller is not None:
+            try:
+                self._controller.post_event(event)
+                return True
+            except Exception as e:
+                self._append_log(f"⚠ 控制器命令失败: {e}")
+                return False
+        return False
 
     # ── UI 构建 ─────────────────────────────────────────────────────────────
     def _build_ui(self):
@@ -515,7 +555,8 @@ class SorterDashboard(tk.Tk):
                 last_tick = now
 
                 # ── 模拟豆子流 ──────────────────────────────────────────────
-                if self._running and not self._paused:
+                eff_state = self._get_effective_state()
+                if eff_state["running"] and not eff_state["paused"]:
                     bean = self._sim.maybe_emit()
                     if bean:
                         self._on_bean_processed(bean)
@@ -555,6 +596,22 @@ class SorterDashboard(tk.Tk):
         t.start()
 
     def _execute_cmd(self, cmd: str):
+        # P2-06: proxy commands to real controller when injected
+        if self._controller is not None:
+            from sorter.control.main import Event
+            event_map = {
+                "start": Event.START,
+                "pause": Event.PAUSE,
+                "stop": Event.STOP,
+                "estop": Event.ESTOP,
+            }
+            event = event_map.get(cmd)
+            if event is not None:
+                if self._send_to_controller(event):
+                    self._append_log(f"▶ 命令已发送至控制器: {cmd.upper()}")
+                return
+            # new_batch and reset fall through to local handling
+
         with self._lock:
             if cmd == "start":
                 if self._state in ("IDLE",):
@@ -653,9 +710,11 @@ class SorterDashboard(tk.Tk):
 
     # ── UI 更新 ──────────────────────────────────────────────────────────────
     def _update_state_display(self):
-        color = STATE_COLORS.get(self._state, "#4a4a4a")
+        eff = self._get_effective_state()
+        state = eff["state"]
+        color = STATE_COLORS.get(state, "#4a4a4a")
         self._state_canvas.itemconfig(self._state_rect, fill=color)
-        self._state_canvas.itemconfig(self._state_text, text=self._state)
+        self._state_canvas.itemconfig(self._state_text, text=state)
 
     def _update_uptime(self):
         elapsed = int(time.time() - self._uptime_start)
@@ -736,8 +795,27 @@ class SorterDashboard(tk.Tk):
         self._log_text.config(state="disabled")
 
 
+# ── P2-06: global dashboard reference for controller injection ─────────────
+_dashboard_instance: Optional['SorterDashboard'] = None
+
+
+def inject_dashboard_controller(sorter_controller):
+    """Inject SorterController into a running dashboard instance.
+
+    Call from main.py after creating the controller:
+        from sorter.control.dashboard import inject_dashboard_controller
+        inject_dashboard_controller(controller)
+    """
+    global _dashboard_instance
+    if _dashboard_instance is not None:
+        _dashboard_instance._controller = sorter_controller
+        _dashboard_instance._append_log("🔌 控制器已注入 — 仪表盘连接真实硬件")
+        logger.info("Controller injected into dashboard")
+
+
 # ── 入口 ─────────────────────────────────────────────────────────────────────
 def main():
+    global _dashboard_instance
     parser = argparse.ArgumentParser(description="HUSKY-SORTER-001 监控仪表盘")
     parser.add_argument("--simulate", action="store_true",
                         help="模拟模式（默认开启）")
@@ -747,6 +825,7 @@ def main():
 
     simulate = args.simulate or (args.hw is None)
     app = SorterDashboard(simulate=simulate, controller_host=args.hw)
+    _dashboard_instance = app
     app.mainloop()
 
 

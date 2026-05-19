@@ -117,16 +117,23 @@ class BeanQualityResult:
 def _compute_quality_score(defect_results: List[DefectResult], max_score: float = 100.0) -> float:
     """Compute quality score from defect results.
 
-    Score deduction per defect:
-    - Severity 5: -25 points
-    - Severity 4: -20 points
-    - Severity 3: -15 points
-    - Severity 2: -10 points
-    - Severity 1: -5 points
+    v2 (P0-25 fix): SCA-aligned exponential severity penalty.
+
+    SCA cupping principle: a single primary defect (severity 4-5) heavily
+    penalizes cup quality. Minor defects (severity 1-2) have modest impact.
+
+    Severity → penalty per triggered defect (exponential):
+    - Severity 5 (CRITICAL: mold/black/foreign): -40 points each
+    - Severity 4 (HIGH: fermented):              -25 points each
+    - Severity 3 (MEDIUM: broken/dead/insect):   -12 points each
+    - Severity 2 (LOW: underweight/hollow/etc):   -5 points each
+    - Severity 1 (MINOR: overweight):             -2 points each
+
+    Confidence modulates the penalty (e.g. 0.7 confidence × 40 = 28 pts).
     """
-    SEVERITY_PENALTIES = {5: 25.0, 4: 20.0, 3: 15.0, 2: 10.0, 1: 5.0}
+    SCA_PENALTIES = {5: 40.0, 4: 25.0, 3: 12.0, 2: 5.0, 1: 2.0}
     total_penalty = sum(
-        r.confidence * SEVERITY_PENALTIES.get(r.severity, 10.0)
+        r.confidence * SCA_PENALTIES.get(r.severity, 10.0)
         for r in defect_results
         if r.triggered
     )
@@ -263,18 +270,23 @@ class QualityClassifier:
         defect_rate_pct: float,
         defects: List[DefectType],
     ) -> QualityGrade:
-        """Determine grade from quality score and defect list."""
+        """Determine grade from quality score and defect list.
+
+        Uses AND logic: a bean must satisfy BOTH the score threshold
+        AND the defect rate threshold to qualify for a grade.
+        (Matches grades.py grade_from_score behavior — P0-24 fix)
+        """
         # Critical defects → automatic reject
         critical = {DefectType.MOLD, DefectType.BLACK, DefectType.FOREIGN}
         if any(d in critical for d in defects):
             return QualityGrade.REJECT
 
-        # Score-based grading
-        if quality_score >= 95.0 or defect_rate_pct < 1.0:
+        # Score-based grading (AND logic: both conditions must pass)
+        if quality_score >= 95.0 and defect_rate_pct < 1.0:
             return QualityGrade.A
-        elif quality_score >= 85.0 or defect_rate_pct < 3.0:
+        elif quality_score >= 85.0 and defect_rate_pct < 3.0:
             return QualityGrade.B
-        elif quality_score >= 70.0 or defect_rate_pct < 10.0:
+        elif quality_score >= 70.0 and defect_rate_pct < 10.0:
             return QualityGrade.C
         else:
             return QualityGrade.REJECT

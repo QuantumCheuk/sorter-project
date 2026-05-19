@@ -41,14 +41,18 @@ class ImageProcessor:
         "upper": np.array([95, 130, 200]),  # 偏高亮度
     }
 
-    def __init__(self, min_bean_area: int = 2000, max_bean_area: int = 80000):
+    def __init__(self, min_bean_area: int = 2000, max_bean_area: int = 80000,
+                 pixels_per_mm: float = 30.0):
         """
         Args:
             min_bean_area: 最小豆子面积（像素）
             max_bean_area: 最大豆子面积（像素）
+            pixels_per_mm: P2-04: 像素→mm 标定系数。默认30为粗估(4MP)，
+                           实际应拍摄已知尺寸标定板后修正。
         """
         self.min_bean_area = min_bean_area
         self.max_bean_area = max_bean_area
+        self.pixels_per_mm = pixels_per_mm
 
     def preprocess(self, image: np.ndarray, method: str = "adaptive") -> Tuple[np.ndarray, List[BeanRegion]]:
         """
@@ -274,8 +278,8 @@ class ImageProcessor:
                 "mean": float(np.mean(solidities)),
                 "std": float(np.std(solidities)),
             },
-            # 估算物理尺寸（假设已知像素分辨率）
-            "estimated_size_mm": float(np.mean(diameters) / 30),  # 粗估：30px≈1mm at 4MP
+            # P2-04: use calibrated pixels_per_mm instead of hardcoded 30
+            "estimated_size_mm": float(np.mean(diameters) / self.pixels_per_mm),
         }
 
     def visualize(self, image: np.ndarray, regions: List[BeanRegion],
@@ -315,6 +319,25 @@ class ImageProcessor:
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
 
         return vis
+
+    def calibrate_pixels_per_mm(self, known_diameter_mm: float, image: np.ndarray) -> Optional[float]:
+        """P2-04: calibrate pixels_per_mm using a reference object of known size.
+
+        Args:
+            known_diameter_mm: physical diameter of reference object (e.g. coin, calibration ball)
+            image: BGR image containing the reference object
+
+        Returns:
+            calibrated pixels_per_mm, or None if detection failed
+        """
+        _, regions = self.preprocess(image)
+        if not regions:
+            return None
+        largest = max(regions, key=lambda r: r.equidiameter)
+        measured_px = largest.equidiameter
+        ppm = measured_px / known_diameter_mm
+        self.pixels_per_mm = ppm
+        return ppm
 
 
 if __name__ == "__main__":

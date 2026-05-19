@@ -350,8 +350,13 @@ DEFAULT_THRESHOLDS: Dict[DefectType, DefectThreshold] = {
     ),
 
     # ═══════════════════════════════════════════════════════════════════════
-    # WEIGHT DEFECTS
+    # WEIGHT DEFECTS — P1-17 fix: mutually exclusive ranges
     # Normal: 0.10-0.28g
+    # BROKEN:    0.02-0.05g (fragments only)
+    # UNDERWEIGHT: 0.05-0.10g (light/immature, normal density)
+    # HOLLOW:    density-only defect (no weight trigger — hollow beans
+    #            can weigh normally but have low density <0.52 g/mL)
+    # OVERWEIGHT: >0.28g
     # ═══════════════════════════════════════════════════════════════════════
 
     DefectType.BROKEN: DefectThreshold(
@@ -359,9 +364,8 @@ DEFAULT_THRESHOLDS: Dict[DefectType, DefectThreshold] = {
         primary_sensor=SensorType.WEIGHT,
         severity=3,
         weight=RangeThreshold(
-            min_val=0.02, max_val=0.08,   # Fragment: ≤0.08g
+            min_val=0.02, max_val=0.05,   # Fragment: <0.05g (exclusive with UNDERWEIGHT)
             unit="g",
-            # NOTE: no critical_high — 0.15g normal bean must NOT trigger this
         ),
         min_confidence=0.7,
     ),
@@ -371,26 +375,22 @@ DEFAULT_THRESHOLDS: Dict[DefectType, DefectThreshold] = {
         primary_sensor=SensorType.WEIGHT,
         severity=2,
         weight=RangeThreshold(
-            # Immature/underdeveloped: very light beans
-            # Normal 0.10-0.28g → underweight: < 0.10g (exclusive of normal)
+            # Immature/light: 0.05-0.10g (exclusive with BROKEN, exclusive with normal)
             min_val=0.05, max_val=0.10,
             unit="g",
             critical_low=0.05,
         ),
-        # NOTE: The range [0.05, 0.10] means underweight triggers for 0.05-0.10g
-        # which are immature beans (below normal minimum 0.10g)
         min_confidence=0.7,
     ),
 
     DefectType.HOLLOW: DefectThreshold(
         defect_type=DefectType.HOLLOW,
-        primary_sensor=SensorType.WEIGHT,
+        primary_sensor=SensorType.DENSITY,  # P1-17: density-only, NOT weight
         severity=2,
-        weight=RangeThreshold(
-            # Hollow/empty beans: very light, often < 0.10g
-            # NOTE: 0.15g is NOT hollow — no critical_high here!
-            min_val=0.03, max_val=0.10,
-            unit="g",
+        density=RangeThreshold(
+            # Hollow beans have abnormally low density regardless of weight
+            min_val=0.25, max_val=0.52,
+            unit="g/mL",
         ),
         min_confidence=0.6,
     ),

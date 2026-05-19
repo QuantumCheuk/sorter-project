@@ -189,12 +189,13 @@ class RecipeToThresholdSetBridge:
         ts.thresholds[DefectType.UNDERWEIGHT] = underwt_thresh
 
         # HOLLOW (density too light — primary density, weight as severity only)
+        # P-004 fix: lower bound 0.30 (physically meaningful), not 0.0
         hollow_thresh = DefectThreshold(
             defect_type=DefectType.HOLLOW,
             primary_sensor=SensorType.DENSITY,
             severity=2,
             density=RangeThreshold(
-                min_val=0.0,
+                min_val=0.30,  # P-004: physical minimum, 0.0 was meaningless
                 max_val=recipe.density.medium_min,
             ),
         )
